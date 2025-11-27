@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Study With Me | 로그인</title>
+    <link rel="stylesheet" href="/css/auth.css" />
+</head>
+<body>
+
+<!-- ===== 배경 슬라이드 ===== -->
+<section class="hero">
+    <div class="slides">
+        <div class="slide"><img th:src="@{/img/bg1.jpg}" alt=""><div class="overlay"></div></div>
+        <div class="slide"><img th:src="@{/img/bg2.jpg}" alt=""><div class="overlay"></div></div>
+        <div class="slide"><img th:src="@{/img/bg3.jpg}" alt=""><div class="overlay"></div></div>
+    </div>
+</section>
+
+<!-- ===== 로그인 박스 ===== -->
+<main class="auth-container">
+    <section class="auth-box">
+        <div class="toggle-dark" id="toggleDark">🌙 다크모드</div>
+        <div class="auth-logo">Study With Me</div>
+        <p class="auth-sub">AI 기반 스터디 매칭 플랫폼</p>
+
+        <!-- 로그인 폼 -->
+        <form id="loginForm" method="post" th:action="@{/auth}">
+            <div th:if="${error != null}" style="background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;">
+                <span th:if="${error == 'invalid'}">이메일 또는 비밀번호가 올바르지 않습니다.</span>
+                <span th:if="${error == 'login_required'}">로그인이 필요합니다.</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" placeholder="example@email.com" required />
+            </div>
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" placeholder="비밀번호 입력" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary full-width">로그인</button>
+
+            <p class="switch-text">
+                계정이 없으신가요?
+                <a href="/register">회원가입</a>
+            </p>
+        </form>
+    </section>
+</main>
+
+<script src="/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>게시글 작성 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+            <button id="darkModeBtn" class="btn btn-outline">🌙 다크모드</button>
+        </div>
+    </div>
+</header>
+
+<main class="page create-layout">
+
+    <!---------------- 작성 폼 ---------------->
+    <section class="post-form">
+
+        <h2 class="create-title">게시글 작성</h2>
+        <p class="create-sub">게시글 내용을 자세하게 입력해 주세요.</p>
+
+        <!-- 오류 메시지 박스 -->
+        <div th:if="${param.error != null}" class="alert-box error" id="errorBox">
+            <span class="alert-icon">⚠️</span>
+            <span th:if="${param.error[0] == 'create_failed'}">
+                게시글 작성에 실패했습니다. 
+                <span th:if="${param.msg != null}" th:text="'(' + ${param.msg[0]} + ')'"></span>
+                다시 시도해주세요.
+            </span>
+            <span th:if="${param.error[0] == 'title_required'}">제목을 입력해주세요.</span>
+            <span th:if="${param.error[0] == 'content_required'}">본문 내용을 입력해주세요.</span>
+            <span th:if="${param.error[0] == 'login_required'}">로그인이 필요합니다.</span>
+            <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+
+        <!-- 성공 메시지 박스 -->
+        <div th:if="${param.success != null}" class="alert-box success" id="successBox">
+            <span class="alert-icon">✓</span>
+            <span th:if="${param.success[0] == 'post_created'}">게시글이 성공적으로 등록되었습니다.</span>
+            <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+
+        <form method="post" action="/posts/write">
+            <!-- 제목 -->
+            <div class="form-section">
+                <label class="form-label">제목 *</label>
+                <input id="postTitle" name="title" placeholder="게시글 제목을 입력하세요" required maxlength="200" />
+            </div>
+
+            <!-- 카테고리 -->
+            <div class="form-section">
+                <label class="form-label">카테고리</label>
+                <select id="categorySelect" name="category" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);">
+                    <option value="">선택 안함</option>
+                    <option value="개발">개발</option>
+                    <option value="자격증">자격증</option>
+                    <option value="영어">영어</option>
+                    <option value="독서">독서</option>
+                    <option value="취업">취업</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+
+            <!-- 진행 방식/지역/정원 -->
+            <div class="form-section">
+                <label class="form-label">진행 방식</label>
+                <select id="modeSelect" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);">
+                    <option value="온라인">온라인</option>
+                    <option value="오프라인">오프라인</option>
+                    <option value="혼합">혼합</option>
+                </select>
+            </div>
+
+            <div class="form-section">
+                <label class="form-label">지역 (오프라인일 경우)</label>
+                <input id="locationInput" placeholder="예: 강남, 신촌, 무관" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);" />
+            </div>
+
+            <div class="form-section">
+                <label class="form-label">모집 정원</label>
+                <input id="capacityInput" type="number" value="0" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);" />
+            </div>
+
+            <!-- 본문 (WYSIWYG) -->
+            <div class="form-section">
+                <label class="form-label">본문 *</label>
+
+                <div class="editor-toolbar">
+                    <button type="button" data-cmd="bold">굵게</button>
+                    <button type="button" data-cmd="italic">기울임</button>
+                    <button type="button" data-cmd="ul">• 리스트</button>
+                    <button type="button" data-cmd="ol">1. 리스트</button>
+                    <button type="button" data-cmd="quote">인용문</button>
+                    <button type="button" data-cmd="code">코드블럭</button>
+                </div>
+
+                <div id="editor" class="editor-area" contenteditable="true"><h2>로드맵 제안</h2>
+<p>스터디 진행 로드맵을 작성해주세요.</p>
+
+<h2>스터디 소개</h2>
+<p>안녕하세요!<br><br>
+스터디에 대한 소개를 작성해주세요.</p>
+
+<h3>진행 방식</h3>
+<ul>
+  <li>진행 방식에 대한 설명을 작성해주세요.</li>
+</ul>
+
+<h3>커리큘럼 예시</h3>
+<pre><code class="language-java">
+// 코드 예시를 작성해주세요
+</code></pre>
+
+<h2>이런 분이면 좋아요</h2>
+<ul>
+  <li>참여 조건을 작성해주세요.</li>
+</ul>
+
+                <p>열정적이고 함께 성장하실 분 환영합니다! 😊</p></div>
+                <!-- hidden textarea 는 required 를 빼지 않으면 브라우저가 submit 자체를 막아서 글이 등록되지 않음 -->
+                <textarea id="content" name="content" style="display: none;"></textarea>
+                <div class="textarea-meta">글자 수: <span id="editorLength">0</span></div>
+            </div>
+
+            <!-- 태그 -->
+            <div class="form-section">
+                <label class="form-label">태그 (쉼표로 구분하여 입력)</label>
+                <input id="tagsInput" name="tags" placeholder="예: 스터디, Java, Spring Boot" />
+                <div class="input-meta">쉼표로 태그를 구분하세요</div>
+                <button type="button" id="aiTagBtn" class="btn btn-outline sm" style="margin-top:6px;">
+                    ✨ AI 태그 추천
+                </button>
+            </div>
+
+            <!-- 대표 이미지 (슬라이드쇼) -->
+            <div class="form-section">
+                <label class="form-label">대표 이미지 URL (최대 3개)</label>
+                <input id="imageUrl1" placeholder="이미지 URL 1" />
+                <input id="imageUrl2" placeholder="이미지 URL 2 (선택)" style="margin-top:6px;" />
+                <input id="imageUrl3" placeholder="이미지 URL 3 (선택)" style="margin-top:6px;" />
+                <div class="input-meta">이미지는 상세 페이지 상단 슬라이드쇼에 표시됩니다.</div>
+            </div>
+
+            <!-- 제출 -->
+            <div class="form-footer">
+                <span class="form-caption">등록 후 수정 가능합니다.</span>
+                <button type="submit" class="btn btn-primary">등록하기</button>
+            </div>
+        </form>
+
+    </section>
+
+    <!---------------- 우측 실시간 미리보기 ---------------->
+    <section class="post-side">
+        <div class="side-card preview-card">
+            <div class="preview-category" id="previewCategory">카테고리</div>
+            <div class="preview-title" id="previewTitle">제목 미리보기</div>
+            <div class="preview-meta">
+                <span id="previewMode">온라인</span> ·
+                <span id="previewLocation">지역</span> ·
+                <span id="previewCapacity">0 / 0명</span>
+            </div>
+            <div id="previewTags" class="preview-tags"></div>
+        </div>
+    </section>
+
+</main>
+
+<script src="/js/board.js"></script>
+<script>
+function showError(message) {
+    const errorBox = document.getElementById('errorBox');
+    if (errorBox) {
+        errorBox.remove();
+    }
+    const form = document.querySelector('.post-form');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert-box error';
+    alertDiv.id = 'errorBox';
+    alertDiv.innerHTML = `
+        <span class="alert-icon">⚠️</span>
+        <span>${message}</span>
+        <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    form.insertBefore(alertDiv, form.firstChild.nextSibling);
+    setTimeout(() => {
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+}
+
+// 폼 제출 전 에디터 내용을 textarea에 복사
+document.querySelector('form')?.addEventListener('submit', function(e) {
+    const editor = document.getElementById('editor');
+    const contentHidden = document.getElementById('content');
+    const titleInput = document.getElementById('postTitle');
+    
+    if (!titleInput || !titleInput.value.trim()) {
+        e.preventDefault();
+        showError('제목을 입력해주세요.');
+        return false;
+    }
+    
+    if (editor && contentHidden) {
+        // 갤러리 HTML 구성
+        const urls = [
+            document.getElementById('imageUrl1')?.value.trim(),
+            document.getElementById('imageUrl2')?.value.trim(),
+            document.getElementById('imageUrl3')?.value.trim()
+        ].filter(u => u);
+
+        let galleryHtml = '';
+        if (urls.length > 0) {
+            galleryHtml += '<div class="carousel"><div class="carousel-inner" id="carouselInner">';
+            urls.forEach(u => {
+                galleryHtml += `<img src="${u}" alt="스터디 이미지"/>`;
+            });
+            galleryHtml += '</div></div>';
+        }
+
+        contentHidden.value = galleryHtml + editor.innerHTML;
+        // 빈 내용 체크
+        const textContent = editor.innerText.trim();
+        if (!textContent || textContent.length === 0) {
+            e.preventDefault();
+            showError('본문 내용을 입력해주세요.');
+            return false;
+        }
+        
+        // HTML 태그만 있고 실제 텍스트가 없는 경우 체크
+        const htmlContent = editor.innerHTML.trim();
+        if (htmlContent === '<br>' || htmlContent === '<p></p>' || htmlContent === '<div><br></div>') {
+            e.preventDefault();
+            showError('본문 내용을 입력해주세요.');
+            return false;
+        }
+    }
+    
+    // 제출 버튼 비활성화 (중복 제출 방지)
+    const submitBtn = this.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '등록 중...';
+    }
+});
+</script>
+</body>
+</html>

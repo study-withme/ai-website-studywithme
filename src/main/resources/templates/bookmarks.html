@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>북마크 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/index.css" />
+    <style>
+        .bookmarks-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="nav-inner">
+        <div class="logo"><a href="/">Study With Me</a></div>
+        <nav class="nav-links">
+            <a href="/">홈</a>
+            <a href="/mypage">마이페이지</a>
+        </nav>
+        <div class="nav-actions">
+            <a href="/" class="btn btn-outline">목록</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="bookmarks-container">
+        <h1 style="margin-bottom: 32px;">북마크한 게시글</h1>
+        
+        <section class="card-grid" th:if="${bookmarks.totalElements > 0}">
+            <article class="card" th:each="bookmark : ${bookmarks.content}">
+                <div class="card-body">
+                    <div class="card-category" th:if="${bookmark.post.category != null}" th:text="${bookmark.post.category}">카테고리</div>
+                    <a th:href="@{/posts/{id}(id=${bookmark.post.id})}" class="card-title" th:text="${bookmark.post.title}">게시글 제목</a>
+                    <p style="color: #6b7280; font-size: 14px; margin: 8px 0; line-height: 1.5;" th:text="${#strings.abbreviate(bookmark.post.content, 100)}">게시글 내용 미리보기...</p>
+                    <div class="card-meta">
+                        <span th:text="${bookmark.post.user.realName}">작성자</span>
+                        <span>조회수 <strong th:text="${bookmark.post.viewCount}">0</strong></span>
+                        <span>❤️ <strong th:text="${bookmark.post.likeCount}">0</strong></span>
+                        <span th:text="${#temporals.format(bookmark.post.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-11</span>
+                    </div>
+                    <div style="margin-top: 8px; color: #6b7280; font-size: 12px;">
+                        북마크한 날짜: <span th:text="${#temporals.format(bookmark.createdAt, 'yyyy-MM-dd')}">2025-01-11</span>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <div class="empty-state" th:if="${bookmarks.totalElements == 0}">
+            <p>북마크한 게시글이 없습니다.</p>
+            <a href="/" class="btn btn-primary" style="margin-top: 16px;">게시글 둘러보기</a>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div th:if="${bookmarks.totalPages > 1}" style="display: flex; justify-content: center; gap: 8px; margin-top: 32px; padding: 20px;">
+            <a th:if="${currentPage > 0}" 
+               th:href="@{/bookmarks(page=${currentPage - 1})}"
+               class="btn btn-outline">이전</a>
+            <span style="display: flex; align-items: center; padding: 0 16px;">
+                <span th:text="${currentPage + 1}">1</span> / <span th:text="${bookmarks.totalPages}">1</span>
+            </span>
+            <a th:if="${currentPage < bookmarks.totalPages - 1}"
+               th:href="@{/bookmarks(page=${currentPage + 1})}"
+               class="btn btn-outline">다음</a>
+        </div>
+    </div>
+</main>
+
+<footer>
+    © 2025 Study With Me — 함께 성장하는 공부 플랫폼.
+</footer>
+</body>
+</html>
+

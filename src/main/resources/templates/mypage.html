@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>마이페이지 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/index.css" />
+    <style>
+        .mypage-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .profile-section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .profile-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+        }
+        .profile-info h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .profile-info p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2563eb;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .posts-section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="nav-inner">
+        <div class="logo"><a href="/">Study With Me</a></div>
+        <nav class="nav-links">
+            <a href="/">홈</a>
+            <a href="/posts/write">글쓰기</a>
+        </nav>
+        <div class="nav-actions">
+            <a href="/logout" class="btn btn-outline">로그아웃</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="mypage-container">
+        <div class="profile-section">
+            <div class="profile-header">
+                <div>
+                    <img class="profile-avatar"
+                         th:src="${profile != null && profile.profileImage != null} ? ${profile.profileImage} : 'https://i.pravatar.cc/80?img=' + ${loginUser.id}"
+                         alt="프로필">
+                </div>
+                <div class="profile-info">
+                    <h2 th:text="${loginUser.realName}">사용자 이름</h2>
+                    <p th:text="${loginUser.email}">user@example.com</p>
+                </div>
+            </div>
+            <form method="post" action="/mypage/profile-image" style="margin-top: 8px; display:flex; gap:8px; align-items:center;">
+                <input name="imageUrl" placeholder="프로필 이미지 URL을 입력하세요 (비우면 기본 이미지)"
+                       style="flex:1; padding:8px 10px; border-radius:8px; border:1px solid #e5e7eb;"
+                       th:value="${profile != null ? profile.profileImage : ''}" />
+                <button type="submit" class="btn btn-outline">저장</button>
+            </form>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" th:text="${stats.level}">1</div>
+                    <div class="stat-label">레벨</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" th:text="${stats.expPercent + '%'}">0%</div>
+                    <div class="stat-label">경험치</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" th:text="${stats.postCount}">0</div>
+                    <div class="stat-label">작성한 게시글</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" th:text="${stats.likesReceived}">0</div>
+                    <div class="stat-label">받은 좋아요</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" th:text="${stats.applications}">0</div>
+                    <div class="stat-label">지원한 스터디</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="posts-section">
+            <h2>내가 작성한 게시글</h2>
+            
+            <section class="card-grid" th:if="${posts.totalElements > 0}">
+                <article class="card" th:each="post : ${posts.content}">
+                    <div class="card-body">
+                        <div class="card-category" th:if="${post.category != null}" th:text="${post.category}">카테고리</div>
+                        <a th:href="@{/posts/{id}(id=${post.id})}" class="card-title" th:text="${post.title}">게시글 제목</a>
+                        <p style="color: #6b7280; font-size: 14px; margin: 8px 0; line-height: 1.5;" th:text="${#strings.abbreviate(post.content, 100)}">게시글 내용 미리보기...</p>
+                        <div class="card-meta">
+                            <span>조회수 <strong th:text="${post.viewCount}">0</strong></span>
+                            <span>좋아요 <strong th:text="${post.likeCount}">0</strong></span>
+                            <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-11</span>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <a th:href="@{/posts/{id}/edit(id=${post.id})}" class="btn btn-outline" style="font-size: 12px; padding: 4px 12px;">수정</a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <div class="empty-state" th:if="${posts.totalElements == 0}">
+                <p>아직 작성한 게시글이 없습니다.</p>
+                <a href="/posts/write" class="btn btn-primary" style="margin-top: 16px;">첫 게시글 작성하기</a>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div th:if="${posts.totalPages > 1}" style="display: flex; justify-content: center; gap: 8px; margin-top: 32px; padding: 20px;">
+                <a th:if="${currentPage > 0}" 
+                   th:href="@{/mypage(page=${currentPage - 1})}"
+                   class="btn btn-outline">이전</a>
+                <span style="display: flex; align-items: center; padding: 0 16px;">
+                    <span th:text="${currentPage + 1}">1</span> / <span th:text="${posts.totalPages}">1</span>
+                </span>
+                <a th:if="${currentPage < posts.totalPages - 1}"
+                   th:href="@{/mypage(page=${currentPage + 1})}"
+                   class="btn btn-outline">다음</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    © 2025 Study With Me — 함께 성장하는 공부 플랫폼.
+</footer>
+</body>
+</html>
+

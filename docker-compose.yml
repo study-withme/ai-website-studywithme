@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:10.4
+    container_name: studywithme-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-studywithmever2}
+      MYSQL_USER: ${MYSQL_USER:-study_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-studypass}
+      TZ: Asia/Seoul
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      # 최초 기동 시, studywithmever2.sql 이 자동으로 실행되어
+      # DB 스키마와 테이블이 생성됩니다.
+      - ./studywithmever2.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
+
+

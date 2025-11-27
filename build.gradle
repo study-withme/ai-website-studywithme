@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4'  // ✅ 최신 안정 버전
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'Study With Me Spring Boot Project'
+
+java {
+    toolchain {
+        // ✅ Java 21 (LTS) 기반, Gradle이 자동 설치/관리
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // ✅ 기본 웹 및 템플릿 엔진
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // ✅ .env 파일 지원 (선택)
+    implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+    implementation 'org.springframework.security:spring-security-crypto'
+
+    // ✅ Lombok (선택)
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // ✅ JPA + MySQL
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // ✅ 테스트
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Test) {
+    systemProperty 'file.encoding', 'UTF-8'
+}
+
+// ✅ 환경변수 자동 주입 (.env 사용 시)
+bootRun {
+    environment "SPRING_PROFILES_ACTIVE", "local"
+    environment "DOTENV_PATH", file(".env").absolutePath
+    jvmArgs += ["--enable-native-access=ALL-UNNAMED"]
+}

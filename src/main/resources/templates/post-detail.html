@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${post.title}">게시글 상세 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <link rel="stylesheet" href="/css/lightbox.css" />
+    
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+</head>
+<body class="light">
+
+<!-- 상단 스크롤 진행바 -->
+<div id="scrollProgress"></div>
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <div class="notif-wrapper">
+                    <button id="notifIcon" class="btn btn-outline" type="button">
+                        🔔
+                        <span id="notifBadge" class="notif-badge hidden"></span>
+                    </button>
+                    <div id="notifDropdown" class="notif-dropdown hidden"></div>
+                </div>
+                <a href="/bookmarks" class="btn btn-outline">북마크</a>
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+            <div th:if="${loginUser == null}">
+                <a href="/auth" class="btn btn-outline">로그인</a>
+            </div>
+            <button id="darkModeBtn" class="btn btn-outline">🌙 다크모드</button>
+        </div>
+    </div>
+</header>
+
+<main class="page detail-layout">
+
+    <!------------------ 왼쪽 본문 --------------------->
+    <section class="detail-main">
+
+        <!-- 오류/성공 메시지 박스 -->
+        <div th:if="${param.error != null}" class="alert-box error" id="errorBox">
+            <span class="alert-icon">⚠️</span>
+            <span th:text="${param.error[0]}">오류 메시지</span>
+            <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+
+        <div th:if="${param.success != null}" class="alert-box success" id="successBox">
+            <span class="alert-icon">✓</span>
+            <span th:if="${param.success[0] == 'post_created'}">게시글이 성공적으로 등록되었습니다.</span>
+            <span th:if="${param.success[0] == 'post_updated'}">게시글이 성공적으로 수정되었습니다.</span>
+            <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+
+        <button class="btn-link" onclick="history.back()">← 목록으로</button>
+
+        <h1 id="detailTitle" class="detail-title" th:text="${post.title}">게시글 제목</h1>
+
+        <div class="detail-meta">
+            <span id="detailCategory" th:if="${post.category != null}" th:text="${post.category}">카테고리</span>
+            <span id="detailCategory" th:if="${post.category == null}">기타</span> ·
+            <span id="detailViews">조회수 <strong th:text="${post.viewCount}">0</strong></span> ·
+            <span id="detailDate" th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-11</span>
+        </div>
+
+        <!-- 자동 목차 -->
+        <div id="tocContainer" class="toc-container"></div>
+
+        <!-- 본문 -->
+        <article id="detailContent" class="detail-content" style="line-height: 1.8;" th:utext="${post.content}">게시글 내용</article>
+
+        <!-- AI 요약 -->
+        <button id="aiSummaryBtn" class="btn btn-outline ai-summary-btn">✨ AI 요약 보기</button>
+        <div id="aiSummaryBox" class="ai-summary-box hidden"></div>
+
+        <!-- 댓글 -->
+        <section class="comment-section">
+            <div class="comment-header">
+                <h2>댓글 <span id="commentCount">(0)</span></h2>
+                <select id="commentSort">
+                    <option value="latest">최신순</option>
+                    <option value="popular">인기순</option>
+                </select>
+            </div>
+
+            <div class="comment-write" th:if="${loginUser != null}">
+                <textarea id="commentInput" placeholder="댓글을 입력하세요"></textarea>
+                <button id="commentBtn" class="btn btn-primary">등록</button>
+            </div>
+
+            <div id="commentList" class="comment-list"></div>
+        </section>
+
+        <!-- 태그 -->
+        <div th:if="${post.tags != null && !post.tags.isEmpty()}" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+            <div class="tag-list">
+                <span th:each="tag : ${#strings.arraySplit(post.tags, ',')}" 
+                      class="tag" th:text="${tag.trim()}">태그</span>
+            </div>
+        </div>
+
+        <!-- 작성자 액션 -->
+        <div th:if="${loginUser != null && isAuthor}" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; gap: 8px;">
+            <a th:href="@{/posts/{id}/edit(id=${post.id})}" class="btn btn-primary">수정</a>
+            <form th:action="@{/posts/{id}/delete(id=${post.id})}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-outline" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+            </form>
+        </div>
+
+    </section>
+
+    <!------------------ 오른쪽 사이드바 --------------------->
+    <aside class="detail-side">
+
+        <!-- 작성자 -->
+        <div class="side-card">
+            <h3>작성자</h3>
+            <div class="author-box">
+                <img class="author-avatar"
+                     th:src="${authorProfile != null && authorProfile.profileImage != null} ? ${authorProfile.profileImage} : 'https://i.pravatar.cc/80?img=' + ${post.user.id}"
+                     alt="프로필">
+                <div>
+                    <div class="author-name" th:text="${post.user.realName}">작성자</div>
+                    <div class="author-role">게시글 작성자</div>
+                    <div class="author-meta-row" th:if="${authorStats != null}">
+                        <span class="author-level-badge"
+                              th:text="'Lv.' + ${authorStats.level}">Lv.1</span>
+                        <div class="author-exp-bar">
+                            <div class="author-exp-fill"
+                                 th:style="'width:' + ${authorStats.expPercent} + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 태그 -->
+        <div class="side-card" th:if="${post.tags != null && !post.tags.isEmpty()}">
+            <h3>태그</h3>
+            <div class="tag-list">
+                <span th:each="tag : ${#strings.arraySplit(post.tags, ',')}" 
+                      class="tag" th:text="${tag.trim()}">태그</span>
+            </div>
+        </div>
+
+        <!-- 실시간 반응 -->
+        <div class="side-card">
+            <h3>실시간 반응</h3>
+
+            <div class="reaction-row">
+                ❤️ 좋아요:
+                <span id="likeCount" class="reaction-number" th:text="${post.likeCount}">0</span>
+                <button id="likeBtn" 
+                        th:if="${loginUser != null}"
+                        th:data-post-id="${post.id}"
+                        th:data-liked="${isLiked}"
+                        class="btn btn-outline sm"
+                        th:classappend="${isLiked} ? 'active' : ''">
+                    <span th:text="${isLiked} ? '취소' : '좋아요'">좋아요</span>
+                </button>
+            </div>
+
+            <div class="reaction-row">
+                🔖 북마크:
+                <span id="bookmarkStatus" th:text="${isBookmarked ? 'ON' : 'OFF'}">OFF</span>
+                <button id="bookmarkBtn"
+                        th:if="${loginUser != null}"
+                        th:data-post-id="${post.id}"
+                        th:data-bookmarked="${isBookmarked}"
+                        class="btn btn-outline sm">
+                    <span th:text="${isBookmarked} ? '북마크 해제' : '북마크'">북마크</span>
+                </button>
+            </div>
+
+            <div class="reaction-row" th:if="${loginUser != null && !isAuthor}">
+                🧑‍🤝‍🧑 참여 희망:
+                <span id="applyCount" class="reaction-number" th:text="${applicationCount}">0</span>
+                <button id="applyBtn"
+                        th:data-post-id="${post.id}"
+                        th:data-has-applied="${hasApplied}"
+                        th:classappend="${hasApplied} ? 'btn btn-primary sm' : 'btn btn-outline sm'">
+                    <span th:text="${hasApplied} ? '지원 취소' : '지원하기'">지원하기</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 작성자의 다른 스터디 -->
+        <div class="side-card">
+            <h3>작성자의 다른 스터디</h3>
+            <ul id="authorPosts" class="author-post-list" th:if="${authorPosts != null and !authorPosts.isEmpty()}">
+                <li th:each="p : ${authorPosts}" class="author-post-item">
+                    <a th:href="@{/posts/{id}(id=${p.id})}"
+                       style="display:block;cursor:pointer;text-decoration:none;color:inherit;">
+                        <div style="font-size:13px;font-weight:600;" th:text="${p.title}">다른 스터디 제목</div>
+                        <div style="font-size:11px;color:#6b7280;">
+                            <span th:text="${p.category != null ? p.category : '기타'}">카테고리</span>
+                            <span> · 조회수 </span>
+                            <span th:text="${p.viewCount}">0</span>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+            <div th:if="${authorPosts == null or authorPosts.isEmpty()}" style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                다른 게시글이 없습니다.
+            </div>
+        </div>
+
+        <!-- 최근 본 스터디 -->
+        <div class="side-card">
+            <h3>최근 본 스터디</h3>
+            <ul id="recentPosts" class="author-post-list">
+                <!-- TODO: Implement client-side recent posts logic -->
+            </ul>
+        </div>
+
+    </aside>
+
+</main>
+
+<!-- 지원하기 플로팅 버튼 (작성자가 아닌 경우만) -->
+<button id="floatingApplyBtn" 
+        th:if="${loginUser != null && !isAuthor}"
+        class="floating-apply-btn"
+        th:data-post-id="${post.id}"
+        th:data-has-applied="${hasApplied}">
+    <span th:text="${hasApplied} ? '지원 취소' : '스터디 지원하기'">스터디 지원하기</span>
+</button>
+
+<!-- 라이트박스 -->
+<div id="lightbox" class="lightbox hidden">
+    <img id="lightboxImg">
+</div>
+
+<script src="/js/lightbox.js"></script>
+<script src="/js/board.js"></script>
+<script th:inline="javascript">
+/*<![CDATA[*/
+const postId = [[${post.id}]];
+const isLikedInitial = [[${isLiked}]];
+const isBookmarkedInitial = [[${isBookmarked}]];
+const hasAppliedInitial = [[${hasApplied}]];
+const isAuthor = [[${isAuthor}]];
+
+// 전역에서 로그인 여부를 확인할 수 있도록 window.loginUser 플래그 제공
+// (board.js에서 댓글/좋아요 등에서 사용)
+window.loginUser = [[${loginUser != null}]];
+
+// 좋아요 버튼
+document.getElementById('likeBtn')?.addEventListener('click', async function() {
+    const btn = this;
+    const likeCountSpan = document.getElementById('likeCount');
+    
+    try {
+        const response = await fetch(`/posts/${postId}/like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.isLiked) {
+                btn.innerHTML = '<span>취소</span>';
+                btn.className = 'btn btn-primary sm';
+            } else {
+                btn.innerHTML = '<span>좋아요</span>';
+                btn.className = 'btn btn-outline sm';
+            }
+            if (likeCountSpan) {
+                likeCountSpan.textContent = result.likeCount;
+            }
+        } else {
+            alert(result.message || '오류가 발생했습니다.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    }
+});
+
+// 북마크 버튼
+document.getElementById('bookmarkBtn')?.addEventListener('click', async function() {
+    const btn = this;
+    const bookmarkStatusSpan = document.getElementById('bookmarkStatus');
+    
+    try {
+        const response = await fetch(`/posts/${postId}/bookmark`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.isBookmarked) {
+                btn.innerHTML = '<span>북마크 해제</span>';
+                btn.className = 'btn btn-primary sm';
+                if (bookmarkStatusSpan) bookmarkStatusSpan.textContent = 'ON';
+            } else {
+                btn.innerHTML = '<span>북마크</span>';
+                btn.className = 'btn btn-outline sm';
+                if (bookmarkStatusSpan) bookmarkStatusSpan.textContent = 'OFF';
+            }
+        } else {
+            alert(result.message || '오류가 발생했습니다.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    }
+});
+
+// 지원하기 버튼
+const applyBtn = document.getElementById('applyBtn');
+const floatingApplyBtn = document.getElementById('floatingApplyBtn');
+const applyCountSpan = document.getElementById('applyCount');
+
+async function handleApply(isCancel) {
+    if (!loginUser) {
+        alert('로그인이 필요합니다.');
+        window.location.href = '/auth?error=login_required';
+        return;
+    }
+    
+    if (isAuthor) {
+        alert('본인의 게시글에는 지원할 수 없습니다.');
+        return;
+    }
+    
+    let message = null;
+    if (!isCancel) {
+        const userInput = prompt('지원 메시지를 입력하세요 (선택사항, 취소하면 메시지 없이 지원):');
+        if (userInput === null) {
+            // 취소 버튼을 눌렀을 때는 메시지 없이 지원
+            if (!confirm('메시지 없이 지원하시겠습니까?')) {
+                return;
+            }
+        } else {
+            message = userInput;
+        }
+    }
+    
+    const url = isCancel ? `/posts/${postId}/cancel-apply` : `/posts/${postId}/apply`;
+    const formData = new FormData();
+    if (message) formData.append('message', message);
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const hasApplied = !isCancel;
+            if (applyBtn) {
+                applyBtn.innerHTML = hasApplied ? '<span>지원 취소</span>' : '<span>지원하기</span>';
+                applyBtn.className = hasApplied ? 'btn btn-primary sm' : 'btn btn-outline sm';
+                applyBtn.dataset.hasApplied = hasApplied;
+            }
+            if (floatingApplyBtn) {
+                floatingApplyBtn.innerHTML = hasApplied ? '<span>지원 취소</span>' : '<span>스터디 지원하기</span>';
+                floatingApplyBtn.dataset.hasApplied = hasApplied;
+            }
+            if (applyCountSpan) {
+                applyCountSpan.textContent = result.applicationCount || 0;
+            }
+            alert(result.message || (hasApplied ? '지원이 완료되었습니다.' : '지원이 취소되었습니다.'));
+        } else {
+            alert(result.message || '오류가 발생했습니다.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    }
+}
+
+applyBtn?.addEventListener('click', function() {
+    const hasApplied = this.dataset.hasApplied === 'true';
+    handleApply(hasApplied);
+});
+
+floatingApplyBtn?.addEventListener('click', function() {
+    const hasApplied = this.dataset.hasApplied === 'true';
+    handleApply(hasApplied);
+});
+
+// 코드 하이라이트
+if (window.hljs) {
+    document.querySelectorAll('pre code').forEach((block) => {
+        window.hljs.highlightElement(block);
+    });
+}
+/*]]>*/
+</script>
+</body>
+</html>

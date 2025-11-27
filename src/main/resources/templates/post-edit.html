@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>게시글 수정 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+            <button id="darkModeBtn" class="btn btn-outline">🌙 다크모드</button>
+        </div>
+    </div>
+</header>
+
+<main class="page create-layout">
+
+    <!---------------- 작성 폼 ---------------->
+    <section class="post-form">
+
+        <h2 class="create-title">게시글 수정</h2>
+        <p class="create-sub">게시글 내용을 수정해 주세요.</p>
+
+        <div th:if="${param.error != null}" style="background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;">
+            <span th:utext="${param.error[0]}">오류 메시지</span>
+        </div>
+
+        <form method="post" th:action="@{/posts/{id}/edit(id=${post.id})}">
+            <!-- 제목 -->
+            <div class="form-section">
+                <label class="form-label">제목 *</label>
+                <input id="postTitle" name="title" th:value="${post.title}" placeholder="게시글 제목을 입력하세요" required maxlength="200" />
+            </div>
+
+            <!-- 카테고리 -->
+            <div class="form-section">
+                <label class="form-label">카테고리</label>
+                <select id="categorySelect" name="category" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);">
+                    <option value="">선택 안함</option>
+                    <option value="개발" th:selected="${post.category == '개발'}">개발</option>
+                    <option value="자격증" th:selected="${post.category == '자격증'}">자격증</option>
+                    <option value="영어" th:selected="${post.category == '영어'}">영어</option>
+                    <option value="독서" th:selected="${post.category == '독서'}">독서</option>
+                    <option value="취업" th:selected="${post.category == '취업'}">취업</option>
+                    <option value="기타" th:selected="${post.category == '기타'}">기타</option>
+                </select>
+            </div>
+
+            <!-- 본문 (WYSIWYG) -->
+            <div class="form-section">
+                <label class="form-label">본문 *</label>
+
+                <div class="editor-toolbar">
+                    <button type="button" data-cmd="bold">굵게</button>
+                    <button type="button" data-cmd="italic">기울임</button>
+                    <button type="button" data-cmd="ul">• 리스트</button>
+                    <button type="button" data-cmd="ol">1. 리스트</button>
+                    <button type="button" data-cmd="quote">인용문</button>
+                    <button type="button" data-cmd="code">코드블럭</button>
+                </div>
+
+                <div id="editor" class="editor-area" contenteditable="true" th:utext="${post.content}"></div>
+                <textarea id="content" name="content" style="display: none;" required th:text="${post.content}"></textarea>
+                <div class="textarea-meta">글자 수: <span id="editorLength">0</span></div>
+            </div>
+
+            <!-- 태그 -->
+            <div class="form-section">
+                <label class="form-label">태그 (쉼표로 구분하여 입력)</label>
+                <input id="tagsInput" name="tags" th:value="${post.tags}" placeholder="예: 스터디, Java, Spring Boot" />
+                <div class="input-meta">쉼표로 태그를 구분하세요</div>
+            </div>
+
+            <!-- 제출 -->
+            <div class="form-footer">
+                <a th:href="@{/posts/{id}(id=${post.id})}" class="btn btn-outline">취소</a>
+                <button type="submit" class="btn btn-primary">수정하기</button>
+            </div>
+        </form>
+
+    </section>
+
+</main>
+
+<script src="/js/board.js"></script>
+<script>
+// 폼 제출 전 에디터 내용을 textarea에 복사
+document.querySelector('form')?.addEventListener('submit', function(e) {
+    const editor = document.getElementById('editor');
+    const contentHidden = document.getElementById('content');
+    if (editor && contentHidden) {
+        contentHidden.value = editor.innerHTML;
+        // 빈 내용 체크
+        if (!editor.innerText || editor.innerText.trim().length === 0) {
+            e.preventDefault();
+            alert('본문 내용을 입력해주세요.');
+            return false;
+        }
+    }
+});
+
+// WYSIWYG 툴바
+document.querySelector('.editor-toolbar')?.addEventListener('click', (e) => {
+    const cmd = e.target.dataset.cmd;
+    if (!cmd) return;
+    const editor = document.getElementById('editor');
+    if (!editor) return;
+    editor.focus();
+    if (cmd === 'ul') document.execCommand('insertUnorderedList');
+    else if (cmd === 'ol') document.execCommand('insertOrderedList');
+    else if (cmd === 'quote') document.execCommand('formatBlock', false, 'blockquote');
+    else if (cmd === 'code') document.execCommand('formatBlock', false, 'pre');
+    else document.execCommand(cmd);
+});
+
+// 본문 글자 수
+const editor = document.getElementById('editor');
+const editorLen = document.getElementById('editorLength');
+if (editor && editorLen) {
+    editor.addEventListener('input', () => {
+        editorLen.textContent = editor.innerText.length;
+    });
+    // 초기 글자 수 계산
+    editorLen.textContent = editor.innerText.length;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>모집 게시판 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser == null}">
+                <a href="/auth" class="btn btn-outline">로그인</a>
+                <a href="/register" class="btn btn-primary">회원가입</a>
+            </div>
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <div class="notif-wrapper">
+                    <button id="notifIcon" class="btn btn-outline" type="button">
+                        🔔
+                        <span id="notifBadge" class="notif-badge hidden"></span>
+                    </button>
+                    <div id="notifDropdown" class="notif-dropdown hidden"></div>
+                </div>
+                <a href="/bookmarks" class="btn btn-outline">북마크</a>
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/posts/write" class="btn btn-primary">글쓰기</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+            <button id="darkModeBtn" class="btn btn-outline">🌙 다크모드</button>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+
+    <section class="board-toolbar">
+        <div class="toolbar-top">
+            <h1>스터디 모집 게시판</h1>
+            <p>원하는 스터디를 검색하거나 필터를 적용해보세요.</p>
+        </div>
+
+        <!-- 검색박스 + 자동완성 -->
+        <div class="toolbar-main">
+            <div class="search-box">
+                <input id="searchInput" placeholder="검색어 또는 태그 입력" />
+                <button id="searchBtn" class="btn btn-outline">검색</button>
+
+                <!-- 자동완성 -->
+                <div id="searchSuggest" class="search-suggest hidden"></div>
+            </div>
+
+            <!-- 카테고리/진행방식 필터 -->
+            <div class="filter-row">
+                <select id="categoryFilter">
+                    <option value="">전체 카테고리</option>
+                    <option value="개발" th:selected="${category == '개발'}">개발</option>
+                    <option value="취업" th:selected="${category == '취업'}">취업</option>
+                    <option value="자격증" th:selected="${category == '자격증'}">자격증</option>
+                    <option value="영어" th:selected="${category == '영어'}">영어</option>
+                    <option value="독서" th:selected="${category == '독서'}">독서</option>
+                </select>
+
+                <select id="sortFilter">
+                    <option value="latest">최신순</option>
+                    <option value="popular">인기순</option>
+                </select>
+            </div>
+
+            <!-- 태그 필터 -->
+            <div id="tagFilterRow" class="tag-filter-row"></div>
+        </div>
+    </section>
+
+    <!-- 게시글 목록 -->
+    <section class="board-grid" id="boardList">
+        <!-- Thymeleaf로 서버 사이드 렌더링 (초기 로드) -->
+        <div th:each="post : ${posts.content}" class="card" th:onclick="'location.href=\'/posts/' + ${post.id} + '\''">
+            <div class="card-thumb" 
+                 th:style="'background-image:url(https://picsum.photos/seed/' + ${post.id} + '/400/300)'"></div>
+            <div class="card-body">
+                <div class="card-title" th:text="${post.title}">게시글 제목</div>
+                <div class="card-meta">
+                    <span th:text="${post.category ?: '기타'}">카테고리</span> · 
+                    조회수 <span th:text="${post.viewCount}">0</span> · 
+                    좋아요 <span th:text="${post.likeCount}">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div th:if="${posts.totalElements == 0}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #9ca3af;">
+            <p>조건에 맞는 게시글이 없습니다.</p>
+        </div>
+    </section>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination">
+        <button id="prevPage" class="page-btn">이전</button>
+        <span id="pageInfo" th:text="${currentPage + 1} + ' / ' + ${posts.totalPages}">1 / 1</span>
+        <button id="nextPage" class="page-btn">다음</button>
+    </div>
+
+</main>
+
+<script src="/js/board.js"></script>
+</body>
+</html>
