@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>글 형식 패턴 관리 | 관리자 패널</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .filter-form {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .filter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-item {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 12px;
+        }
+        .filter-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+        .filter-item-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .filter-item-regex {
+            font-family: monospace;
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+            word-break: break-all;
+        }
+        .filter-item-meta {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+            <a href="/admin">관리자 패널</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="toolbar-top">
+        <h1>글 형식 패턴 관리</h1>
+        <p>정규식 패턴을 사용하여 특정 글 형식을 차단할 수 있습니다.</p>
+    </div>
+
+    <div class="filter-form">
+        <h3 style="margin: 0 0 12px; font-size: 16px;">새 패턴 추가</h3>
+        <form id="addForm" style="display: flex; flex-direction: column; gap: 8px;">
+            <input type="text" id="patternNameInput" placeholder="패턴 이름" 
+                   style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);" />
+            <input type="text" id="patternRegexInput" placeholder="정규식 패턴 (예: .*광고.*)" 
+                   style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: monospace;" />
+            <div style="display: flex; gap: 8px;">
+                <select id="patternTypeSelect" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);">
+                    <option value="BOTH">제목 + 내용</option>
+                    <option value="TITLE">제목만</option>
+                    <option value="CONTENT">내용만</option>
+                </select>
+                <button type="submit" class="btn btn-primary">추가</button>
+            </div>
+            <input type="text" id="descriptionInput" placeholder="설명 (선택사항)" 
+                   style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);" />
+        </form>
+    </div>
+
+    <div class="filter-list">
+        <div th:each="filterPattern : ${filterPatterns}" class="filter-item">
+            <div class="filter-item-header">
+                <div style="flex: 1;">
+                    <div class="filter-item-name" th:text="${filterPattern.patternName}">패턴 이름</div>
+                    <div class="filter-item-regex" th:text="${filterPattern.patternRegex}">정규식</div>
+                </div>
+                <button class="btn btn-outline sm" th:onclick="'deletePattern(' + ${filterPattern.id} + ')'">삭제</button>
+            </div>
+            <div class="filter-item-meta">
+                <span th:text="${filterPattern.patternType}">타입</span> · 
+                차단 횟수: <span th:text="${filterPattern.blockCount}">0</span>
+                <span th:if="${filterPattern.description != null}" th:text="' · ' + ${filterPattern.description}"></span>
+            </div>
+        </div>
+        
+        <div th:if="${filterPatterns.isEmpty()}" style="text-align: center; padding: 40px; color: #9ca3af;">
+            <p>등록된 패턴이 없습니다.</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="/admin" class="btn btn-outline">← 관리자 패널</a>
+    </div>
+</main>
+
+<script>
+document.getElementById('addForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const patternName = document.getElementById('patternNameInput').value.trim();
+    const patternRegex = document.getElementById('patternRegexInput').value.trim();
+    const patternType = document.getElementById('patternTypeSelect').value;
+    const description = document.getElementById('descriptionInput').value.trim();
+    
+    if (!patternName || !patternRegex) {
+        alert('패턴 이름과 정규식을 입력해주세요.');
+        return;
+    }
+    
+    fetch('/admin/filter-patterns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'patternName=' + encodeURIComponent(patternName) + 
+              '&patternRegex=' + encodeURIComponent(patternRegex) + 
+              '&patternType=' + encodeURIComponent(patternType) + 
+              '&description=' + encodeURIComponent(description)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+});
+
+function deletePattern(id) {
+    if (!confirm('이 패턴을 삭제하시겠습니까?')) return;
+    
+    fetch('/admin/filter-patterns/' + id + '/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+</script>
+</body>
+</html>
+

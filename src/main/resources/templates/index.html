@@ -30,6 +30,7 @@
                 </div>
                 <a href="/bookmarks" class="btn btn-outline">북마크</a>
                 <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a th:if="${loginUser.isAdmin()}" href="/admin" class="btn btn-outline" style="background: #fef3c7; color: #92400e; border-color: #fde68a;">관리자</a>
                 <a href="/posts/write" class="btn btn-primary">글쓰기</a>
                 <a href="/logout" class="btn btn-outline">로그아웃</a>
             </div>

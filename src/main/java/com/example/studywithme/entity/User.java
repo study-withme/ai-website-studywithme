@@ -34,9 +34,17 @@ public class User {
     @Column(name = "email_verified")
     private Boolean emailVerified = false;
 
+    @Column(name = "role", nullable = false)
+    private Integer role = 0; // 0: 일반유저, 1: 어드민
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
+    // 관리자 여부 확인 헬퍼 메서드
+    public boolean isAdmin() {
+        return role != null && role == 1;
+    }
 }

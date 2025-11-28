@@ -16,6 +16,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final ContentFilterService contentFilterService;
 
     // 게시글 작성
     @Transactional
@@ -32,7 +33,17 @@ public class PostService {
         post.setViewCount(0);
         post.setLikeCount(0);
 
-        return postRepository.save(post);
+        Post savedPost = postRepository.save(post);
+        
+        // AI 필터링 체크 (저장 후 검사하여 blocked_posts 테이블에 기록)
+        ContentFilterService.FilterResult filterResult = contentFilterService.filterContent(title, content, savedPost.getId(), userId);
+        if (filterResult.isBlocked()) {
+            // 차단된 경우 게시글 삭제
+            postRepository.delete(savedPost);
+            throw new RuntimeException("게시글이 차단되었습니다: " + filterResult.getBlockReason());
+        }
+
+        return savedPost;
     }
 
     // 게시글 수정
@@ -44,6 +55,12 @@ public class PostService {
         // 작성자 확인
         if (!post.getUser().getId().equals(userId)) {
             throw new RuntimeException("게시글을 수정할 권한이 없습니다.");
+        }
+
+        // AI 필터링 체크
+        ContentFilterService.FilterResult filterResult = contentFilterService.filterContent(title, content, postId, userId);
+        if (filterResult.isBlocked()) {
+            throw new RuntimeException("게시글이 차단되었습니다: " + filterResult.getBlockReason());
         }
 
         post.setTitle(title);

@@ -37,6 +37,7 @@ public class UserService {
         user.setBirthDate(birthDate);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRole(0); // 기본값: 일반유저
 
         User saved = userRepository.save(user);
 

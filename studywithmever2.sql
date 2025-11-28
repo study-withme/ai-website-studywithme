@@ -8,13 +8,13 @@
 -- PHP 버전: 8.0.28
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
+-- START TRANSACTION; -- 주석 처리: 각 테이블을 독립적으로 생성
 SET time_zone = "+00:00";
 
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+-- Character set 설정 (필요시 주석 해제)
+-- /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+-- /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+-- /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
 --
@@ -1121,8 +1121,160 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-COMMIT;
+-- --------------------------------------------------------
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+--
+-- 기존 테이블 업데이트 (ALTER TABLE) - 관리자 기능 추가
+-- 기존 데이터베이스에 적용하려면 아래 쿼리를 실행하세요.
+-- 이미 컬럼이 존재하면 에러가 발생하므로, 먼저 확인 후 실행하세요.
+--
+
+-- 방법 1: 직접 실행 (role 컬럼이 없는 경우)
+-- ALTER TABLE `users` ADD COLUMN `role` int(11) DEFAULT 0 COMMENT '0: 일반유저, 1: 어드민' AFTER `email_verified`;
+
+-- 방법 2: 안전한 방법 (컬럼 존재 여부 확인 후 추가)
+-- 아래 주석을 해제하고 실행하세요
+/*
+SET @exist = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+              WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'users' 
+              AND COLUMN_NAME = 'role');
+              
+SET @sqlstmt = IF(@exist = 0, 
+                  'ALTER TABLE users ADD COLUMN role int(11) DEFAULT 0 COMMENT ''0: 일반유저, 1: 어드민'' AFTER email_verified',
+                  'SELECT ''Column role already exists'' AS message');
+                  
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+*/
+
+-- 방법 3: 가장 간단한 방법 (MariaDB 10.5.2 이상)
+-- ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `role` int(11) DEFAULT 0 COMMENT '0: 일반유저, 1: 어드민' AFTER `email_verified`;
+
+-- --------------------------------------------------------
+
+--
+-- 테이블 구조 `blocked_posts` - AI에 의해 차단된 게시글
+--
+
+CREATE TABLE IF NOT EXISTS `blocked_posts` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `post_id` bigint(20) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `title` varchar(200) NOT NULL,
+  `content` text NOT NULL,
+  `block_reason` varchar(255) DEFAULT NULL COMMENT '차단 사유 (욕설, 스팸, 광고 등)',
+  `block_type` enum('PROFANITY','SPAM','AD','PATTERN','KEYWORD','AI_DETECTED') DEFAULT 'AI_DETECTED',
+  `detected_keywords` text DEFAULT NULL COMMENT '감지된 키워드 목록 (JSON)',
+  `ai_confidence` float DEFAULT NULL COMMENT 'AI 신뢰도 (0.0 ~ 1.0)',
+  `blocked_by` int(11) DEFAULT NULL COMMENT '차단한 관리자 ID (NULL이면 AI 자동)',
+  `is_reviewed` tinyint(1) DEFAULT 0 COMMENT '관리자 검토 여부',
+  `reviewed_by` int(11) DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `status` enum('BLOCKED','RESTORED','PENDING') DEFAULT 'BLOCKED',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_blocked_post` (`post_id`),
+  KEY `idx_blocked_user` (`user_id`),
+  KEY `idx_blocked_type` (`block_type`),
+  KEY `idx_blocked_status` (`status`),
+  CONSTRAINT `blocked_posts_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `blocked_posts_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `blocked_posts_ibfk_3` FOREIGN KEY (`blocked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `blocked_posts_ibfk_4` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 테이블 구조 `filter_words` - 욕설 필터 단어 목록
+--
+
+CREATE TABLE IF NOT EXISTS `filter_words` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `word` varchar(100) NOT NULL COMMENT '필터링할 단어',
+  `word_type` enum('PROFANITY','SPAM','AD','CUSTOM') DEFAULT 'CUSTOM',
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_by` int(11) DEFAULT NULL COMMENT '등록한 관리자 ID',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_word` (`word`),
+  KEY `idx_word_type` (`word_type`),
+  KEY `idx_word_active` (`is_active`),
+  CONSTRAINT `filter_words_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 테이블 구조 `filter_patterns` - 차단 패턴 (글 형식)
+--
+
+CREATE TABLE IF NOT EXISTS `filter_patterns` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `pattern_name` varchar(100) NOT NULL COMMENT '패턴 이름',
+  `pattern_regex` text NOT NULL COMMENT '정규식 패턴',
+  `pattern_type` enum('TITLE','CONTENT','BOTH') DEFAULT 'BOTH',
+  `description` text DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `block_count` int(11) DEFAULT 0 COMMENT '이 패턴으로 차단된 횟수',
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_pattern_active` (`is_active`),
+  KEY `idx_pattern_type` (`pattern_type`),
+  CONSTRAINT `filter_patterns_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 테이블 구조 `filter_keywords` - 차단 키워드 (관리자가 추가)
+--
+
+CREATE TABLE IF NOT EXISTS `filter_keywords` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `keyword` varchar(100) NOT NULL,
+  `keyword_type` enum('EXACT','PARTIAL','REGEX') DEFAULT 'PARTIAL',
+  `description` text DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `block_count` int(11) DEFAULT 0,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_keyword` (`keyword`),
+  KEY `idx_keyword_active` (`is_active`),
+  KEY `idx_keyword_type` (`keyword_type`),
+  CONSTRAINT `filter_keywords_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 테이블 구조 `ai_learning_data` - AI 학습 데이터 (차단 빈도가 높은 패턴)
+--
+
+CREATE TABLE IF NOT EXISTS `ai_learning_data` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `content_type` enum('POST','COMMENT') DEFAULT 'POST',
+  `content_sample` text NOT NULL COMMENT '차단된 내용 샘플',
+  `block_reason` varchar(255) DEFAULT NULL,
+  `detected_pattern` text DEFAULT NULL COMMENT '감지된 패턴',
+  `frequency` int(11) DEFAULT 1 COMMENT '유사 패턴 발생 빈도',
+  `last_detected_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_learning_type` (`content_type`),
+  KEY `idx_learning_frequency` (`frequency`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- COMMIT; -- 주석 처리: 트랜잭션을 사용하지 않으므로 불필요
+
+-- Character set 복원 (필요시 주석 해제)
+-- /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+-- /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+-- /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

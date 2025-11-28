@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>차단된 게시글 | 관리자 패널</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .blocked-post-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .blocked-post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+        .blocked-post-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .blocked-post-meta {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .blocked-post-content {
+            font-size: 13px;
+            color: #4b5563;
+            margin-top: 8px;
+            max-height: 100px;
+            overflow: hidden;
+        }
+        .blocked-post-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-blocked {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .badge-restored {
+            background: #d1fae5;
+            color: #065f46;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+            <a href="/admin">관리자 패널</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="toolbar-top">
+        <h1>차단된 게시글 목록</h1>
+        <p>AI에 의해 차단된 게시글을 확인하고 복구할 수 있습니다.</p>
+    </div>
+
+    <div class="filter-row" style="margin-top: 16px;">
+        <select id="statusFilter" onchange="filterByStatus()">
+            <option value="">전체 상태</option>
+            <option value="BLOCKED" th:selected="${status == 'BLOCKED'}">차단됨</option>
+            <option value="RESTORED" th:selected="${status == 'RESTORED'}">복구됨</option>
+            <option value="PENDING" th:selected="${status == 'PENDING'}">대기중</option>
+        </select>
+        <a href="/admin" class="btn btn-outline">← 관리자 패널</a>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <div th:each="blockedPost : ${blockedPosts.content}" class="blocked-post-item">
+            <div class="blocked-post-header">
+                <div>
+                    <h3 class="blocked-post-title" th:text="${blockedPost.title}">게시글 제목</h3>
+                    <div class="blocked-post-meta">
+                        <span th:text="${blockedPost.blockType}">차단 유형</span> · 
+                        <span th:text="${blockedPost.blockReason}">차단 사유</span> · 
+                        <span th:text="${#temporals.format(blockedPost.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                    </div>
+                </div>
+                <span class="badge" 
+                      th:classappend="${blockedPost.status == 'BLOCKED'} ? 'badge-blocked' : 'badge-restored'"
+                      th:text="${blockedPost.status}">상태</span>
+            </div>
+            <div class="blocked-post-content" th:text="${blockedPost.content}">게시글 내용...</div>
+            <div class="blocked-post-actions" th:if="${blockedPost.status == 'BLOCKED'}">
+                <button class="btn btn-primary" th:onclick="'restorePost(' + ${blockedPost.id} + ')'">복구</button>
+            </div>
+        </div>
+        
+        <div th:if="${blockedPosts.totalElements == 0}" style="text-align: center; padding: 40px; color: #9ca3af;">
+            <p>차단된 게시글이 없습니다.</p>
+        </div>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination">
+        <button class="page-btn" th:if="${currentPage > 0}" 
+                th:onclick="'location.href=\'/admin/blocked-posts?page=' + (${currentPage} - 1) + '&status=' + (${status} ?: '') + '\''">이전</button>
+        <span th:text="${currentPage + 1} + ' / ' + ${totalPages}">1 / 1</span>
+        <button class="page-btn" th:if="${currentPage < totalPages - 1}" 
+                th:onclick="'location.href=\'/admin/blocked-posts?page=' + (${currentPage} + 1) + '&status=' + (${status} ?: '') + '\''">다음</button>
+    </div>
+</main>
+
+<script>
+function filterByStatus() {
+    const status = document.getElementById('statusFilter').value;
+    location.href = '/admin/blocked-posts?status=' + status;
+}
+
+function restorePost(id) {
+    if (!confirm('이 게시글을 복구하시겠습니까?')) return;
+    
+    fetch('/admin/blocked-posts/' + id + '/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+</script>
+</body>
+</html>
+

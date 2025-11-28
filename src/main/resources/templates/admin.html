@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>관리자 패널 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .admin-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 18px;
+        }
+        .stat-card h3 {
+            margin: 0 0 8px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .admin-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .admin-menu-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .admin-menu-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .admin-menu-item h3 {
+            margin: 0 0 4px;
+            font-size: 16px;
+        }
+        .admin-menu-item p {
+            margin: 0;
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/bookmarks" class="btn btn-outline">북마크</a>
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/posts/write" class="btn btn-primary">글쓰기</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+            <button id="darkModeBtn" class="btn btn-outline">🌙 다크모드</button>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="toolbar-top">
+        <h1>관리자 패널</h1>
+        <p>AI 필터링 및 콘텐츠 관리</p>
+    </div>
+
+    <!-- 통계 카드 -->
+    <div class="admin-dashboard">
+        <div class="stat-card">
+            <h3>차단된 게시글</h3>
+            <div class="stat-value" th:text="${stats.totalBlockedPosts}">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>필터 단어</h3>
+            <div class="stat-value" th:text="${stats.totalFilterWords}">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>차단 키워드</h3>
+            <div class="stat-value" th:text="${stats.totalFilterKeywords}">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>차단 패턴</h3>
+            <div class="stat-value" th:text="${stats.totalFilterPatterns}">0</div>
+        </div>
+    </div>
+
+    <!-- 관리 메뉴 -->
+    <div class="admin-menu">
+        <div class="admin-menu-item" onclick="location.href='/admin/blocked-posts'">
+            <h3>🚫 차단된 게시글</h3>
+            <p>AI에 의해 차단된 게시글 목록 확인 및 복구</p>
+        </div>
+        <div class="admin-menu-item" onclick="location.href='/admin/filter-words'">
+            <h3>🔤 욕설 필터</h3>
+            <p>욕설 필터 단어 추가 및 관리</p>
+        </div>
+        <div class="admin-menu-item" onclick="location.href='/admin/filter-keywords'">
+            <h3>🔑 키워드 관리</h3>
+            <p>차단 키워드 추가 및 관리</p>
+        </div>
+        <div class="admin-menu-item" onclick="location.href='/admin/filter-patterns'">
+            <h3>📝 글 형식 패턴</h3>
+            <p>차단 패턴(정규식) 추가 및 관리</p>
+        </div>
+        <div class="admin-menu-item" onclick="location.href='/admin/ai-learning'">
+            <h3>🤖 AI 학습 데이터</h3>
+            <p>차단 빈도가 높은 패턴 확인</p>
+        </div>
+    </div>
+</main>
+
+<script src="/js/script.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>욕설 필터 관리 | 관리자 패널</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .filter-form {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .filter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-item {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .filter-item-info {
+            flex: 1;
+        }
+        .filter-item-word {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .filter-item-type {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+            <a href="/admin">관리자 패널</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="toolbar-top">
+        <h1>욕설 필터 단어 관리</h1>
+        <p>욕설 필터링에 사용할 단어를 추가하거나 삭제할 수 있습니다.</p>
+    </div>
+
+    <div class="filter-form">
+        <h3 style="margin: 0 0 12px; font-size: 16px;">새 필터 단어 추가</h3>
+        <form id="addForm" style="display: flex; gap: 8px;">
+            <input type="text" id="wordInput" placeholder="필터링할 단어 입력" 
+                   style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);" />
+            <select id="wordTypeSelect" style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);">
+                <option value="CUSTOM">사용자 정의</option>
+                <option value="PROFANITY">욕설</option>
+                <option value="SPAM">스팸</option>
+                <option value="AD">광고</option>
+            </select>
+            <button type="submit" class="btn btn-primary">추가</button>
+        </form>
+    </div>
+
+    <div class="filter-list">
+        <div th:each="filterWord : ${filterWords}" class="filter-item">
+            <div class="filter-item-info">
+                <div class="filter-item-word" th:text="${filterWord.word}">단어</div>
+                <div class="filter-item-type" th:text="${filterWord.wordType}">타입</div>
+            </div>
+            <button class="btn btn-outline sm" th:onclick="'deleteWord(' + ${filterWord.id} + ')'">삭제</button>
+        </div>
+        
+        <div th:if="${filterWords.isEmpty()}" style="text-align: center; padding: 40px; color: #9ca3af;">
+            <p>등록된 필터 단어가 없습니다.</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="/admin" class="btn btn-outline">← 관리자 패널</a>
+    </div>
+</main>
+
+<script>
+document.getElementById('addForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const word = document.getElementById('wordInput').value.trim();
+    const wordType = document.getElementById('wordTypeSelect').value;
+    
+    if (!word) {
+        alert('단어를 입력해주세요.');
+        return;
+    }
+    
+    fetch('/admin/filter-words', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'word=' + encodeURIComponent(word) + '&wordType=' + encodeURIComponent(wordType)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+});
+
+function deleteWord(id) {
+    if (!confirm('이 필터 단어를 삭제하시겠습니까?')) return;
+    
+    fetch('/admin/filter-words/' + id + '/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+</script>
+</body>
+</html>
+

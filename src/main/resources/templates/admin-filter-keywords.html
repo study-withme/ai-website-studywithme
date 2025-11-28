@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>키워드 관리 | 관리자 패널</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .filter-form {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .filter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-item {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .filter-item-info {
+            flex: 1;
+        }
+        .filter-item-keyword {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .filter-item-meta {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+            <a href="/admin">관리자 패널</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="toolbar-top">
+        <h1>차단 키워드 관리</h1>
+        <p>차단할 키워드를 추가하거나 삭제할 수 있습니다.</p>
+    </div>
+
+    <div class="filter-form">
+        <h3 style="margin: 0 0 12px; font-size: 16px;">새 키워드 추가</h3>
+        <form id="addForm" style="display: flex; flex-direction: column; gap: 8px;">
+            <input type="text" id="keywordInput" placeholder="차단할 키워드 입력" 
+                   style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);" />
+            <div style="display: flex; gap: 8px;">
+                <select id="keywordTypeSelect" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);">
+                    <option value="PARTIAL">부분 일치</option>
+                    <option value="EXACT">정확히 일치</option>
+                    <option value="REGEX">정규식</option>
+                </select>
+                <button type="submit" class="btn btn-primary">추가</button>
+            </div>
+            <input type="text" id="descriptionInput" placeholder="설명 (선택사항)" 
+                   style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);" />
+        </form>
+    </div>
+
+    <div class="filter-list">
+        <div th:each="filterKeyword : ${filterKeywords}" class="filter-item">
+            <div class="filter-item-info">
+                <div class="filter-item-keyword" th:text="${filterKeyword.keyword}">키워드</div>
+                <div class="filter-item-meta">
+                    <span th:text="${filterKeyword.keywordType}">타입</span> · 
+                    차단 횟수: <span th:text="${filterKeyword.blockCount}">0</span>
+                    <span th:if="${filterKeyword.description != null}" th:text="' · ' + ${filterKeyword.description}"></span>
+                </div>
+            </div>
+            <button class="btn btn-outline sm" th:onclick="'deleteKeyword(' + ${filterKeyword.id} + ')'">삭제</button>
+        </div>
+        
+        <div th:if="${filterKeywords.isEmpty()}" style="text-align: center; padding: 40px; color: #9ca3af;">
+            <p>등록된 키워드가 없습니다.</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="/admin" class="btn btn-outline">← 관리자 패널</a>
+    </div>
+</main>
+
+<script>
+document.getElementById('addForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const keyword = document.getElementById('keywordInput').value.trim();
+    const keywordType = document.getElementById('keywordTypeSelect').value;
+    const description = document.getElementById('descriptionInput').value.trim();
+    
+    if (!keyword) {
+        alert('키워드를 입력해주세요.');
+        return;
+    }
+    
+    fetch('/admin/filter-keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'keyword=' + encodeURIComponent(keyword) + 
+              '&keywordType=' + encodeURIComponent(keywordType) + 
+              '&description=' + encodeURIComponent(description)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+});
+
+function deleteKeyword(id) {
+    if (!confirm('이 키워드를 삭제하시겠습니까?')) return;
+    
+    fetch('/admin/filter-keywords/' + id + '/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+</script>
+</body>
+</html>
+
