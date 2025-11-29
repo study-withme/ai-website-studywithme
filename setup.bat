@@ -1,4 +1,6 @@
 @echo off
+chcp 65001 >nul
+setlocal enabledelayedexpansion
 REM Study With Me 프로젝트 자동 설정 스크립트 (Windows)
 
 echo ==========================================
@@ -16,8 +18,8 @@ if not exist "src\main\resources\application.properties" (
     if "!db_password!"=="" set db_password=studypass
     
     REM PowerShell을 사용하여 파일 내용 변경
-    powershell -Command "(Get-Content 'src\main\resources\application.properties') -replace 'your_password_here', '!db_password!' | Set-Content 'src\main\resources\application.properties'"
-    powershell -Command "(Get-Content 'src\main\resources\application.properties') -replace '\$\{DB_PASSWORD:your_password_here\}', '!db_password!' | Set-Content 'src\main\resources\application.properties'"
+    powershell -Command "(Get-Content 'src\main\resources\application.properties' -Encoding UTF8) -replace 'your_password_here', '!db_password!' | Set-Content 'src\main\resources\application.properties' -Encoding UTF8"
+    powershell -Command "(Get-Content 'src\main\resources\application.properties' -Encoding UTF8) -replace '\$\{DB_PASSWORD:your_password_here\}', '!db_password!' | Set-Content 'src\main\resources\application.properties' -Encoding UTF8"
     echo ✅ application.properties 파일이 생성되고 비밀번호가 설정되었습니다.
 ) else (
     echo ✅ application.properties 파일이 이미 존재합니다.
