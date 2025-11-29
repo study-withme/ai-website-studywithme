@@ -5,6 +5,7 @@ import com.example.studywithme.entity.PostApplication;
 import com.example.studywithme.entity.StudyGroup;
 import com.example.studywithme.entity.StudyGroupMember;
 import com.example.studywithme.entity.User;
+import com.example.studywithme.repository.UserRepository;
 import com.example.studywithme.service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class MainController {
     private final UserActivityService userActivityService;
     private final UserRecommendationService userRecommendationService;
     private final com.example.studywithme.repository.UserProfileRepository userProfileRepository;
+    private final com.example.studywithme.repository.UserRepository userRepository;
     private final com.example.studywithme.service.AITagService aiTagService;
     private final com.example.studywithme.service.AISummaryService aiSummaryService;
     private final com.example.studywithme.service.StudyGroupService studyGroupService;
@@ -218,9 +220,19 @@ public class MainController {
     public String mypage(HttpSession session, Model model,
                          @RequestParam(defaultValue = "0") int page,
                          @RequestParam(defaultValue = "10") int size) {
-        User loginUser = (User) session.getAttribute("loginUser");
-        if (loginUser == null) {
+        User sessionUser = (User) session.getAttribute("loginUser");
+        if (sessionUser == null) {
             return "redirect:/auth?error=login_required";
+        }
+
+        // 세션의 사용자 ID로 DB에서 최신 사용자 정보를 다시 조회 (보안 강화)
+        User loginUser = userRepository.findById(sessionUser.getId())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 세션의 사용자 정보와 DB의 사용자 정보가 일치하는지 확인
+        if (!loginUser.getId().equals(sessionUser.getId())) {
+            session.invalidate();
+            return "redirect:/auth?error=session_invalid";
         }
 
         Pageable pageable = PageRequest.of(page, size);
@@ -231,6 +243,12 @@ public class MainController {
         // 프로필
         com.example.studywithme.entity.UserProfile profile =
                 userProfileRepository.findByUser_Id(loginUser.getId()).orElse(null);
+
+        // 프로필이 존재하는 경우, 프로필의 사용자 ID가 현재 로그인 사용자와 일치하는지 확인
+        if (profile != null && !profile.getUser().getId().equals(loginUser.getId())) {
+            // 프로필의 사용자 ID가 일치하지 않으면 null로 설정
+            profile = null;
+        }
 
         model.addAttribute("loginUser", loginUser);
         model.addAttribute("posts", myPosts);
