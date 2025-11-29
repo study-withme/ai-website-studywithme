@@ -1,0 +1,32 @@
+spring.application.name=studywithme
+
+# 데이터베이스 설정 (환경 변수 사용 권장)
+spring.datasource.url=jdbc:mysql://localhost:3306/studywithmever2?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+spring.datasource.username=${DB_USERNAME:root}
+spring.datasource.password=${DB_PASSWORD:your_password_here}
+
+# JPA 설정
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Thymeleaf 설정
+spring.thymeleaf.cache=false
+server.port=8080
+
+# Python 추천 시스템 설정
+python.script.path=python/ai_recommendation.py
+python.executable=python3
+db.host=${DB_HOST:localhost}
+db.port=${DB_PORT:3306}
+db.user=${DB_USER:root}
+db.password=${DB_PASSWORD:your_password_here}
+db.name=${DB_NAME:studywithmever2}
+
+# Python AI 태그/요약 시스템 설정
+python.script.tag.path=python/ai_tag_recommendation.py
+python.script.summary.path=python/ai_summary.py
+
+# Google Gemini API 설정 (환경 변수 사용 권장)
+gemini.api.key=${GEMINI_API_KEY:your_gemini_api_key_here}
+gemini.api.url=https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent
