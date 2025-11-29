@@ -213,6 +213,7 @@ CREATE TABLE `users` (
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `email_verified` tinyint(1) DEFAULT 0,
+  `role` int(11) DEFAULT 0 COMMENT '0: 일반유저, 1: 어드민',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -1319,6 +1320,27 @@ CREATE TABLE IF NOT EXISTS `blocked_comments` (
   CONSTRAINT `blocked_comments_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `blocked_comments_ibfk_4` FOREIGN KEY (`blocked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `blocked_comments_ibfk_5` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 테이블 구조 `chat_messages` - 챗봇 메시지
+--
+
+CREATE TABLE IF NOT EXISTS `chat_messages` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `message` text NOT NULL,
+  `response` text NOT NULL,
+  `role` enum('USER','ASSISTANT') NOT NULL,
+  `action_type` varchar(50) DEFAULT NULL,
+  `action_data` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_user_created` (`user_id`, `created_at`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `fk_chat_messages_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- COMMIT; -- 주석 처리: 트랜잭션을 사용하지 않으므로 불필요
