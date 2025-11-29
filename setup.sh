@@ -7,9 +7,17 @@ echo "Study With Me 프로젝트 설정 시작"
 echo "=========================================="
 
 # 1. application.properties 확인 및 생성
-if [ ! -f "src/main/resources/application.properties" ]; then
+PROPERTIES_FILE="src/main/resources/application.properties"
+PROPERTIES_EXAMPLE="src/main/resources/application.properties.example"
+
+if [ ! -f "$PROPERTIES_FILE" ]; then
     echo "📝 application.properties 파일 생성 중..."
-    cp src/main/resources/application.properties.example src/main/resources/application.properties
+    if [ ! -f "$PROPERTIES_EXAMPLE" ]; then
+        echo "❌ 오류: $PROPERTIES_EXAMPLE 파일을 찾을 수 없습니다."
+        echo "   현재 디렉토리: $(pwd)"
+        exit 1
+    fi
+    cp "$PROPERTIES_EXAMPLE" "$PROPERTIES_FILE"
     
     echo ""
     echo "🔑 데이터베이스 비밀번호 설정"
@@ -20,16 +28,18 @@ if [ ! -f "src/main/resources/application.properties" ]; then
     # macOS와 Linux에서 sed 명령어가 다를 수 있음
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        sed -i '' "s/your_password_here/$db_password/g" src/main/resources/application.properties
-        sed -i '' "s/\${DB_PASSWORD:your_password_here}/$db_password/g" src/main/resources/application.properties
+        sed -i '' "s/your_password_here/$db_password/g" "$PROPERTIES_FILE"
+        sed -i '' "s/\${DB_PASSWORD:your_password_here}/$db_password/g" "$PROPERTIES_FILE"
     else
         # Linux
-        sed -i "s/your_password_here/$db_password/g" src/main/resources/application.properties
-        sed -i "s/\${DB_PASSWORD:your_password_here}/$db_password/g" src/main/resources/application.properties
+        sed -i "s/your_password_here/$db_password/g" "$PROPERTIES_FILE"
+        sed -i "s/\${DB_PASSWORD:your_password_here}/$db_password/g" "$PROPERTIES_FILE"
     fi
     echo "✅ application.properties 파일이 생성되고 비밀번호가 설정되었습니다."
+    echo "   파일 위치: $(pwd)/$PROPERTIES_FILE"
 else
     echo "✅ application.properties 파일이 이미 존재합니다."
+    echo "   파일 위치: $(pwd)/$PROPERTIES_FILE"
 fi
 
 # 2. Python 확인

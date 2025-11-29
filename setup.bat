@@ -8,9 +8,17 @@ echo Study With Me 프로젝트 설정 시작
 echo ==========================================
 
 REM 1. application.properties 확인 및 생성
-if not exist "src\main\resources\application.properties" (
+set PROPERTIES_FILE=src\main\resources\application.properties
+set PROPERTIES_EXAMPLE=src\main\resources\application.properties.example
+
+if not exist "%PROPERTIES_FILE%" (
     echo 📝 application.properties 파일 생성 중...
-    copy "src\main\resources\application.properties.example" "src\main\resources\application.properties"
+    if not exist "%PROPERTIES_EXAMPLE%" (
+        echo ❌ 오류: %PROPERTIES_EXAMPLE% 파일을 찾을 수 없습니다.
+        echo    현재 디렉토리: %CD%
+        exit /b 1
+    )
+    copy "%PROPERTIES_EXAMPLE%" "%PROPERTIES_FILE%"
     echo.
     echo 🔑 데이터베이스 비밀번호 설정
     echo    Docker Compose를 사용하시면 'studypass'를 사용하세요.
@@ -18,11 +26,13 @@ if not exist "src\main\resources\application.properties" (
     if "!db_password!"=="" set db_password=studypass
     
     REM PowerShell을 사용하여 파일 내용 변경
-    powershell -Command "(Get-Content 'src\main\resources\application.properties' -Encoding UTF8) -replace 'your_password_here', '!db_password!' | Set-Content 'src\main\resources\application.properties' -Encoding UTF8"
-    powershell -Command "(Get-Content 'src\main\resources\application.properties' -Encoding UTF8) -replace '\$\{DB_PASSWORD:your_password_here\}', '!db_password!' | Set-Content 'src\main\resources\application.properties' -Encoding UTF8"
+    powershell -Command "(Get-Content '%PROPERTIES_FILE%' -Encoding UTF8) -replace 'your_password_here', '!db_password!' | Set-Content '%PROPERTIES_FILE%' -Encoding UTF8"
+    powershell -Command "(Get-Content '%PROPERTIES_FILE%' -Encoding UTF8) -replace '\$\{DB_PASSWORD:your_password_here\}', '!db_password!' | Set-Content '%PROPERTIES_FILE%' -Encoding UTF8"
     echo ✅ application.properties 파일이 생성되고 비밀번호가 설정되었습니다.
+    echo    파일 위치: %CD%\%PROPERTIES_FILE%
 ) else (
     echo ✅ application.properties 파일이 이미 존재합니다.
+    echo    파일 위치: %CD%\%PROPERTIES_FILE%
 )
 
 REM 2. Python 확인
