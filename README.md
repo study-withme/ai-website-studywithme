@@ -1,91 +1,203 @@
-# 📚 Capstone Design: AI 기반 맞춤형 스터디/모임 플랫폼
+# 📚 Study With Me - AI 기반 맞춤형 스터디/모임 플랫폼
 
-**“Study With Me”**는 AI가 사용자의 활동 로그를 분석하여
-1. **악성 게시글 및 댓글을 자동 감지하여 차단**하고,
-2. **본인에게 가장 필요한 공부와 모임을 우선적으로 추천**해주는 온라인 커뮤니티 플랫폼입니다.
+<div align="center">
 
----
+**"Study With Me"**는 AI가 사용자의 활동 로그를 분석하여  
+악성 게시글을 자동 차단하고, 개인화된 스터디/모임을 추천해주는 스마트 커뮤니티 플랫폼입니다.
 
-## 🏫 프로젝트/시스템 개요 및 주요 기능
-- **목적**: 온라인/비대면 환경에서 스터디・모임 중개 서비스를 넘어서, 실제 이용자에게 의미 있는 추천과 악성 정보로부터 보호 기능을 동시에 제공
-- **핵심 기능**:
-  - **AI 기반 위험 게시글/댓글 실시간 감지 및 차단**
-    - 사용자 입력 데이터(게시글, 댓글 등)를 자연어 처리 모델과 룰 기반 필터로 1차 분석
-    - 욕설/악성/유해 판단시 자동 차단(관리자/알림 연동)
-  - **활동 로그 기반 ‘맞춤형’ 추천**
-    - 각 사용자 활동(검색, 조회, 참여, 신청 등) 로그를 분석하여, 관심사・성향에 맞는 스터디/모임/게시글만 우선 노출
-    - 추천 알고리즘: 최근 활동 빈도, 콘텐츠 관련성, 그룹성향 분석 등 복합 적용
+[![Java](https://img.shields.io/badge/Java-21-orange?logo=java)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen?logo=spring)](https://spring.io/projects/spring-boot)
+[![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql)](https://www.mysql.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://www.docker.com/)
+
+</div>
 
 ---
 
-## ⚙️ 개발 환경
-- **백엔드 프레임워크**: Spring Boot 3.x, Java 21
-- **프론트/템플릿**: Thymeleaf, HTML5, CSS, JavaScript
-- **DB**: MySQL/MariaDB, Docker 기반 자동 환경 구축
-- **빌드/배포**: Gradle Wrapper, Docker Compose, GitHub 연동
+## 🎯 프로젝트 개요
 
-##  사용 기술/주요 로직
-- **AI/자연어 처리**: 욕설・도배・악성 구문 감지(자체 룰+한국어 욕설 사전), 향후 ML모델 연동 구조까지 설계
-- **Spring Security**: 인증/인가(비밀번호는 BCrypt로 암호화), 역할기반 접근제어
-- **(활동 및 로그 추적)**: 사용자별 조회/참여 기록을 엔티티 및 서비스 레이어에서 별도로 관리, 추천 알고리즘의 우선 필터로 활용
-- **JPA + Repository 패턴**: 데이터 접근/저장/통계(최신 활동, 개인별 관심사 등) 효율적 처리
-- **RESTful 설계/컨트롤러 분리**: API, Web 구분
+**Study With Me**는 단순한 스터디 모임 중개 서비스를 넘어서, AI 기반의 지능형 추천 시스템과 콘텐츠 필터링을 제공하는 차세대 학습 커뮤니티 플랫폼입니다.
 
-##  기술/기법 선택 이유 및 차별점
-- **직접 구축한 한국어 악성 탐지 룰/딥러닝 연동 구조**: 오픈소스/외부 API에 의존하지 않고 자체 악성 정보/욕설 탐지 로직을 우선 적용, 추후 ML API로 확장 가능성 확보
-- **강력한 개인정보 보호/보안**: 비밀번호 직접 저장하지 않고 BCrypt 해시만 저장, 민감 정보는 DB/환경변수 분리 관리
-- **가장 필요한 정보(공부/모임/게시글)만 추천**: 단순 최신순, 인기순이 아니라 사용자 로그 기반 진짜 필요한 정보 위주 노출(탈락 점수, 분류별 스코어링)
-- **확장성 및 유지보수성**: 엔티티/서비스/리포지토리/컨트롤러 완전 계층 분리, 추후 추천 모델 교체/추가 가능 아키텍처
+### 핵심 가치
+- 🤖 **AI 기반 개인화 추천**: 사용자 활동 로그 분석을 통한 맞춤형 콘텐츠 추천
+- 🛡️ **지능형 콘텐츠 필터링**: 악성 게시글 및 댓글 자동 감지 및 차단
+- 📊 **활동 기반 분석**: 사용자 행동 패턴 분석을 통한 선호도 예측
+- 👥 **스터디 그룹 관리**: 효율적인 스터디 그룹 생성 및 관리 시스템
 
 ---
 
-아래는 실제 개발, 배포, 실행 관련 상세 안내입니다.
+## ✨ 주요 기능
 
-## Study With Me (Spring Boot 3 + MySQL)
+### 1. AI 기반 개인화 추천 시스템
+- **활동 로그 분석**: 사용자의 검색, 클릭, 좋아요, 북마크 등 모든 활동을 추적
+- **맞춤형 게시글 추천**: 콘텐츠 기반 필터링 + 협업 필터링 하이브리드 방식
+- **스터디 그룹 추천**: 관심사 및 학습 목표 기반 스터디 그룹 매칭
+- **파트너 추천**: 게시글별 적합한 스터디 파트너 자동 추천
 
-**Study With Me**는 스터디/모임 추천 및 커뮤니티 기능을 제공하는 Spring Boot 기반 웹 프로젝트입니다.  
-이 문서는 깃허브에서 코드를 클론한 사용자가 **별도 수동 설정 최소화**로 바로 실행할 수 있도록 환경 세팅 방법과 DB 초기화 방법을 안내합니다.
+### 2. 지능형 콘텐츠 필터링
+- **실시간 악성 콘텐츠 감지**: 룰 기반 + 패턴 매칭을 통한 욕설/악성 구문 탐지
+- **자동 차단 및 관리자 알림**: 문제 있는 게시글/댓글 자동 차단 및 관리자 알림
+- **학습 데이터 기반 개선**: AI 학습 데이터 축적을 통한 필터링 정확도 향상
+
+### 3. 게시글 및 댓글 시스템
+- **게시글 CRUD**: 제목, 본문, 카테고리, 태그를 포함한 게시글 관리
+- **AI 자동 태그 분류**: 게시글 내용 분석을 통한 자동 태그 및 카테고리 분류
+- **AI 본문 요약**: 긴 게시글의 핵심 내용 자동 요약
+- **댓글 시스템**: 대댓글 지원, 좋아요 기능 포함
+
+### 4. 스터디 그룹 관리
+- **그룹 생성 및 관리**: 목표, 일정, 최대 인원 등 설정 가능
+- **멤버 관리**: 그룹장 권한 관리, 멤버 초대/수락 시스템
+- **게시글 연동**: 스터디 그룹에 대한 게시글 작성 및 지원 관리
+
+### 5. 사용자 활동 추적
+- **활동 로그 수집**: 모든 사용자 행동을 데이터베이스에 기록
+- **통계 및 분석**: 개인별 활동 통계 및 선호도 분석
+- **맞춤형 대시보드**: 마이페이지에서 개인 활동 요약 확인
+
+### 6. 관리자 기능
+- **차단된 콘텐츠 관리**: 악성 게시글/댓글 검토 및 처리
+- **필터 키워드 관리**: 필터링 키워드, 패턴, 단어 관리
+- **AI 학습 데이터 관리**: AI 학습에 사용된 데이터 확인 및 관리
 
 ---
 
-### 1. 필수 요구사항
+## 🛠 기술 스택
 
-- **Java 21** (Gradle가 toolchain으로 자동 설치 가능)
-- **Gradle**: 저장소에 포함된 `./gradlew`(Gradle Wrapper) 사용 권장
-- **Docker / Docker Compose** (MySQL 자동 설치 및 DB 스키마 자동 생성용)
+### 백엔드
+- **Java 21** (LTS)
+- **Spring Boot 3.3.4**
+  - Spring Web (RESTful API)
+  - Spring Data JPA (데이터베이스)
+  - Spring Security (인증/인가)
+  - Thymeleaf (템플릿 엔진)
+- **MySQL/MariaDB 8.0+**
+- **BCrypt** (비밀번호 암호화)
 
-> Docker를 사용하지 않고 직접 MySQL을 설치해서 써도 되지만,  
-> 이 README는 *Docker 기반 자동 초기화*를 기준으로 설명합니다.
+### AI 시스템 (Python)
+- **Python 3.x**
+- **MySQL Connector** (데이터베이스 연결)
+- **하이브리드 추천 알고리즘**
+  - 콘텐츠 기반 필터링
+  - 협업 필터링
+  - 시간 가중치 적용
+  - 인기도 기반 추천
+
+### 인프라 & 도구
+- **Docker & Docker Compose** (개발 환경 자동화)
+- **Gradle Wrapper** (빌드 자동화)
+- **GitHub** (버전 관리)
+
+### 프론트엔드
+- **HTML5 / CSS3 / JavaScript**
+- **Thymeleaf 템플릿**
+- **반응형 디자인**
 
 ---
 
-### 2. 프로젝트 클론
+## 📁 프로젝트 구조
 
-```bash
-git clone https://github.com/your-id/studywithmever2.git
-cd studywithmever2
+```
+studywithmever2/
+├── src/main/java/com/example/studywithme/
+│   ├── config/              # Spring 설정 (Security 등)
+│   ├── controller/          # MVC 컨트롤러
+│   │   ├── MainController.java
+│   │   ├── AdminController.java
+│   │   ├── CommentApiController.java
+│   │   └── NotificationApiController.java
+│   ├── entity/              # JPA 엔티티
+│   │   ├── User.java
+│   │   ├── Post.java
+│   │   ├── Comment.java
+│   │   ├── StudyGroup.java
+│   │   ├── UserActivity.java
+│   │   ├── BlockedPost.java
+│   │   ├── BlockedComment.java
+│   │   └── ...
+│   ├── repository/          # JPA Repository
+│   │   ├── UserRepository.java
+│   │   ├── PostRepository.java
+│   │   ├── StudyGroupRepository.java
+│   │   └── ...
+│   ├── service/             # 비즈니스 로직
+│   │   ├── UserService.java
+│   │   ├── PostService.java
+│   │   ├── CommentService.java
+│   │   ├── StudyGroupService.java
+│   │   ├── UserRecommendationService.java
+│   │   ├── PythonRecommendationService.java
+│   │   ├── AITagService.java
+│   │   ├── AISummaryService.java
+│   │   ├── ContentFilterService.java
+│   │   └── ...
+│   └── StudyWithMeApplication.java
+│
+├── src/main/resources/
+│   ├── application.properties   # Spring Boot 설정
+│   ├── static/                  # 정적 파일 (CSS, JS)
+│   └── templates/               # Thymeleaf 템플릿
+│
+├── python/                      # AI 추천 시스템 (Python)
+│   ├── ai_recommendation.py     # 사용자 맞춤형 게시글 추천
+│   ├── ai_tag_recommendation.py # 자동 태그 분류 (기본)
+│   ├── ai_tag_recommendation_deep.py  # 자동 태그 분류 (딥러닝)
+│   ├── ai_summary.py            # 게시글 본문 자동 요약
+│   ├── config.py                # 설정 파일
+│   ├── utils.py                 # 유틸리티 함수
+│   ├── logger.py                # 로깅 설정
+│   ├── requirements.txt         # Python 의존성
+│   └── README.md                # Python 시스템 문서
+│
+├── docker-compose.yml           # Docker Compose 설정
+├── studywithmever2.sql          # 데이터베이스 초기화 스크립트
+├── build.gradle                 # Gradle 빌드 설정
+└── README.md                    # 본 문서
 ```
 
 ---
 
-### 3. 데이터베이스 자동 생성 (Docker 사용)
+## 🚀 빠른 시작
 
-이 프로젝트 루트에는 `studywithmever2.sql` 이 포함되어 있습니다.  
-`docker-compose.yml` 에서는 이 파일을 MySQL 컨테이너 초기화 스크립트로 마운트하여,
+### 1. 필수 요구사항
 
-- DB 생성
-- 테이블/뷰 생성
-- 제약조건 및 인덱스 설정
+- **Java 21+** (Gradle이 자동 설치 가능)
+- **Docker & Docker Compose** (MySQL 자동 설치용)
+- **Python 3.x** (AI 시스템 실행용, 선택사항)
+- **Git**
 
-을 **컨테이너 최초 실행 시 자동으로** 수행합니다.
-
-#### 3-1. (선택) 환경 변수 파일 준비
-
-`.env` 파일을 루트에 두면 `docker-compose.yml` 과 Spring Boot 둘 다 공통으로 사용할 수 있습니다.
-
-예시:
+### 2. 프로젝트 클론
 
 ```bash
+git clone https://github.com/study-withme/ai-website-studywithme.git
+cd ai-website-studywithme
+```
+
+### 3. 데이터베이스 설정 (Docker)
+
+프로젝트 루트에서 MySQL 컨테이너를 시작합니다:
+
+```bash
+docker compose up -d db
+```
+
+이 명령은 다음을 자동으로 수행합니다:
+- MariaDB 10.4 컨테이너 생성
+- `studywithmever2.sql` 스크립트 자동 실행
+- 데이터베이스 및 테이블 생성
+
+데이터베이스 상태 확인:
+```bash
+docker logs -f studywithme-db
+```
+
+### 4. 환경 변수 설정 (선택)
+
+`.env` 파일을 프로젝트 루트에 생성하여 데이터베이스 연결 정보를 설정할 수 있습니다:
+
+```bash
+# .env 파일 예시
 MYSQL_ROOT_PASSWORD=rootpassword
 MYSQL_DATABASE=studywithmever2
 MYSQL_USER=study_user
@@ -95,126 +207,221 @@ MYSQL_PORT=3306
 SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/studywithmever2?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
 SPRING_DATASOURCE_USERNAME=study_user
 SPRING_DATASOURCE_PASSWORD=studypass
-
-SPRING_PROFILES_ACTIVE=local
 ```
 
-> 운영/개인 환경에서는 **절대 실제 비밀번호를 커밋하지 말고**,  
-> 각자 로컬에서만 `.env` 를 만들어 사용하세요.
+> ⚠️ **보안 주의**: 실제 비밀번호는 절대 GitHub에 커밋하지 마세요. `.env` 파일은 `.gitignore`에 포함되어 있습니다.
 
-#### 3-2. MySQL 컨테이너 기동
-
-프로젝트 루트에서 아래 명령을 실행합니다.
-
-```bash
-docker compose up -d db
-```
-
-- 이미지: `mariadb:10.4`
-- 포트: `MYSQL_PORT`(기본 3306) → 호스트로 노출
-- 첫 기동 시 `studywithmever2.sql` 이 자동 실행됩니다.
-
-DB 상태를 확인하고 싶다면:
-
-```bash
-docker logs -f studywithme-db      # 초기화 로그 확인
-docker exec -it studywithme-db bash
-mysql -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${MYSQL_DATABASE}"
-```
-
----
-
-### 4. Spring Boot 애플리케이션 설정
-
-`src/main/resources/application.properties` 는 **환경변수 기반 설정**을 사용하도록 되어 있습니다.
-
-- `SPRING_DATASOURCE_URL` (기본: `jdbc:mysql://localhost:3306/studywithmever2?...`)
-- `SPRING_DATASOURCE_USERNAME` (기본: `root`)
-- `SPRING_DATASOURCE_PASSWORD` (기본: `password`)
-
-환경변수를 지정하지 않으면 위 기본값으로 실행되므로,  
-실제 사용 시에는 쉘에서 직접 export 하거나 `.env` 를 사용하여 덮어쓰는 것을 권장합니다.
-
-#### 4-1. 쉘에서 직접 환경변수 설정 (예시)
+또는 쉘에서 직접 환경 변수를 설정할 수 있습니다:
 
 ```bash
 export SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/studywithmever2?serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
-export SPRING_DATASOURCE_USERNAME="study_user"
-export SPRING_DATASOURCE_PASSWORD="studypass"
-export SPRING_PROFILES_ACTIVE="local"
+export SPRING_DATASOURCE_USERNAME="root"
+export SPRING_DATASOURCE_PASSWORD="password"
 ```
 
----
+### 5. 애플리케이션 실행
 
-### 5. 애플리케이션 실행 방법
-
-루트 디렉토리에서 Gradle Wrapper로 실행합니다.
+Gradle Wrapper를 사용하여 애플리케이션을 실행합니다:
 
 ```bash
 ./gradlew bootRun
 ```
 
-정상 기동 후 브라우저에서 아래 주소로 접속합니다.
-
-- `http://localhost:8080/`
-
-기본적으로 다음과 같은 페이지 템플릿이 포함되어 있습니다.
-
-- `index.html` (메인)
-- `auth.html`, `register.html` (로그인/회원가입)
-- `ai.html`, `recommend.html` (AI/추천 관련 UI)
-- `post-*.html`, `mypage.html`, `bookmarks.html` 등
+애플리케이션이 시작되면 브라우저에서 접속하세요:
+- **메인 페이지**: http://localhost:8080/
+- **로그인/회원가입**: http://localhost:8080/auth
+- **관리자 페이지**: http://localhost:8080/admin (관리자 권한 필요)
 
 ---
 
-### 6. DB 스키마 커스터마이징
+## 🤖 Python AI 시스템
 
-- `studywithmever2.sql` 에 모든 테이블/뷰/제약조건이 정의되어 있습니다.
-- 새로운 컬럼/테이블을 추가하고 싶다면,
-  - 로컬 DB에서 직접 `ALTER TABLE` 등을 실행한 뒤
-  - 필요 시 수정된 덤프를 다시 떠서 `studywithmever2.sql` 를 교체하세요.
+이 프로젝트는 Spring Boot 백엔드와 별도로 Python 기반 AI 추천 시스템을 포함하고 있습니다.
 
-**주의:**  
-기존 컨테이너에 이미 데이터가 있는 상태에서 SQL을 바꾸더라도,  
-`/docker-entrypoint-initdb.d` 는 *최초 생성 시 한 번만 실행*되므로  
-스키마를 변경하려면 DB 볼륨을 삭제하고 다시 기동해야 합니다.
+### Python 시스템 구성
+
+1. **`ai_recommendation.py`**: 사용자 맞춤형 게시글 추천
+   - 활동 로그 분석
+   - 하이브리드 추천 알고리즘
+   - 개인화된 점수 계산
+
+2. **`ai_tag_recommendation.py`**: 게시글 자동 태그 분류
+   - 키워드 기반 태그 추출
+   - 카테고리 자동 분류
+
+3. **`ai_tag_recommendation_deep.py`**: 딥러닝 기반 태그 분류
+   - 고급 패턴 인식
+   - 더 정확한 태그 매칭
+
+4. **`ai_summary.py`**: 게시글 본문 자동 요약
+   - 핵심 내용 추출
+   - 간결한 요약 생성
+
+### Python 시스템 사용법
+
+자세한 내용은 [`python/README.md`](python/README.md)를 참고하세요.
+
+**기본 설치:**
+```bash
+cd python
+pip install -r requirements.txt
+```
+
+**추천 실행 예시:**
+```bash
+python ai_recommendation.py 1 10  # 사용자 ID 1에게 10개 게시글 추천
+```
+
+### Spring Boot와 Python 통합
+
+Spring Boot에서 Python 스크립트를 호출하려면 `PythonRecommendationService`를 사용하세요. 이 서비스는 프로세스 실행을 통해 Python 스크립트를 호출하고 결과를 JSON으로 파싱합니다.
+
+---
+
+## 📚 주요 API 엔드포인트
+
+### 게시글 API
+- `GET /posts` - 게시글 목록 조회
+- `GET /posts/{id}` - 게시글 상세 조회
+- `POST /posts` - 게시글 작성
+- `PUT /posts/{id}` - 게시글 수정
+- `DELETE /posts/{id}` - 게시글 삭제
+
+### 추천 API
+- `GET /api/recommendations/posts` - 맞춤형 게시글 추천
+- `GET /api/recommendations/study-groups` - 스터디 그룹 추천
+- `GET /api/recommendations/partners/{postId}` - 스터디 파트너 추천
+
+### 댓글 API
+- `GET /api/comments/post/{postId}` - 게시글 댓글 조회
+- `POST /api/comments` - 댓글 작성
+- `DELETE /api/comments/{id}` - 댓글 삭제
+
+### 스터디 그룹 API
+- `GET /study-groups` - 그룹 목록
+- `POST /study-groups` - 그룹 생성
+- `POST /study-groups/{id}/join` - 그룹 가입
+- `POST /study-groups/{id}/applications/{applicationId}/approve` - 가입 승인
+
+---
+
+## 🔒 보안 기능
+
+- **BCrypt 비밀번호 암호화**: 사용자 비밀번호는 해시로 저장
+- **Spring Security**: 역할 기반 접근 제어 (ROLE_USER, ROLE_ADMIN)
+- **세션 기반 인증**: 안전한 사용자 인증 및 권한 관리
+- **콘텐츠 필터링**: 악성 콘텐츠 자동 감지 및 차단
+- **입력 검증**: XSS 및 SQL Injection 방지
+
+---
+
+## 📊 데이터베이스 스키마
+
+주요 테이블:
+- **users**: 사용자 정보
+- **posts**: 게시글
+- **comments**: 댓글
+- **study_groups**: 스터디 그룹
+- **user_activities**: 사용자 활동 로그
+- **blocked_posts**: 차단된 게시글
+- **blocked_comments**: 차단된 댓글
+- **ai_learning_data**: AI 학습 데이터
+
+전체 스키마는 `studywithmever2.sql` 파일을 참고하세요.
+
+---
+
+## 🛠 개발 환경 설정
+
+### Docker 없이 실행하기
+
+Docker를 사용하지 않고 로컬에 MySQL을 설치한 경우:
+
+1. MySQL 설치 및 데이터베이스 생성
+2. `studywithmever2.sql` 스크립트 실행
+3. `application.properties` 또는 환경 변수로 연결 정보 설정
+
+### DB 스키마 변경하기
+
+스키마를 변경한 후 Docker 컨테이너를 재생성해야 합니다:
 
 ```bash
 docker compose down -v   # 볼륨 포함 완전 삭제
-docker compose up -d db  # 다시 초기화 (studywithmever2.sql 재실행)
+docker compose up -d db  # 다시 초기화 (SQL 스크립트 재실행)
 ```
 
 ---
 
-### 7. 개발 환경 요약
+## 📖 추가 문서
 
-- **백엔드**
-  - Spring Boot 3.3.x
-  - Java 21 (Gradle toolchain)
-  - Spring Web, Thymeleaf
-  - Spring Data JPA + MySQL/MariaDB
-- **빌드**
-  - Gradle Wrapper (`./gradlew`)
-- **DB**
-  - Docker 기반 MariaDB 10.4
-  - 초기 스키마: `studywithmever2.sql` 자동 실행
+- **[Python AI 시스템 가이드](python/README.md)**: Python 추천 시스템 상세 설명
+- **[알고리즘 분석](python/ALGORITHM_ANALYSIS.md)**: AI 추천 알고리즘 상세 분석
+- **[프로젝트 로드맵](PROJECT_ROADMAP.md)**: 개발 계획 및 향후 계획
 
 ---
 
-### 8. 자주 하는 질문 (FAQ)
+## ❓ 자주 묻는 질문 (FAQ)
 
-- **Q. Docker 없이 실행해도 되나요?**  
-  A. 가능합니다. 직접 MySQL/MariaDB를 설치하고, `studywithmever2` 데이터베이스를 만든 뒤 `studywithmever2.sql` 을 수동으로 실행하면 됩니다. 그리고 `SPRING_DATASOURCE_*` 값만 해당 DB 정보로 맞춰주면 됩니다.
+**Q. Docker 없이 실행할 수 있나요?**  
+A. 네, 가능합니다. 로컬에 MySQL을 설치하고 `studywithmever2.sql`을 수동으로 실행한 뒤, 데이터베이스 연결 정보만 설정하면 됩니다.
 
-- **Q. 비밀번호를 깃허브에 올려도 되나요?**  
-  A. 실제 서비스/개인용 비밀번호는 절대 올리면 안 됩니다. 이 프로젝트는 환경변수 기반으로 되어 있으니, `.env` 파일은 `.gitignore` 에 추가하여 로컬에서만 관리하세요.
+**Q. Python AI 시스템이 필수인가요?**  
+A. 아니요. Python 시스템은 선택사항입니다. Spring Boot 애플리케이션은 독립적으로 실행 가능하며, Python 시스템은 고급 추천 기능을 위해 사용됩니다.
+
+**Q. 관리자 계정은 어떻게 생성하나요?**  
+A. 데이터베이스에서 `users` 테이블의 해당 사용자 레코드에 `role` 컬럼을 `ADMIN`으로 설정하면 됩니다.
+
+**Q. 비밀번호를 GitHub에 올려도 되나요?**  
+A. 절대 안 됩니다. 실제 비밀번호는 `.env` 파일을 사용하여 로컬에서만 관리하세요. `.env` 파일은 `.gitignore`에 포함되어 있습니다.
 
 ---
 
-### 9. 기여 및 이슈
+## 🤝 기여하기
 
-- 버그, 개선사항, 기능 제안은 깃허브 이슈로 등록해주세요.
-- PR 시에는
-  - 빌드 (`./gradlew build`)
-  - 기본 실행 (`./gradlew bootRun`)
-  - DB 초기화(Docker 또는 로컬 MySQL)를 모두 확인한 뒤 제출해 주세요.
+버그 리포트, 기능 제안, Pull Request를 환영합니다!
+
+1. 이 저장소를 Fork하세요
+2. 새로운 브랜치를 생성하세요 (`git checkout -b feature/amazing-feature`)
+3. 변경사항을 커밋하세요 (`git commit -m 'Add some amazing feature'`)
+4. 브랜치에 Push하세요 (`git push origin feature/amazing-feature`)
+5. Pull Request를 열어주세요
+
+### 기여 전 확인사항
+
+- 빌드 확인: `./gradlew build`
+- 실행 확인: `./gradlew bootRun`
+- 데이터베이스 초기화 확인 (Docker 또는 로컬 MySQL)
+
+---
+
+## 📝 라이선스
+
+이 프로젝트는 Capstone Design 프로젝트입니다.
+
+---
+
+## 👥 팀
+
+**Study With Me 개발팀**
+
+- 프로젝트 리드
+- 백엔드 개발 (Spring Boot)
+- AI 시스템 개발 (Python)
+- 프론트엔드 개발
+
+---
+
+## 🔗 관련 링크
+
+- **GitHub 저장소**: https://github.com/study-withme/ai-website-studywithme
+- **문서**: 이 README 및 `python/README.md` 참고
+
+---
+
+<div align="center">
+
+**Made with ❤️ by Study With Me Team**
+
+⭐ 이 프로젝트가 도움이 되었다면 Star를 눌러주세요!
+
+</div>
