@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/css/board.css" />
     <link rel="stylesheet" href="/css/lightbox.css" />
+    <link rel="stylesheet" href="/css/chatbot.css" />
     
     <!-- highlight.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
@@ -418,10 +419,18 @@ if (window.hljs) {
     
     let isLoaded = false;
     
-    aiSummaryBtn.addEventListener('click', async function() {
+    aiSummaryBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('AI 요약 버튼 클릭됨');
+        console.log('요약 박스 hidden 상태:', aiSummaryBox.classList.contains('hidden'));
+        
         if (aiSummaryBox.classList.contains('hidden')) {
             // 요약 박스 표시
+            console.log('요약 박스 표시');
             aiSummaryBox.classList.remove('hidden');
+            aiSummaryBtn.textContent = '요약 숨기기';
             
             // 아직 로드되지 않았으면 요약 생성
             if (!isLoaded) {
@@ -429,33 +438,59 @@ if (window.hljs) {
                 
                 try {
                     const postId = window.location.pathname.split('/').pop();
+                    console.log('AI 요약 요청 시작, postId:', postId);
+                    
                     const response = await fetch(`/api/posts/${postId}/ai-summary?maxLength=200`, {
-                        method: 'POST'
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     });
                     
+                    console.log('응답 상태:', response.status, response.statusText);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
                     const result = await response.json();
+                    console.log('AI 요약 응답:', result);
                     
                     if (result.error) {
                         aiSummaryBox.innerHTML = `
-                            <div style="padding: 20px;">
-                                <h3 style="margin: 0 0 10px; font-size: 16px; color: var(--text);">✨ AI 요약</h3>
-                                <p style="color: #ef4444;">오류: ${result.error}</p>
+                            <div style="padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <h3 style="margin: 0; font-size: 16px; color: var(--text);">✨ AI 요약</h3>
+                                    <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').textContent='✨ AI 요약 보기';" 
+                                            style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text);">×</button>
+                                </div>
+                                <p style="color: #ef4444; margin: 0;">오류: ${result.error}</p>
                             </div>
                         `;
+                        isLoaded = true;
                         return;
                     }
+                    
+                    const summaryText = result.summary || '요약을 생성할 수 없습니다.';
+                    const originalLength = result.original_length || 0;
+                    const summaryLength = result.summary_length || 0;
+                    
+                    console.log('요약 텍스트:', summaryText);
+                    console.log('원본 길이:', originalLength, '요약 길이:', summaryLength);
                     
                     aiSummaryBox.innerHTML = `
                         <div style="padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <h3 style="margin: 0; font-size: 16px; color: var(--text);">✨ AI 요약</h3>
-                                <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden')" 
+                                <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').textContent='✨ AI 요약 보기';" 
                                         style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text);">×</button>
                             </div>
-                            <p style="margin: 0; line-height: 1.8; color: var(--text);">${result.summary || '요약을 생성할 수 없습니다.'}</p>
+                            <p style="margin: 0; line-height: 1.8; color: var(--text); white-space: pre-wrap;">${summaryText}</p>
+                            ${originalLength > 0 ? `
                             <div style="margin-top: 12px; font-size: 12px; color: #6b7280;">
-                                원본: ${result.original_length || 0}자 → 요약: ${result.summary_length || 0}자
+                                원본: ${originalLength}자 → 요약: ${summaryLength}자
                             </div>
+                            ` : ''}
                         </div>
                     `;
                     
@@ -463,16 +498,24 @@ if (window.hljs) {
                 } catch (error) {
                     console.error('AI 요약 오류:', error);
                     aiSummaryBox.innerHTML = `
-                        <div style="padding: 20px;">
-                            <h3 style="margin: 0 0 10px; font-size: 16px; color: var(--text);">✨ AI 요약</h3>
-                            <p style="color: #ef4444;">요약 생성 중 오류가 발생했습니다.</p>
+                        <div style="padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="margin: 0; font-size: 16px; color: var(--text);">✨ AI 요약</h3>
+                                <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').textContent='✨ AI 요약 보기';" 
+                                        style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text);">×</button>
+                            </div>
+                            <p style="color: #ef4444; margin: 0;">요약 생성 중 오류가 발생했습니다: ${error.message}</p>
+                            <p style="color: #6b7280; font-size: 12px; margin-top: 8px; margin-bottom: 0;">브라우저 콘솔을 확인하세요.</p>
                         </div>
                     `;
+                    isLoaded = true;
                 }
             }
         } else {
             // 요약 박스 숨기기
+            console.log('요약 박스 숨기기');
             aiSummaryBox.classList.add('hidden');
+            aiSummaryBtn.textContent = '✨ AI 요약 보기';
         }
     });
 })();
@@ -508,5 +551,10 @@ if (window.hljs) {
     100% { transform: rotate(360deg); }
 }
 </style>
+
+<!-- AI 챗봇 -->
+<div th:replace="~{fragments/chatbot :: chatbot}"></div>
+
+<script src="/js/chatbot.js"></script>
 </body>
 </html>

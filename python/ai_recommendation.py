@@ -10,31 +10,27 @@ import mysql.connector
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
+from config import Config
+from logger import setup_logger
 
-# 데이터베이스 연결 설정
-DB_CONFIG = {
-    'host': 'localhost',
-    'port': 3306,
-    'user': 'root',
-    'password': 'password',
-    'database': 'studywithmever2',
-    'charset': 'utf8mb4'
-}
+logger = setup_logger(__name__)
 
 
 class UserActivityAnalyzer:
     """사용자 활동 로그 분석기"""
     
-    def __init__(self, db_config: Dict):
-        self.db_config = db_config
+    def __init__(self, db_config: Optional[Dict] = None):
+        self.db_config = db_config or Config.get_db_config()
         self.conn = None
     
     def connect(self):
         """데이터베이스 연결"""
         try:
             self.conn = mysql.connector.connect(**self.db_config)
+            logger.info(f"데이터베이스 연결 성공: {self.db_config['host']}:{self.db_config['port']}/{self.db_config['database']}")
             return True
         except mysql.connector.Error as e:
+            logger.error(f"데이터베이스 연결 실패: {e}", exc_info=True)
             print(f"데이터베이스 연결 실패: {e}", file=sys.stderr)
             return False
     
@@ -272,36 +268,26 @@ def main():
     
     try:
         user_id = int(sys.argv[1])
-        limit = int(sys.argv[2]) if len(sys.argv) > 2 else 20
+        limit = int(sys.argv[2]) if len(sys.argv) > 2 else Config.DEFAULT_RECOMMENDATION_LIMIT
     except ValueError:
         print(json.dumps({
             'error': '잘못된 인자입니다. user_id와 limit는 정수여야 합니다.'
         }), file=sys.stderr)
         sys.exit(1)
     
-    # 환경 변수에서 DB 설정 읽기 (선택적)
-    import os
-    if os.getenv('DB_HOST'):
-        DB_CONFIG['host'] = os.getenv('DB_HOST')
-    if os.getenv('DB_PORT'):
-        DB_CONFIG['port'] = int(os.getenv('DB_PORT'))
-    if os.getenv('DB_USER'):
-        DB_CONFIG['user'] = os.getenv('DB_USER')
-    if os.getenv('DB_PASSWORD'):
-        DB_CONFIG['password'] = os.getenv('DB_PASSWORD')
-    if os.getenv('DB_NAME'):
-        DB_CONFIG['database'] = os.getenv('DB_NAME')
-    
-    analyzer = UserActivityAnalyzer(DB_CONFIG)
+    # Config 클래스가 이미 환경 변수를 읽으므로 추가 설정 불필요
+    analyzer = UserActivityAnalyzer()
     
     if not analyzer.connect():
         sys.exit(1)
     
     try:
         # 사용자 선호도 분석
+        logger.info(f"사용자 {user_id}의 선호도 분석 시작")
         preferences = analyzer.analyze_user_preferences(user_id)
         
         # 추천 게시글 조회
+        logger.info(f"사용자 {user_id}에게 {limit}개의 게시글 추천 시작")
         recommended_posts = analyzer.get_recommended_posts(user_id, limit)
         
         # 결과를 JSON으로 출력
@@ -324,9 +310,11 @@ def main():
             'total_recommended': len(recommended_posts)
         }
         
+        logger.info(f"추천 완료: {len(recommended_posts)}개의 게시글 추천됨")
         print(json.dumps(result, ensure_ascii=False, indent=2))
         
     except Exception as e:
+        logger.error(f"추천 시스템 오류: {e}", exc_info=True)
         print(json.dumps({
             'error': str(e)
         }), file=sys.stderr)

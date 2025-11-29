@@ -635,61 +635,8 @@ if (isDetail) {
     }
   });
 
-  /* ---------- AI 요약 (실제 API 호출) ---------- */
-  const summaryBtn = $("#aiSummaryBtn");
-  const summaryBox = $("#aiSummaryBox");
-
-  if (summaryBtn && summaryBox) {
-    let isLoading = false;
-    
-    summaryBtn.addEventListener("click", async () => {
-      if (!summaryBox.classList.contains("hidden")) {
-        summaryBox.classList.add("hidden");
-        summaryBtn.textContent = "✨ AI 요약 보기";
-        return;
-      }
-
-      if (isLoading) return;
-      
-      isLoading = true;
-      summaryBtn.textContent = "요약 생성 중...";
-      summaryBox.innerHTML = "<div style='text-align:center;padding:20px;'>요약을 생성하고 있습니다...</div>";
-      summaryBox.classList.remove("hidden");
-
-      try {
-        const postId = location.pathname.split('/').pop();
-        const response = await fetch(`/posts/${postId}/ai-summary`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          summaryBox.innerHTML = `
-            <b>AI 요약:</b><br>
-            <div style="margin-top:8px;line-height:1.6;white-space:pre-line;">${result.summary}</div>
-          `;
-        } else {
-          summaryBox.innerHTML = `
-            <b>오류:</b><br>
-            <div style="margin-top:8px;color:#dc2626;">${result.message || '요약 생성에 실패했습니다.'}</div>
-          `;
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        summaryBox.innerHTML = `
-          <b>오류:</b><br>
-          <div style="margin-top:8px;color:#dc2626;">요약 생성 중 오류가 발생했습니다.</div>
-        `;
-      } finally {
-        isLoading = false;
-        summaryBtn.textContent = "요약 숨기기";
-      }
-    });
-  }
+  /* ---------- AI 요약 기능은 post-detail.html의 인라인 스크립트에서 처리 ---------- */
+  // board.js의 중복 코드 제거 - post-detail.html에서 직접 처리
 
   /* ---------- 자동 목차 + active 하이라이트 ---------- */
   (function initTOC() {

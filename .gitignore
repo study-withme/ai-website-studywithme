@@ -47,3 +47,46 @@ dev-notes.ipynb
 
 ### Temporary/Personal Files ###
 assets/
+
+### Configuration Files (개인 정보 포함) ###
+src/main/resources/application.properties
+src/main/resources/application-local.properties
+.env
+.env.local
+.env.*.local
+
+### Database Files (개인 설정 포함) ###
+*.sql
+!chat_messages_table.sql
+fix_user_activity_enum.sql
+migration_from_3days_ago.sql
+
+### Python Cache ###
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+python/**/*.pyc
+python/**/__pycache__/
+
+### OS Files ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk

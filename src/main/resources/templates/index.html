@@ -5,6 +5,7 @@
     <title>모집 게시판 | Study With Me</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/css/board.css" />
+    <link rel="stylesheet" href="/css/chatbot.css" />
 </head>
 <body class="light">
 
@@ -83,7 +84,7 @@
     <!-- 게시글 목록 -->
     <section class="board-grid" id="boardList">
         <!-- Thymeleaf로 서버 사이드 렌더링 (초기 로드) -->
-        <div th:each="post : ${posts.content}" class="card" th:onclick="'location.href=\'/posts/' + ${post.id} + '\''">
+        <div th:if="${posts != null and posts.content != null}" th:each="post : ${posts.content}" class="card" th:onclick="'location.href=\'/posts/' + ${post.id} + '\''">
             <div class="card-thumb" 
                  th:style="'background-image:url(https://picsum.photos/seed/' + ${post.id} + '/400/300)'"></div>
             <div class="card-body">
@@ -96,7 +97,7 @@
             </div>
         </div>
         
-        <div th:if="${posts.totalElements == 0}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #9ca3af;">
+        <div th:if="${posts == null or posts.totalElements == 0}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #9ca3af;">
             <p>조건에 맞는 게시글이 없습니다.</p>
         </div>
     </section>
@@ -104,12 +105,46 @@
     <!-- 페이지네이션 -->
     <div class="pagination">
         <button id="prevPage" class="page-btn">이전</button>
-        <span id="pageInfo" th:text="${currentPage + 1} + ' / ' + ${posts.totalPages}">1 / 1</span>
+        <span id="pageInfo" th:text="${(posts != null ? (currentPage + 1) : 1) + ' / ' + (posts != null ? posts.totalPages : 1)}">1 / 1</span>
         <button id="nextPage" class="page-btn">다음</button>
     </div>
 
 </main>
 
+<!-- AI 챗봇 -->
+<button id="chatbotToggle" class="chatbot-toggle" title="AI 챗봇">🤖</button>
+
+<div id="chatbotWindow" class="chatbot-window">
+    <div class="chatbot-header">
+        <h3>🤖 AI 어시스턴트</h3>
+        <button id="chatbotCloseBtn" title="닫기">✕</button>
+    </div>
+    <div id="chatbotMessages" class="chatbot-messages">
+        <div class="chatbot-message assistant">
+            <div class="chatbot-message-avatar">🤖</div>
+            <div class="chatbot-message-content">
+                안녕하세요! Study With Me AI 어시스턴트입니다. 무엇을 도와드릴까요?<br><br>
+                예시:<br>
+                • "마이페이지 보여줘"<br>
+                • "프로그래밍 스터디 찾아줘"<br>
+                • "북마크 보여줘"<br>
+                • "게시글 작성하는 방법 알려줘"
+            </div>
+        </div>
+    </div>
+    <div class="chatbot-input-area">
+        <input 
+            id="chatbotInput" 
+            class="chatbot-input" 
+            type="text" 
+            placeholder="메시지를 입력하세요..."
+            autocomplete="off"
+        />
+        <button id="chatbotSendBtn" class="chatbot-send-btn" title="전송">➤</button>
+    </div>
+</div>
+
 <script src="/js/board.js"></script>
+<script src="/js/chatbot.js"></script>
 </body>
 </html>

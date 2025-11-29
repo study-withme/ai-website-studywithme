@@ -26,7 +26,7 @@ public class UserActivity {
     private String realName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "action_type", nullable = false, length = 20)
+    @Column(name = "action_type", nullable = false, columnDefinition = "ENUM('SEARCH','CLICK','LIKE','RECOMMEND','BOOKMARK','COMMENT','AI_CLICK')")
     private ActionType actionType;
 
     @Column(name = "target_id")

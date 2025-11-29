@@ -1,0 +1,35 @@
+<!-- AI 챗봇 공통 Fragment -->
+<div th:fragment="chatbot">
+    <!-- AI 챗봇 -->
+    <button id="chatbotToggle" class="chatbot-toggle" title="AI 챗봇">🤖</button>
+
+    <div id="chatbotWindow" class="chatbot-window">
+        <div class="chatbot-header">
+            <h3>🤖 AI 어시스턴트</h3>
+            <button id="chatbotCloseBtn" title="닫기">✕</button>
+        </div>
+        <div id="chatbotMessages" class="chatbot-messages">
+            <div class="chatbot-message assistant">
+                <div class="chatbot-message-avatar">🤖</div>
+                <div class="chatbot-message-content">
+                    안녕하세요! Study With Me AI 어시스턴트입니다. 무엇을 도와드릴까요?<br><br>
+                    예시:<br>
+                    • "마이페이지 보여줘"<br>
+                    • "프로그래밍 스터디 찾아줘"<br>
+                    • "북마크 보여줘"<br>
+                    • "게시글 작성하는 방법 알려줘"
+                </div>
+            </div>
+        </div>
+        <div class="chatbot-input-area">
+            <input 
+                id="chatbotInput" 
+                class="chatbot-input" 
+                type="text" 
+                placeholder="메시지를 입력하세요..."
+                autocomplete="off"
+            />
+            <button id="chatbotSendBtn" class="chatbot-send-btn" title="전송">➤</button>
+        </div>
+    </div>
+</div>
