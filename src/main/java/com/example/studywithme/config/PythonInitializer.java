@@ -164,23 +164,47 @@ public class PythonInitializer implements ApplicationRunner {
     }
 
     /**
-     * Python 스크립트 파일 존재 확인
+     * Python 스크립트 파일 존재 확인 (모든 Python 파일 확인)
      */
     private List<String> checkPythonScripts() {
         List<String> missingScripts = new ArrayList<>();
-        List<String> scripts = List.of(
+        
+        // 실행 가능한 메인 스크립트들
+        List<String> mainScripts = List.of(
                 recommendationScriptPath,
                 tagScriptPath,
-                summaryScriptPath
+                summaryScriptPath,
+                "python/ai_tag_recommendation_deep.py"  // 딥러닝 태그 추천 스크립트 추가
         );
 
-        for (String scriptPath : scripts) {
+        // 유틸리티/모듈 파일들
+        List<String> moduleFiles = List.of(
+                "python/config.py",
+                "python/exceptions.py",
+                "python/logger.py",
+                "python/metrics.py",
+                "python/utils.py"
+        );
+
+        log.info("Python 메인 스크립트 확인 중...");
+        for (String scriptPath : mainScripts) {
             Path path = Paths.get(scriptPath);
             if (Files.exists(path) && Files.isRegularFile(path)) {
-                log.info("✓ Python 스크립트 확인: {}", scriptPath);
+                log.info("✓ Python 메인 스크립트 확인: {}", scriptPath);
             } else {
-                log.warn("✗ Python 스크립트 없음: {}", scriptPath);
+                log.warn("✗ Python 메인 스크립트 없음: {}", scriptPath);
                 missingScripts.add(scriptPath);
+            }
+        }
+
+        log.info("Python 모듈 파일 확인 중...");
+        for (String modulePath : moduleFiles) {
+            Path path = Paths.get(modulePath);
+            if (Files.exists(path) && Files.isRegularFile(path)) {
+                log.info("✓ Python 모듈 파일 확인: {}", modulePath);
+            } else {
+                log.warn("✗ Python 모듈 파일 없음: {}", modulePath);
+                missingScripts.add(modulePath);
             }
         }
 
@@ -227,19 +251,31 @@ public class PythonInitializer implements ApplicationRunner {
     }
 
     /**
-     * Python 스크립트 문법 검사
+     * Python 스크립트 문법 검사 (모든 Python 파일 검사)
      */
     private void validatePythonScripts() {
-        List<String> scripts = List.of(
+        // 모든 Python 파일 목록
+        List<String> allPythonFiles = List.of(
                 recommendationScriptPath,
                 tagScriptPath,
-                summaryScriptPath
+                summaryScriptPath,
+                "python/ai_tag_recommendation_deep.py",
+                "python/config.py",
+                "python/exceptions.py",
+                "python/logger.py",
+                "python/metrics.py",
+                "python/utils.py"
         );
 
-        log.info("Python 스크립트 문법 검사 중...");
-        for (String scriptPath : scripts) {
+        log.info("Python 스크립트 문법 검사 중... (총 {}개 파일)", allPythonFiles.size());
+        int successCount = 0;
+        int failCount = 0;
+
+        for (String scriptPath : allPythonFiles) {
             Path path = Paths.get(scriptPath);
             if (!Files.exists(path)) {
+                log.warn("✗ 파일 없음 (문법 검사 스킵): {}", scriptPath);
+                failCount++;
                 continue;
             }
 
@@ -264,14 +300,19 @@ public class PythonInitializer implements ApplicationRunner {
                     int exitCode = process.waitFor();
                     if (exitCode == 0) {
                         log.info("✓ 문법 검사 통과: {}", scriptPath);
+                        successCount++;
                     } else {
                         log.warn("✗ 문법 오류 발견: {} - {}", scriptPath, output.toString().trim());
+                        failCount++;
                     }
                 }
             } catch (Exception e) {
                 log.warn("✗ 문법 검사 실패: {} - {}", scriptPath, e.getMessage());
+                failCount++;
             }
         }
+
+        log.info("문법 검사 완료: 성공 {}개, 실패 {}개", successCount, failCount);
     }
 
     /**
@@ -280,23 +321,44 @@ public class PythonInitializer implements ApplicationRunner {
     private void testPythonScripts() {
         log.info("Python 스크립트 테스트 실행 중...");
 
+        int testCount = 0;
+        int successCount = 0;
+
         // 1. 요약 스크립트 테스트
-        testSummaryScript();
+        testCount++;
+        if (testSummaryScript()) {
+            successCount++;
+        }
 
         // 2. 태그 추천 스크립트 테스트
-        testTagScript();
+        testCount++;
+        if (testTagScript()) {
+            successCount++;
+        }
 
-        // 3. 추천 스크립트는 DB 연결이 필요하므로 스킵
-        log.info("✓ Python 스크립트 테스트 완료 (추천 스크립트는 DB 연결 필요로 스킵)");
+        // 3. 딥러닝 태그 추천 스크립트 테스트 (선택적)
+        Path deepTagPath = Paths.get("python/ai_tag_recommendation_deep.py");
+        if (Files.exists(deepTagPath)) {
+            testCount++;
+            if (testDeepTagScript()) {
+                successCount++;
+            }
+        }
+
+        // 4. 추천 스크립트는 DB 연결이 필요하므로 스킵
+        log.info("✓ Python 스크립트 테스트 완료: 성공 {}/{} (추천 스크립트는 DB 연결 필요로 스킵)", 
+                 successCount, testCount);
     }
 
     /**
      * 요약 스크립트 테스트
+     * @return 테스트 성공 여부
      */
-    private void testSummaryScript() {
+    private boolean testSummaryScript() {
         Path path = Paths.get(summaryScriptPath);
         if (!Files.exists(path)) {
-            return;
+            log.warn("✗ 요약 스크립트 파일 없음: {}", summaryScriptPath);
+            return false;
         }
 
         try {
@@ -321,21 +383,26 @@ public class PythonInitializer implements ApplicationRunner {
             int exitCode = process.waitFor();
             if (exitCode == 0 && output.toString().contains("summary")) {
                 log.info("✓ 요약 스크립트 테스트 성공: {}", summaryScriptPath);
+                return true;
             } else {
                 log.warn("✗ 요약 스크립트 테스트 실패: {} (exit code: {})", summaryScriptPath, exitCode);
+                return false;
             }
         } catch (Exception e) {
             log.warn("✗ 요약 스크립트 테스트 실패: {} - {}", summaryScriptPath, e.getMessage());
+            return false;
         }
     }
 
     /**
      * 태그 추천 스크립트 테스트
+     * @return 테스트 성공 여부
      */
-    private void testTagScript() {
+    private boolean testTagScript() {
         Path path = Paths.get(tagScriptPath);
         if (!Files.exists(path)) {
-            return;
+            log.warn("✗ 태그 추천 스크립트 파일 없음: {}", tagScriptPath);
+            return false;
         }
 
         try {
@@ -360,11 +427,59 @@ public class PythonInitializer implements ApplicationRunner {
             int exitCode = process.waitFor();
             if (exitCode == 0 && output.toString().contains("category")) {
                 log.info("✓ 태그 추천 스크립트 테스트 성공: {}", tagScriptPath);
+                return true;
             } else {
                 log.warn("✗ 태그 추천 스크립트 테스트 실패: {} (exit code: {})", tagScriptPath, exitCode);
+                return false;
             }
         } catch (Exception e) {
             log.warn("✗ 태그 추천 스크립트 테스트 실패: {} - {}", tagScriptPath, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 딥러닝 태그 추천 스크립트 테스트 (선택적)
+     * @return 테스트 성공 여부
+     */
+    private boolean testDeepTagScript() {
+        Path path = Paths.get("python/ai_tag_recommendation_deep.py");
+        if (!Files.exists(path)) {
+            log.info("ℹ 딥러닝 태그 추천 스크립트 없음 (선택적 기능): {}", path);
+            return false;
+        }
+
+        try {
+            // 딥러닝 라이브러리 의존성이 있을 수 있으므로 간단한 import 테스트만 수행
+            ProcessBuilder processBuilder = new ProcessBuilder(
+                    pythonExecutable,
+                    "-c",
+                    "import sys; sys.path.insert(0, 'python'); import ai_tag_recommendation_deep; print('OK')"
+            );
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
+
+            StringBuilder output = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), "UTF-8"))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0 && output.toString().contains("OK")) {
+                log.info("✓ 딥러닝 태그 추천 스크립트 모듈 로드 성공: python/ai_tag_recommendation_deep.py");
+                return true;
+            } else {
+                log.warn("✗ 딥러닝 태그 추천 스크립트 모듈 로드 실패 (선택적 기능, torch/transformers 필요할 수 있음): {} (exit code: {})", 
+                         path, exitCode);
+                return false;
+            }
+        } catch (Exception e) {
+            log.warn("✗ 딥러닝 태그 추천 스크립트 테스트 실패 (선택적 기능): {} - {}", path, e.getMessage());
+            return false;
         }
     }
 }
