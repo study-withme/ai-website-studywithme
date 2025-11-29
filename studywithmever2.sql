@@ -8,13 +8,13 @@
 -- PHP 버전: 8.0.28
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
--- START TRANSACTION; -- 주석 처리: 각 테이블을 독립적으로 생성
+START TRANSACTION;
 SET time_zone = "+00:00";
 
--- Character set 설정 (필요시 주석 해제)
--- /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
--- /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
--- /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
 --
@@ -394,6 +394,39 @@ ALTER TABLE `post_likes`
   ADD KEY `post_id` (`post_id`);
 
 --
+-- 테이블의 인덱스 `ai_learning_data`
+--
+ALTER TABLE `ai_learning_data`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_learning_type` (`content_type`),
+  ADD KEY `idx_learning_frequency` (`frequency`);
+
+--
+-- 테이블의 인덱스 `blocked_comments`
+--
+ALTER TABLE `blocked_comments`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_blocked_comment` (`comment_id`),
+  ADD KEY `idx_blocked_comment_user` (`user_id`),
+  ADD KEY `idx_blocked_comment_post` (`post_id`),
+  ADD KEY `idx_blocked_comment_type` (`block_type`),
+  ADD KEY `idx_blocked_comment_status` (`status`),
+  ADD KEY `blocked_comments_ibfk_4` (`blocked_by`),
+  ADD KEY `blocked_comments_ibfk_5` (`reviewed_by`);
+
+--
+-- 테이블의 인덱스 `blocked_posts`
+--
+ALTER TABLE `blocked_posts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_blocked_post` (`post_id`),
+  ADD KEY `idx_blocked_user` (`user_id`),
+  ADD KEY `idx_blocked_type` (`block_type`),
+  ADD KEY `idx_blocked_status` (`status`),
+  ADD KEY `blocked_posts_ibfk_3` (`blocked_by`),
+  ADD KEY `blocked_posts_ibfk_4` (`reviewed_by`);
+
+--
 -- 테이블의 인덱스 `bookmarks`
 --
 ALTER TABLE `bookmarks`
@@ -402,12 +435,62 @@ ALTER TABLE `bookmarks`
   ADD KEY `idx_bookmark_post` (`post_id`);
 
 --
+-- 테이블의 인덱스 `chat_messages`
+--
+ALTER TABLE `chat_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_created` (`user_id`,`created_at`),
+  ADD KEY `idx_created_at` (`created_at`);
+
+--
+-- 테이블의 인덱스 `filter_keywords`
+--
+ALTER TABLE `filter_keywords`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_keyword` (`keyword`),
+  ADD KEY `idx_keyword_active` (`is_active`),
+  ADD KEY `idx_keyword_type` (`keyword_type`),
+  ADD KEY `filter_keywords_ibfk_1` (`created_by`);
+
+--
+-- 테이블의 인덱스 `filter_patterns`
+--
+ALTER TABLE `filter_patterns`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_pattern_active` (`is_active`),
+  ADD KEY `idx_pattern_type` (`pattern_type`),
+  ADD KEY `filter_patterns_ibfk_1` (`created_by`);
+
+--
+-- 테이블의 인덱스 `filter_words`
+--
+ALTER TABLE `filter_words`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_word` (`word`),
+  ADD KEY `idx_word_type` (`word_type`),
+  ADD KEY `idx_word_active` (`is_active`),
+  ADD KEY `filter_words_ibfk_1` (`created_by`);
+
+--
+-- 테이블의 인덱스 `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- 테이블의 인덱스 `security_events`
 --
 ALTER TABLE `security_events`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_sec_user` (`user_id`),
   ADD KEY `idx_sec_event` (`event_type`);
+
+--
+-- 테이블의 인덱스 `tmp_numbers`
+--
+ALTER TABLE `tmp_numbers`
+  ADD PRIMARY KEY (`n`);
 
 --
 -- 테이블의 인덱스 `users`
@@ -594,10 +677,77 @@ ALTER TABLE `post_likes`
   ADD CONSTRAINT `post_likes_ibfk_2` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE;
 
 --
+-- 테이블의 AUTO_INCREMENT `ai_learning_data`
+--
+ALTER TABLE `ai_learning_data`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- 테이블의 AUTO_INCREMENT `blocked_comments`
+--
+ALTER TABLE `blocked_comments`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- 테이블의 AUTO_INCREMENT `blocked_posts`
+--
+ALTER TABLE `blocked_posts`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
 -- 테이블의 AUTO_INCREMENT `bookmarks`
 --
 ALTER TABLE `bookmarks`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- 테이블의 AUTO_INCREMENT `chat_messages`
+--
+ALTER TABLE `chat_messages`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- 테이블의 AUTO_INCREMENT `filter_keywords`
+--
+ALTER TABLE `filter_keywords`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- 테이블의 AUTO_INCREMENT `filter_patterns`
+--
+ALTER TABLE `filter_patterns`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- 테이블의 AUTO_INCREMENT `filter_words`
+--
+ALTER TABLE `filter_words`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- 테이블의 AUTO_INCREMENT `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
+-- 테이블의 제약사항 `blocked_comments`
+--
+ALTER TABLE `blocked_comments`
+  ADD CONSTRAINT `blocked_comments_ibfk_1` FOREIGN KEY (`comment_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `blocked_comments_ibfk_2` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `blocked_comments_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `blocked_comments_ibfk_4` FOREIGN KEY (`blocked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `blocked_comments_ibfk_5` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 테이블의 제약사항 `blocked_posts`
+--
+ALTER TABLE `blocked_posts`
+  ADD CONSTRAINT `blocked_posts_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `blocked_posts_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `blocked_posts_ibfk_3` FOREIGN KEY (`blocked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `blocked_posts_ibfk_4` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- 테이블의 제약사항 `bookmarks`
@@ -605,6 +755,36 @@ ALTER TABLE `bookmarks`
 ALTER TABLE `bookmarks`
   ADD CONSTRAINT `bookmarks_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `bookmarks_ibfk_2` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE;
+
+--
+-- 테이블의 제약사항 `chat_messages`
+--
+ALTER TABLE `chat_messages`
+  ADD CONSTRAINT `fk_chat_messages_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 테이블의 제약사항 `filter_keywords`
+--
+ALTER TABLE `filter_keywords`
+  ADD CONSTRAINT `filter_keywords_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 테이블의 제약사항 `filter_patterns`
+--
+ALTER TABLE `filter_patterns`
+  ADD CONSTRAINT `filter_patterns_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 테이블의 제약사항 `filter_words`
+--
+ALTER TABLE `filter_words`
+  ADD CONSTRAINT `filter_words_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 테이블의 제약사항 `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- 테이블의 제약사항 `security_events`
@@ -639,12 +819,11 @@ ALTER TABLE `user_profiles`
 -- --------------------------------------------------------
 
 --
--- 테이블 구조 `study_groups` - 스터디 모임 정보
+-- 테이블 구조 `study_groups`
 --
 
-CREATE TABLE IF NOT EXISTS `study_groups` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `post_id` bigint(20) DEFAULT NULL,
+CREATE TABLE `study_groups` (
+  `id` bigint(20) NOT NULL,
   `creator_id` int(11) NOT NULL,
   `title` varchar(200) NOT NULL,
   `description` text DEFAULT NULL,
@@ -661,18 +840,8 @@ CREATE TABLE IF NOT EXISTS `study_groups` (
   `ai_analyzed_at` timestamp NULL DEFAULT NULL,
   `embedding_updated_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_post_group` (`post_id`),
-  KEY `creator_id` (`creator_id`),
-  CONSTRAINT `study_groups_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `study_groups_ibfk_2` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- 기존 테이블에 post_id 컬럼 추가 (마이그레이션)
--- ALTER TABLE `study_groups` ADD COLUMN `post_id` bigint(20) DEFAULT NULL AFTER `id`;
--- ALTER TABLE `study_groups` ADD UNIQUE KEY `unique_post_group` (`post_id`);
--- ALTER TABLE `study_groups` ADD CONSTRAINT `study_groups_ibfk_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE SET NULL;
 
 -- --------------------------------------------------------
 
@@ -688,6 +857,122 @@ CREATE TABLE `study_group_members` (
   `joined_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `status` enum('ACTIVE','LEFT','REMOVED') DEFAULT 'ACTIVE'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 테이블 구조 `tmp_numbers`
+--
+
+CREATE TABLE `tmp_numbers` (
+  `n` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- 테이블의 덤프 데이터 `tmp_numbers`
+--
+
+INSERT INTO `tmp_numbers` (`n`) VALUES
+(1),
+(2),
+(3),
+(4),
+(5),
+(6),
+(7),
+(8),
+(9),
+(10),
+(11),
+(12),
+(13),
+(14),
+(15),
+(16),
+(17),
+(18),
+(19),
+(20),
+(21),
+(22),
+(23),
+(24),
+(25),
+(26),
+(27),
+(28),
+(29),
+(30),
+(31),
+(32),
+(33),
+(34),
+(35),
+(36),
+(37),
+(38),
+(39),
+(40),
+(41),
+(42),
+(43),
+(44),
+(45),
+(46),
+(47),
+(48),
+(49),
+(50),
+(51),
+(52),
+(53),
+(54),
+(55),
+(56),
+(57),
+(58),
+(59),
+(60),
+(61),
+(62),
+(63),
+(64),
+(65),
+(66),
+(67),
+(68),
+(69),
+(70),
+(71),
+(72),
+(73),
+(74),
+(75),
+(76),
+(77),
+(78),
+(79),
+(80),
+(81),
+(82),
+(83),
+(84),
+(85),
+(86),
+(87),
+(88),
+(89),
+(90),
+(91),
+(92),
+(93),
+(94),
+(95),
+(96),
+(97),
+(98),
+(99),
+(100);
 
 -- --------------------------------------------------------
 
@@ -1122,18 +1407,15 @@ ALTER TABLE `post_applications`
 -- 테이블 구조 `notifications` - 알림
 --
 
-CREATE TABLE IF NOT EXISTS `notifications` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `notifications` (
+  `id` bigint(20) NOT NULL,
   `user_id` int(11) NOT NULL,
   `type` varchar(50) NOT NULL,
   `title` varchar(200) NOT NULL,
   `body` text DEFAULT NULL,
   `link_url` varchar(255) DEFAULT NULL,
   `is_read` tinyint(1) DEFAULT 0,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1173,8 +1455,8 @@ DEALLOCATE PREPARE stmt;
 -- 테이블 구조 `blocked_posts` - AI에 의해 차단된 게시글
 --
 
-CREATE TABLE IF NOT EXISTS `blocked_posts` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `blocked_posts` (
+  `id` bigint(20) NOT NULL,
   `post_id` bigint(20) NOT NULL,
   `user_id` int(11) NOT NULL,
   `title` varchar(200) NOT NULL,
@@ -1188,16 +1470,7 @@ CREATE TABLE IF NOT EXISTS `blocked_posts` (
   `reviewed_by` int(11) DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
   `status` enum('BLOCKED','RESTORED','PENDING') DEFAULT 'BLOCKED',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_blocked_post` (`post_id`),
-  KEY `idx_blocked_user` (`user_id`),
-  KEY `idx_blocked_type` (`block_type`),
-  KEY `idx_blocked_status` (`status`),
-  CONSTRAINT `blocked_posts_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `blocked_posts_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `blocked_posts_ibfk_3` FOREIGN KEY (`blocked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `blocked_posts_ibfk_4` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1206,19 +1479,14 @@ CREATE TABLE IF NOT EXISTS `blocked_posts` (
 -- 테이블 구조 `filter_words` - 욕설 필터 단어 목록
 --
 
-CREATE TABLE IF NOT EXISTS `filter_words` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `filter_words` (
+  `id` bigint(20) NOT NULL,
   `word` varchar(100) NOT NULL COMMENT '필터링할 단어',
   `word_type` enum('PROFANITY','SPAM','AD','CUSTOM') DEFAULT 'CUSTOM',
   `is_active` tinyint(1) DEFAULT 1,
   `created_by` int(11) DEFAULT NULL COMMENT '등록한 관리자 ID',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_word` (`word`),
-  KEY `idx_word_type` (`word_type`),
-  KEY `idx_word_active` (`is_active`),
-  CONSTRAINT `filter_words_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1227,8 +1495,8 @@ CREATE TABLE IF NOT EXISTS `filter_words` (
 -- 테이블 구조 `filter_patterns` - 차단 패턴 (글 형식)
 --
 
-CREATE TABLE IF NOT EXISTS `filter_patterns` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `filter_patterns` (
+  `id` bigint(20) NOT NULL,
   `pattern_name` varchar(100) NOT NULL COMMENT '패턴 이름',
   `pattern_regex` text NOT NULL COMMENT '정규식 패턴',
   `pattern_type` enum('TITLE','CONTENT','BOTH') DEFAULT 'BOTH',
@@ -1237,11 +1505,7 @@ CREATE TABLE IF NOT EXISTS `filter_patterns` (
   `block_count` int(11) DEFAULT 0 COMMENT '이 패턴으로 차단된 횟수',
   `created_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_pattern_active` (`is_active`),
-  KEY `idx_pattern_type` (`pattern_type`),
-  CONSTRAINT `filter_patterns_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1250,8 +1514,8 @@ CREATE TABLE IF NOT EXISTS `filter_patterns` (
 -- 테이블 구조 `filter_keywords` - 차단 키워드 (관리자가 추가)
 --
 
-CREATE TABLE IF NOT EXISTS `filter_keywords` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `filter_keywords` (
+  `id` bigint(20) NOT NULL,
   `keyword` varchar(100) NOT NULL,
   `keyword_type` enum('EXACT','PARTIAL','REGEX') DEFAULT 'PARTIAL',
   `description` text DEFAULT NULL,
@@ -1259,12 +1523,7 @@ CREATE TABLE IF NOT EXISTS `filter_keywords` (
   `block_count` int(11) DEFAULT 0,
   `created_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_keyword` (`keyword`),
-  KEY `idx_keyword_active` (`is_active`),
-  KEY `idx_keyword_type` (`keyword_type`),
-  CONSTRAINT `filter_keywords_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1273,18 +1532,15 @@ CREATE TABLE IF NOT EXISTS `filter_keywords` (
 -- 테이블 구조 `ai_learning_data` - AI 학습 데이터 (차단 빈도가 높은 패턴)
 --
 
-CREATE TABLE IF NOT EXISTS `ai_learning_data` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `ai_learning_data` (
+  `id` bigint(20) NOT NULL,
   `content_type` enum('POST','COMMENT') DEFAULT 'POST',
   `content_sample` text NOT NULL COMMENT '차단된 내용 샘플',
   `block_reason` varchar(255) DEFAULT NULL,
   `detected_pattern` text DEFAULT NULL COMMENT '감지된 패턴',
   `frequency` int(11) DEFAULT 1 COMMENT '유사 패턴 발생 빈도',
   `last_detected_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_learning_type` (`content_type`),
-  KEY `idx_learning_frequency` (`frequency`)
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1293,8 +1549,8 @@ CREATE TABLE IF NOT EXISTS `ai_learning_data` (
 -- 테이블 구조 `blocked_comments` - AI에 의해 차단된 댓글
 --
 
-CREATE TABLE IF NOT EXISTS `blocked_comments` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `blocked_comments` (
+  `id` bigint(20) NOT NULL,
   `comment_id` bigint(20) NOT NULL,
   `post_id` bigint(20) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -1308,18 +1564,7 @@ CREATE TABLE IF NOT EXISTS `blocked_comments` (
   `reviewed_by` int(11) DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
   `status` enum('BLOCKED','RESTORED','PENDING') DEFAULT 'BLOCKED',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_blocked_comment` (`comment_id`),
-  KEY `idx_blocked_comment_user` (`user_id`),
-  KEY `idx_blocked_comment_post` (`post_id`),
-  KEY `idx_blocked_comment_type` (`block_type`),
-  KEY `idx_blocked_comment_status` (`status`),
-  CONSTRAINT `blocked_comments_ibfk_1` FOREIGN KEY (`comment_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `blocked_comments_ibfk_2` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `blocked_comments_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `blocked_comments_ibfk_4` FOREIGN KEY (`blocked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `blocked_comments_ibfk_5` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1328,24 +1573,19 @@ CREATE TABLE IF NOT EXISTS `blocked_comments` (
 -- 테이블 구조 `chat_messages` - 챗봇 메시지
 --
 
-CREATE TABLE IF NOT EXISTS `chat_messages` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `chat_messages` (
+  `id` bigint(20) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
   `message` text NOT NULL,
   `response` text NOT NULL,
   `role` enum('USER','ASSISTANT') NOT NULL,
   `action_type` varchar(50) DEFAULT NULL,
   `action_data` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_user_created` (`user_id`, `created_at`),
-  KEY `idx_created_at` (`created_at`),
-  CONSTRAINT `fk_chat_messages_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- COMMIT; -- 주석 처리: 트랜잭션을 사용하지 않으므로 불필요
+COMMIT;
 
--- Character set 복원 (필요시 주석 해제)
--- /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
--- /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
--- /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
