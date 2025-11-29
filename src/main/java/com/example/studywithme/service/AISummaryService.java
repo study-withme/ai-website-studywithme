@@ -39,14 +39,22 @@ public class AISummaryService {
             }
 
             // Python 스크립트 실행
+            // 내용이 너무 길면 잘라서 전달 (명령줄 인자 길이 제한 고려)
+            String contentToProcess = content;
+            if (contentToProcess.length() > 50000) {
+                log.warn("본문이 너무 깁니다 ({}자). 앞부분만 사용합니다.", contentToProcess.length());
+                contentToProcess = contentToProcess.substring(0, 50000);
+            }
+            
             ProcessBuilder processBuilder = new ProcessBuilder(
                     pythonExecutable,
                     scriptPath.toAbsolutePath().toString(),
-                    content,
+                    contentToProcess,
                     String.valueOf(maxLength)
             );
 
             processBuilder.redirectErrorStream(true);
+            log.info("Python 요약 스크립트 실행: maxLength={}, contentLength={}", maxLength, contentToProcess.length());
             Process process = processBuilder.start();
 
             // 결과 읽기
@@ -78,14 +86,25 @@ public class AISummaryService {
 
             // 결과 반환
             Map<String, Object> result = new HashMap<>();
-            result.put("summary", rootNode.has("summary") ? rootNode.get("summary").asText() : "");
-            result.put("original_length", rootNode.has("original_length") ? 
-                      rootNode.get("original_length").asInt() : content.length());
-            result.put("summary_length", rootNode.has("summary_length") ? 
-                      rootNode.get("summary_length").asInt() : 0);
+            String summary = rootNode.has("summary") ? rootNode.get("summary").asText() : "";
+            int originalLength = rootNode.has("original_length") ? 
+                      rootNode.get("original_length").asInt() : content.length();
+            int summaryLength = rootNode.has("summary_length") ? 
+                      rootNode.get("summary_length").asInt() : 0;
+            
+            result.put("summary", summary);
+            result.put("original_length", originalLength);
+            result.put("summary_length", summaryLength);
 
-            log.info("AI 요약 완료: 원본 길이={}, 요약 길이={}", 
-                    result.get("original_length"), result.get("summary_length"));
+            log.info("AI 요약 완료: 원본 길이={}, 요약 길이={}, 요약 내용 길이={}", 
+                    originalLength, summaryLength, summary.length());
+            
+            // 요약이 비어있으면 fallback 사용
+            if (summary == null || summary.trim().isEmpty()) {
+                log.warn("Python 스크립트가 빈 요약을 반환했습니다. Fallback 사용.");
+                return getFallbackSummary(content, maxLength);
+            }
+            
             return result;
 
         } catch (Exception e) {

@@ -54,22 +54,27 @@ public class MainController {
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> posts;
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            posts = postService.searchPosts(keyword, pageable);
-            model.addAttribute("keyword", keyword);
-            if (loginUser != null) {
-                userActivityService.logSearch(loginUser, keyword);
+        try {
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                posts = postService.searchPosts(keyword, pageable);
+                model.addAttribute("keyword", keyword);
+                if (loginUser != null) {
+                    userActivityService.logSearch(loginUser, keyword);
+                }
+            } else if (category != null && !category.trim().isEmpty()) {
+                posts = postService.getPostsByCategory(category, pageable);
+                model.addAttribute("category", category);
+            } else {
+                posts = postService.getPosts(pageable);
             }
-        } else if (category != null && !category.trim().isEmpty()) {
-            posts = postService.getPostsByCategory(category, pageable);
-            model.addAttribute("category", category);
-        } else {
-            posts = postService.getPosts(pageable);
+        } catch (Exception e) {
+            // 오류 발생 시 빈 페이지 반환
+            posts = Page.empty(pageable);
         }
 
         model.addAttribute("posts", posts);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", posts.getTotalPages());
+        model.addAttribute("totalPages", posts != null ? posts.getTotalPages() : 0);
 
         return "index";  // templates/index.html
     }

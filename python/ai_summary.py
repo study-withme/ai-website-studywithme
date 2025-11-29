@@ -64,8 +64,83 @@ class AISummarizer:
         
         return score
     
+    def extract_structured_info(self, content: str) -> Dict[str, str]:
+        """구조화된 정보 추출"""
+        info = {
+            'target_users': '',
+            'level': '',
+            'process': '',
+            'summary': ''
+        }
+        
+        # 섹션별 키워드 패턴
+        target_user_patterns = [
+            r'이런\s*분이면\s*좋아요[:\s]*([^진행방식이런]*?)(?=진행\s*방식|이런|$)',
+            r'원하는\s*사람[:\s]*([^진행방식이런]*?)(?=진행\s*방식|이런|$)',
+            r'참여\s*대상[:\s]*([^진행방식이런]*?)(?=진행\s*방식|이런|$)',
+            r'모집\s*대상[:\s]*([^진행방식이런]*?)(?=진행\s*방식|이런|$)',
+        ]
+        
+        level_patterns = [
+            r'레벨[:\s]*([^진행방식이런]*?)(?=진행\s*방식|이런|$)',
+            r'수준[:\s]*([^진행방식이런]*?)(?=진행\s*방식|이런|$)',
+            r'난이도[:\s]*([^진행방식이런]*?)(?=진행\s*방식|이런|$)',
+            r'경력[:\s]*([^진행방식이런]*?)(?=진행\s*방식|이런|$)',
+        ]
+        
+        process_patterns = [
+            r'진행\s*방식[:\s]*([^이런원하는]*?)(?=이런|원하는|$)',
+            r'방식[:\s]*([^이런원하는]*?)(?=이런|원하는|$)',
+            r'일정[:\s]*([^이런원하는]*?)(?=이런|원하는|$)',
+        ]
+        
+        # 타겟 사용자 추출
+        for pattern in target_user_patterns:
+            match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
+            if match:
+                info['target_users'] = match.group(1).strip()[:200]
+                break
+        
+        # 레벨 추출
+        for pattern in level_patterns:
+            match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
+            if match:
+                info['level'] = match.group(1).strip()[:150]
+                break
+        
+        # 진행 방식 추출
+        for pattern in process_patterns:
+            match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
+            if match:
+                info['process'] = match.group(1).strip()[:200]
+                break
+        
+        return info
+    
+    def infer_level_from_content(self, content: str) -> str:
+        """내용에서 레벨 추정"""
+        content_lower = content.lower()
+        
+        # 레벨 키워드 매칭
+        beginner_keywords = ['초보', '입문', '기초', '처음', '신입', '비전공', '처음시작']
+        intermediate_keywords = ['중급', '중간', '어느정도', '경험', '실무']
+        advanced_keywords = ['고급', '심화', '전문', '시니어', '리드', '아키텍트']
+        
+        beginner_count = sum(1 for kw in beginner_keywords if kw in content_lower)
+        intermediate_count = sum(1 for kw in intermediate_keywords if kw in content_lower)
+        advanced_count = sum(1 for kw in advanced_keywords if kw in content_lower)
+        
+        if advanced_count > intermediate_count and advanced_count > beginner_count:
+            return "고급 (시니어/전문가 수준)"
+        elif intermediate_count > beginner_count:
+            return "중급 (경험자 수준)"
+        elif beginner_count > 0:
+            return "초급 (입문자/초보자 수준)"
+        else:
+            return "수준 미지정"
+    
     def summarize(self, content: str, max_length: int = 200) -> Dict:
-        """본문 요약"""
+        """구조화된 요약 생성"""
         if not content:
             return {
                 'summary': '',
@@ -74,72 +149,70 @@ class AISummarizer:
         
         # 텍스트 정리
         cleaned_text = self.clean_text(content)
+        original_length = len(cleaned_text)
         
-        if len(cleaned_text) <= max_length:
-            return {
-                'summary': cleaned_text,
-                'original_length': len(cleaned_text),
-                'summary_length': len(cleaned_text)
-            }
+        # 구조화된 정보 추출
+        structured_info = self.extract_structured_info(cleaned_text)
         
-        # 문장 추출
-        sentences = self.extract_sentences(cleaned_text)
+        # 레벨 추정 (명시적으로 없으면 추정)
+        if not structured_info['level']:
+            structured_info['level'] = self.infer_level_from_content(cleaned_text)
         
-        if not sentences:
-            return {
-                'summary': cleaned_text[:max_length] + '...',
-                'original_length': len(cleaned_text),
-                'summary_length': max_length
-            }
-        
-        # 키워드 추출 (빈도 기반)
-        words = re.findall(r'\b\w+\b', cleaned_text.lower())
-        word_freq = {}
-        for word in words:
-            if len(word) >= 2:  # 2글자 이상만
-                word_freq[word] = word_freq.get(word, 0) + 1
-        
-        # 상위 키워드 선택
-        top_keywords = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10]
-        keywords = [word for word, _ in top_keywords]
-        
-        # 문장 점수 계산
-        sentence_scores = []
-        for i, sentence in enumerate(sentences):
-            score = self.calculate_sentence_score(sentence, keywords)
-            # 앞부분 문장에 가중치
-            position_weight = 1.0 - (i / len(sentences)) * 0.3
-            score *= position_weight
-            sentence_scores.append((sentence, score, i))
-        
-        # 점수 순으로 정렬
-        sentence_scores.sort(key=lambda x: x[1], reverse=True)
-        
-        # 요약 생성
-        summary_sentences = []
-        current_length = 0
-        
-        for sentence, score, original_index in sentence_scores:
-            if current_length + len(sentence) <= max_length:
-                summary_sentences.append((original_index, sentence))
-                current_length += len(sentence) + 1  # +1 for space
+        # 타겟 사용자 추출 (명시적으로 없으면 요약에서 추출)
+        if not structured_info['target_users']:
+            # 간단한 요약 생성
+            sentences = self.extract_sentences(cleaned_text)
+            if sentences:
+                # 앞부분 문장들을 요약으로 사용
+                summary_sentences = sentences[:3]
+                structured_info['summary'] = ' '.join(summary_sentences)[:max_length]
             else:
-                break
+                structured_info['summary'] = cleaned_text[:max_length]
+        else:
+            # 타겟 사용자가 있으면 그것을 요약으로 사용
+            structured_info['summary'] = structured_info['target_users'][:max_length]
         
-        # 원래 순서대로 정렬
-        summary_sentences.sort(key=lambda x: x[0])
-        summary = ' '.join([s for _, s in summary_sentences])
+        # 구조화된 요약 생성
+        summary_parts = []
         
-        # 최대 길이 초과 시 자르기
-        if len(summary) > max_length:
-            summary = summary[:max_length-3] + '...'
+        if structured_info['target_users']:
+            summary_parts.append(f"• 사용자는 이런 사람을 원함:\n  {structured_info['target_users']}")
+        elif structured_info['summary']:
+            summary_parts.append(f"• 스터디 소개:\n  {structured_info['summary']}")
+        
+        if structured_info['level']:
+            summary_parts.append(f"• 어떤 수준의 레벨로 추정됨:\n  {structured_info['level']}")
+        
+        if structured_info['process']:
+            # 진행 방식은 간단히만
+            process_summary = structured_info['process'][:100]
+            if len(structured_info['process']) > 100:
+                process_summary += "..."
+            summary_parts.append(f"• 진행 방식:\n  {process_summary}")
+        
+        # 요약이 비어있으면 기본 요약 생성
+        if not summary_parts:
+            sentences = self.extract_sentences(cleaned_text)
+            if sentences:
+                summary_text = ' '.join(sentences[:2])[:max_length]
+                if len(' '.join(sentences[:2])) > max_length:
+                    summary_text = summary_text[:max_length-3] + '...'
+                summary_parts.append(f"• 요약:\n  {summary_text}")
+            else:
+                summary_parts.append(f"• 요약:\n  {cleaned_text[:max_length]}")
+        
+        summary = '\n\n'.join(summary_parts)
+        summary_length = len(summary)
         
         return {
             'summary': summary,
-            'original_length': len(cleaned_text),
-            'summary_length': len(summary),
-            'sentence_count': len(summary_sentences),
-            'total_sentences': len(sentences)
+            'original_length': original_length,
+            'summary_length': summary_length,
+            'structured': {
+                'target_users': structured_info['target_users'],
+                'level': structured_info['level'],
+                'process': structured_info['process']
+            }
         }
 
 
