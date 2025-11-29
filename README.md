@@ -1,98 +1,430 @@
-# 📚 Study With Me - AI 기반 맞춤형 스터디/모임 플랫폼
+# 🎓 AI 기반 개인화 추천 및 콘텐츠 필터링 스터디 매칭 플랫폼
 
 <div align="center">
 
-**"Study With Me"**는 AI가 사용자의 활동 로그를 분석하여  
-악성 게시글을 자동 차단하고, 개인화된 스터디/모임을 추천해주는 스마트 커뮤니티 플랫폼입니다.
+### Capstone Design Project | 졸업작품
+
+**Study With Me: 하이브리드 추천 알고리즘과 실시간 콘텐츠 필터링을 활용한 지능형 학습 커뮤니티 플랫폼**
 
 [![Java](https://img.shields.io/badge/Java-21-orange?logo=java)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen?logo=spring)](https://spring.io/projects/spring-boot)
 [![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql)](https://www.mysql.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**개발 기간**: 2024-2025  
+**프로젝트 유형**: 캡스톤 디자인 / 졸업작품  
+**분야**: 웹 애플리케이션, AI/ML, 추천 시스템, 자연어 처리
 
 </div>
 
 ---
 
-## 🎯 프로젝트 개요
+## 📋 목차
 
-**Study With Me**는 단순한 스터디 모임 중개 서비스를 넘어서, AI 기반의 지능형 추천 시스템과 콘텐츠 필터링을 제공하는 차세대 학습 커뮤니티 플랫폼입니다.
-
-### 핵심 가치
-- 🤖 **AI 기반 개인화 추천**: 사용자 활동 로그 분석을 통한 맞춤형 콘텐츠 추천
-- 🛡️ **지능형 콘텐츠 필터링**: 악성 게시글 및 댓글 자동 감지 및 차단
-- 📊 **활동 기반 분석**: 사용자 행동 패턴 분석을 통한 선호도 예측
-- 👥 **스터디 그룹 관리**: 효율적인 스터디 그룹 생성 및 관리 시스템
+1. [프로젝트 개요](#-프로젝트-개요)
+2. [연구 배경 및 목적](#-연구-배경-및-목적)
+3. [시스템 아키텍처](#-시스템-아키텍처)
+4. [핵심 기술 및 알고리즘](#-핵심-기술-및-알고리즘)
+5. [주요 기능](#-주요-기능)
+6. [기술 스택](#-기술-스택)
+7. [프로젝트 구조](#-프로젝트-구조)
+8. [설치 및 실행](#-설치-및-실행)
+9. [개발 과정 및 성과](#-개발-과정-및-성과)
+10. [향후 개선 방향](#-향후-개선-방향)
+11. [참고 문헌](#-참고-문헌)
 
 ---
 
-## ✨ 주요 기능
+## 🎯 프로젝트 개요
 
-### 1. AI 기반 개인화 추천 시스템
-- **활동 로그 분석**: 사용자의 검색, 클릭, 좋아요, 북마크 등 모든 활동을 추적
-- **맞춤형 게시글 추천**: 콘텐츠 기반 필터링 + 협업 필터링 하이브리드 방식
-- **스터디 그룹 추천**: 관심사 및 학습 목표 기반 스터디 그룹 매칭
-- **파트너 추천**: 게시글별 적합한 스터디 파트너 자동 추천
+### 연구 주제
 
-### 2. 지능형 콘텐츠 필터링
-- **실시간 악성 콘텐츠 감지**: 룰 기반 + 패턴 매칭을 통한 욕설/악성 구문 탐지
-- **자동 차단 및 관리자 알림**: 문제 있는 게시글/댓글 자동 차단 및 관리자 알림
-- **학습 데이터 기반 개선**: AI 학습 데이터 축적을 통한 필터링 정확도 향상
+**"활동 로그 기반 하이브리드 추천 시스템과 실시간 콘텐츠 필터링을 결합한 지능형 스터디 매칭 플랫폼 구현"**
 
-### 3. 게시글 및 댓글 시스템
-- **게시글 CRUD**: 제목, 본문, 카테고리, 태그를 포함한 게시글 관리
-- **AI 자동 태그 분류**: 게시글 내용 분석을 통한 자동 태그 및 카테고리 분류
-- **AI 본문 요약**: 긴 게시글의 핵심 내용 자동 요약
-- **댓글 시스템**: 대댓글 지원, 좋아요 기능 포함
+### 핵심 문제 정의
 
-### 4. 스터디 그룹 관리
-- **그룹 생성 및 관리**: 목표, 일정, 최대 인원 등 설정 가능
-- **멤버 관리**: 그룹장 권한 관리, 멤버 초대/수락 시스템
-- **게시글 연동**: 스터디 그룹에 대한 게시글 작성 및 지원 관리
+1. **정보 과부하 문제**: 기존 스터디 매칭 플랫폼에서는 사용자가 원하는 정보를 찾기 위해 많은 시간을 소요
+2. **비개인화 추천**: 모든 사용자에게 동일한 콘텐츠를 제공하여 사용자 만족도 저하
+3. **악성 콘텐츠 관리**: 수동 검토로 인한 악성 게시글/댓글 관리의 비효율성
+4. **콜드 스타트 문제**: 신규 사용자나 활동이 적은 사용자에 대한 추천 정확도 저하
 
-### 5. 사용자 활동 추적
-- **활동 로그 수집**: 모든 사용자 행동을 데이터베이스에 기록
+### 연구 목표
+
+1. **개인화 추천 시스템 구축**: 사용자 활동 로그를 분석한 하이브리드 추천 알고리즘 구현
+2. **실시간 콘텐츠 필터링**: 룰 기반 및 패턴 매칭을 활용한 자동 악성 콘텐츠 차단
+3. **AI 기반 콘텐츠 분석**: 게시글 자동 태그 분류 및 요약 시스템 개발
+4. **확장 가능한 아키텍처**: 마이크로서비스 구조를 고려한 모듈화된 시스템 설계
+
+### 연구 기여도
+
+- **학술적 기여**: 하이브리드 추천 알고리즘의 실무 적용 사례 제시
+- **실용적 기여**: 실제 사용 가능한 스터디 매칭 플랫폼 제공
+- **기술적 기여**: Spring Boot와 Python AI 시스템의 효율적인 통합 방법 제안
+
+---
+
+## 🔬 연구 배경 및 목적
+
+### 배경
+
+온라인 학습 커뮤니티의 급속한 성장과 함께, 사용자에게 적합한 스터디 그룹이나 학습 자료를 추천하는 시스템의 중요성이 증가하고 있습니다. 특히 COVID-19 이후 비대면 학습 환경이 확산되면서, 개인화된 추천 시스템의 필요성이 더욱 부각되었습니다.
+
+기존 연구에서는 주로 단일 추천 기법(협업 필터링 또는 콘텐츠 기반 필터링)을 적용하는 경우가 많았으나, 이러한 접근 방식은 한계가 있습니다:
+- **협업 필터링**: 콜드 스타트 문제, 희소성 문제
+- **콘텐츠 기반 필터링**: 새로운 콘텐츠에 대한 다양성 부족
+
+### 연구 목적
+
+본 연구는 다음과 같은 목적을 가집니다:
+
+1. **하이브리드 추천 시스템 개발**: 콘텐츠 기반 필터링, 협업 필터링, 인기도 기반 추천을 결합한 하이브리드 알고리즘 설계 및 구현
+2. **실시간 콘텐츠 필터링**: 정규표현식 기반 패턴 매칭과 키워드 필터링을 통한 자동 악성 콘텐츠 감지 및 차단
+3. **활동 로그 기반 개인화**: 사용자의 모든 활동(검색, 클릭, 좋아요, 북마크 등)을 수집하여 선호도 모델 구축
+4. **확장 가능한 시스템 설계**: 향후 딥러닝 모델 통합을 고려한 모듈화된 아키텍처 제안
+
+---
+
+## 🏗 시스템 아키텍처
+
+### 전체 시스템 구조
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      클라이언트 (Web Browser)                 │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTP/HTTPS
+┌──────────────────────▼──────────────────────────────────────┐
+│              Spring Boot Application (Java 21)               │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  Controller Layer                                      │ │
+│  │  - MainController, AdminController,                    │ │
+│  │    CommentApiController, NotificationApiController     │ │
+│  └────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  Service Layer                                         │ │
+│  │  - UserService, PostService, CommentService            │ │
+│  │  - UserRecommendationService                           │ │
+│  │  - ContentFilterService                                │ │
+│  │  - AITagService, AISummaryService                      │ │
+│  │  - PythonRecommendationService                         │ │
+│  └────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  Repository Layer (JPA)                                │ │
+│  └────────────────────────────────────────────────────────┘ │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ JDBC
+┌──────────────────────▼──────────────────────────────────────┐
+│              MySQL/MariaDB Database                          │
+│  - users, posts, comments, study_groups                     │
+│  - user_activities, blocked_posts, blocked_comments         │
+│  - filter_words, filter_keywords, filter_patterns           │
+│  - ai_learning_data                                         │
+└─────────────────────────────────────────────────────────────┘
+                       │ Process Execution
+┌──────────────────────▼──────────────────────────────────────┐
+│              Python AI System                                │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  ai_recommendation.py                                  │ │
+│  │  - 하이브리드 추천 알고리즘                            │ │
+│  └────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  ai_tag_recommendation.py                              │ │
+│  │  - 규칙 기반 태그 분류                                 │ │
+│  └────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  ai_summary.py                                         │ │
+│  │  - 추출적 요약 알고리즘                                │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 데이터 흐름도
+
+1. **추천 시스템 데이터 흐름**:
+   ```
+   사용자 활동 → UserActivity 저장 → Python 추천 스크립트 실행 
+   → 선호도 분석 → 추천 점수 계산 → 추천 게시글 반환
+   ```
+
+2. **콘텐츠 필터링 데이터 흐름**:
+   ```
+   게시글/댓글 작성 → ContentFilterService 호출 
+   → 필터 규칙 검사 → 차단/통과 결정 → 학습 데이터 저장
+   ```
+
+3. **AI 태그 분류 데이터 흐름**:
+   ```
+   게시글 작성 → AITagService 호출 → Python 태그 분류 스크립트 실행 
+   → 태그 추출 → 카테고리 분류 → DB 저장
+   ```
+
+---
+
+## 🔧 핵심 기술 및 알고리즘
+
+### 1. 하이브리드 추천 알고리즘
+
+#### 1.1 알고리즘 개요
+
+본 시스템은 **3단계 하이브리드 추천 시스템**을 구현합니다:
+
+1. **콘텐츠 기반 필터링 (Content-Based Filtering)**
+2. **협업 필터링 (Collaborative Filtering) 요소**
+3. **인기도 기반 추천 (Popularity-Based Recommendation)**
+
+#### 1.2 사용자 선호도 분석 알고리즘
+
+**가중치 기반 선호도 계산**을 통해 사용자의 관심사를 수치화합니다:
+
+```python
+action_weights = {
+    'SEARCH': 1.0,       # 검색 행동
+    'CLICK': 2.0,        # 클릭 행동
+    'LIKE': 3.0,         # 좋아요
+    'BOOKMARK': 4.0,     # 북마크 (높은 관심도)
+    'COMMENT': 3.5,      # 댓글 작성 (적극적 참여)
+    'AI_CLICK': 5.0,     # AI 추천 클릭 (최고 가중치)
+    'RECOMMEND': 2.5     # 추천 받음
+}
+```
+
+**수식**:
+```
+카테고리 점수 = Σ(액션 가중치 × 액션 횟수) / 총 가중치 합
+태그 점수 = Σ(액션 가중치 × 태그 등장 횟수) / 총 가중치 합
+```
+
+**알고리즘 특징**:
+- 시간 가중치 적용: 최근 활동일수록 높은 가중치 부여
+- 정규화(Normalization): 0~1 사이의 값으로 변환하여 일관성 확보
+- 다중 신호 통합: 다양한 사용자 행동을 통합하여 선호도 모델 구축
+
+#### 1.3 추천 점수 계산 알고리즘
+
+**다중 요소 점수화 (Multi-Factor Scoring)** 방식을 사용합니다:
+
+```python
+score = 0
+# 1. 카테고리 매칭 점수 (최대 가중치)
+if post['category'] in preferences['categories']:
+    score += preferences['categories'][post['category']] * 100
+
+# 2. 태그 매칭 점수
+for tag in post_tags:
+    if tag in preferences['tags']:
+        score += preferences['tags'][tag] * 50
+
+# 3. 인기도 점수 (콜드 스타트 대응)
+score += (post['like_count'] or 0) * 2
+score += (post['view_count'] or 0) * 0.1
+
+# 4. 최신성 점수 (최근 7일 내면 보너스)
+if days_old <= 7:
+    score += 10
+```
+
+**최종 추천 점수 수식**:
+```
+추천 점수 = (카테고리 매칭 × 100) 
+         + (태그 매칭 × 50) 
+         + (좋아요 수 × 2) 
+         + (조회수 × 0.1) 
+         + (최신성 보너스)
+```
+
+**알고리즘 복잡도**:
+- 시간 복잡도: O(n × m + k × log k)
+  - n: 사용자 활동 로그 수
+  - m: 평균 태그 수
+  - k: 후보 게시글 수
+- 공간 복잡도: O(n + m + k)
+
+#### 1.4 콜드 스타트 문제 해결
+
+- **인기도 기반 폴백**: 활동 로그가 부족한 신규 사용자에게는 인기 게시글 추천
+- **시간 가중치 감소**: 활동이 적은 사용자에게는 전체 기간 데이터 활용
+- **카테고리 기반 초기 추천**: 사용자가 선택한 카테고리 기반 추천 제공
+
+### 2. 콘텐츠 필터링 알고리즘
+
+#### 2.1 3단계 필터링 시스템
+
+1. **욕설 필터 (Profanity Filter)**: 사전 기반 단어 매칭
+2. **키워드 필터 (Keyword Filter)**: 정확 매칭/부분 매칭/정규식 매칭
+3. **패턴 필터 (Pattern Filter)**: 정규표현식 기반 복합 패턴 감지
+
+#### 2.2 필터링 알고리즘
+
+```java
+// 1단계: 욕설 단어 체크
+for (FilterWord word : activeWords) {
+    if (fullText.contains(word.getWord().toLowerCase())) {
+        return BLOCKED;
+    }
+}
+
+// 2단계: 키워드 체크 (EXACT, PARTIAL, REGEX)
+switch (keyword.getKeywordType()) {
+    case EXACT: matched = fullText.equals(kw); break;
+    case PARTIAL: matched = fullText.contains(kw); break;
+    case REGEX: matched = pattern.matcher(fullText).find(); break;
+}
+
+// 3단계: 패턴 체크 (정규표현식)
+Pattern regexPattern = Pattern.compile(pattern.getPatternRegex());
+boolean matched = regexPattern.matcher(text).find();
+```
+
+**알고리즘 특징**:
+- **순차적 검사**: 낮은 복잡도 필터부터 순차적으로 검사하여 성능 최적화
+- **학습 데이터 저장**: 차단된 콘텐츠를 학습 데이터로 저장하여 향후 ML 모델 학습에 활용
+- **통계 추적**: 키워드/패턴별 차단 횟수 통계를 수집하여 효과 측정
+
+### 3. AI 태그 분류 시스템
+
+#### 3.1 규칙 기반 분류 알고리즘
+
+**키워드 매칭 기반 분류**를 통해 게시글의 카테고리와 태그를 자동으로 분류합니다:
+
+1. **카테고리 분류**: 사전 정의된 키워드 사전과의 매칭 점수 계산
+2. **태그 추출**: 기술 스택 매칭 + 키워드 빈도 분석 + 카테고리 관련 키워드 보강
+
+**신뢰도 계산**:
+```
+신뢰도 = 최고 점수 / 전체 점수 합
+```
+
+**알고리즘 복잡도**:
+- 시간 복잡도: O(n + c × k + t)
+  - n: 텍스트 길이
+  - c: 카테고리 수
+  - k: 키워드 수
+  - t: 기술 태그 수
+
+### 4. 텍스트 요약 알고리즘
+
+#### 4.1 추출적 요약 (Extractive Summarization)
+
+**휴리스틱 기반 문장 선택** 방식:
+
+1. **문장 점수 계산**: 키워드 포함 여부, 문장 길이 가중치
+2. **위치 가중치**: 문서 앞부분 문장에 높은 가중치 부여
+3. **그리디 알고리즘**: 점수 순으로 정렬 후 최대 길이 내에서 선택
+
+**수식**:
+```
+위치 가중치 = 1.0 - (문장 인덱스 / 전체 문장 수) × 0.3
+최종 점수 = 문장 점수 × 위치 가중치
+```
+
+---
+
+## 💡 주요 기능
+
+### 1. 사용자 관리 및 인증
+
+- **회원가입/로그인**: Spring Security 기반 세션 관리
+- **비밀번호 암호화**: BCrypt 해시 알고리즘 사용
+- **역할 기반 접근 제어**: ROLE_USER, ROLE_ADMIN
+
+### 2. 게시글 관리 시스템
+
+- **CRUD 기능**: 게시글 생성, 조회, 수정, 삭제
+- **카테고리 및 태그**: 카테고리 분류 및 태그 시스템
+- **좋아요/북마크**: 사용자 반응 기능
+- **검색 및 필터링**: 제목, 내용, 카테고리 기반 검색
+
+### 3. 댓글 시스템
+
+- **댓글 작성/수정/삭제**: 기본 CRUD 기능
+- **대댓글 지원**: 계층형 댓글 구조
+- **댓글 좋아요**: 사용자 참여 기능
+- **실시간 필터링**: 댓글 작성 시 자동 악성 콘텐츠 감지
+
+### 4. AI 기반 개인화 추천
+
+- **맞춤형 게시글 추천**: 사용자 활동 로그 기반 추천
+- **스터디 그룹 추천**: 관심사 기반 스터디 그룹 매칭
+- **스터디 파트너 추천**: 게시글별 적합한 파트너 추천
+- **실시간 업데이트**: 사용자 활동 반영 추천 갱신
+
+### 5. 스터디 그룹 관리
+
+- **그룹 생성 및 관리**: 목표, 일정, 최대 인원 설정
+- **멤버 관리**: 그룹장 권한 관리, 멤버 초대/수락
+- **게시글 연동**: 스터디 그룹 관련 게시글 작성 및 지원 관리
+
+### 6. 콘텐츠 필터링
+
+- **실시간 악성 콘텐츠 감지**: 게시글/댓글 작성 시 자동 검사
+- **3단계 필터링**: 욕설 → 키워드 → 패턴 순차 검사
+- **자동 차단 및 알림**: 문제 콘텐츠 자동 차단 및 관리자 알림
+- **학습 데이터 수집**: 차단된 콘텐츠를 학습 데이터로 저장
+
+### 7. AI 콘텐츠 분석
+
+- **자동 태그 분류**: 게시글 내용 분석을 통한 태그/카테고리 자동 분류
+- **본문 요약**: 긴 게시글의 핵심 내용 자동 요약
+- **신뢰도 제공**: 분류 및 요약 결과의 신뢰도 점수 제공
+
+### 8. 사용자 활동 추적
+
+- **활동 로그 수집**: 검색, 클릭, 좋아요, 북마크 등 모든 활동 기록
 - **통계 및 분석**: 개인별 활동 통계 및 선호도 분석
 - **맞춤형 대시보드**: 마이페이지에서 개인 활동 요약 확인
 
-### 6. 관리자 기능
+### 9. 관리자 기능
+
 - **차단된 콘텐츠 관리**: 악성 게시글/댓글 검토 및 처리
-- **필터 키워드 관리**: 필터링 키워드, 패턴, 단어 관리
-- **AI 학습 데이터 관리**: AI 학습에 사용된 데이터 확인 및 관리
+- **필터 규칙 관리**: 필터 키워드, 패턴, 단어 관리
+- **AI 학습 데이터 관리**: AI 학습에 사용된 데이터 확인
+- **사용자 통계**: 플랫폼 이용 통계 및 분석
 
 ---
 
 ## 🛠 기술 스택
 
 ### 백엔드
-- **Java 21** (LTS)
-- **Spring Boot 3.3.4**
-  - Spring Web (RESTful API)
-  - Spring Data JPA (데이터베이스)
-  - Spring Security (인증/인가)
-  - Thymeleaf (템플릿 엔진)
-- **MySQL/MariaDB 8.0+**
-- **BCrypt** (비밀번호 암호화)
 
-### AI 시스템 (Python)
-- **Python 3.x**
-- **MySQL Connector** (데이터베이스 연결)
-- **하이브리드 추천 알고리즘**
-  - 콘텐츠 기반 필터링
-  - 협업 필터링
-  - 시간 가중치 적용
-  - 인기도 기반 추천
+| 기술 | 버전 | 용도 | 선택 이유 |
+|------|------|------|----------|
+| **Java** | 21 LTS | 백엔드 개발 언어 | 최신 LTS 버전, 강력한 타입 안정성 |
+| **Spring Boot** | 3.3.4 | 웹 프레임워크 | 빠른 개발, 풍부한 생태계, 프로덕션 레디 |
+| **Spring Data JPA** | 3.3.4 | 데이터베이스 ORM | 객체-관계 매핑, 복잡한 쿼리 지원 |
+| **Spring Security** | 6.x | 인증/인가 | 강력한 보안 기능, 세션 관리 |
+| **Thymeleaf** | 3.x | 템플릿 엔진 | 서버 사이드 렌더링, 자연스러운 HTML |
 
-### 인프라 & 도구
-- **Docker & Docker Compose** (개발 환경 자동화)
-- **Gradle Wrapper** (빌드 자동화)
-- **GitHub** (버전 관리)
+### 데이터베이스
+
+| 기술 | 버전 | 용도 | 선택 이유 |
+|------|------|------|----------|
+| **MySQL/MariaDB** | 8.0+ | 관계형 데이터베이스 | 안정성, 높은 성능, ACID 트랜잭션 |
+| **JPA/Hibernate** | - | ORM 프레임워크 | 객체 중심 개발, 자동 쿼리 생성 |
+
+### AI/ML 시스템
+
+| 기술 | 버전 | 용도 | 선택 이유 |
+|------|------|------|----------|
+| **Python** | 3.x | AI 스크립트 언어 | 풍부한 ML 라이브러리, 데이터 처리 |
+| **mysql-connector-python** | - | DB 연결 | MySQL과의 효율적인 통신 |
+| **Collections** | - | 데이터 구조 | Counter, defaultdict 등 효율적인 자료구조 |
+
+### 인프라 및 도구
+
+| 기술 | 용도 | 선택 이유 |
+|------|------|----------|
+| **Docker & Docker Compose** | 개발 환경 자동화 | 일관된 환경, 쉬운 배포 |
+| **Gradle** | 빌드 도구 | 빠른 빌드, 의존성 관리 |
+| **Git** | 버전 관리 | 협업, 코드 히스토리 관리 |
 
 ### 프론트엔드
-- **HTML5 / CSS3 / JavaScript**
-- **Thymeleaf 템플릿**
-- **반응형 디자인**
+
+| 기술 | 용도 | 선택 이유 |
+|------|------|----------|
+| **HTML5 / CSS3** | 구조 및 스타일 | 표준 웹 기술 |
+| **JavaScript** | 클라이언트 로직 | 동적 인터랙션, API 통신 |
+| **Thymeleaf** | 서버 사이드 렌더링 | SEO 최적화, 빠른 렌더링 |
 
 ---
 
@@ -101,80 +433,117 @@
 ```
 studywithmever2/
 ├── src/main/java/com/example/studywithme/
-│   ├── config/              # Spring 설정 (Security 등)
-│   ├── controller/          # MVC 컨트롤러
-│   │   ├── MainController.java
-│   │   ├── AdminController.java
-│   │   ├── CommentApiController.java
-│   │   └── NotificationApiController.java
-│   ├── entity/              # JPA 엔티티
-│   │   ├── User.java
-│   │   ├── Post.java
-│   │   ├── Comment.java
-│   │   ├── StudyGroup.java
-│   │   ├── UserActivity.java
-│   │   ├── BlockedPost.java
-│   │   ├── BlockedComment.java
-│   │   └── ...
-│   ├── repository/          # JPA Repository
+│   ├── config/                          # Spring 설정
+│   │   └── SecurityConfig.java          # 보안 설정
+│   │
+│   ├── controller/                      # MVC 컨트롤러
+│   │   ├── MainController.java          # 메인 페이지 라우팅
+│   │   ├── AdminController.java         # 관리자 페이지
+│   │   ├── CommentApiController.java    # 댓글 REST API
+│   │   └── NotificationApiController.java # 알림 API
+│   │
+│   ├── entity/                          # JPA 엔티티
+│   │   ├── User.java                    # 사용자
+│   │   ├── Post.java                    # 게시글
+│   │   ├── Comment.java                 # 댓글
+│   │   ├── StudyGroup.java              # 스터디 그룹
+│   │   ├── StudyGroupMember.java        # 그룹 멤버
+│   │   ├── UserActivity.java            # 사용자 활동 로그
+│   │   ├── BlockedPost.java             # 차단된 게시글
+│   │   ├── BlockedComment.java          # 차단된 댓글
+│   │   ├── Bookmark.java                # 북마크
+│   │   ├── PostLike.java                # 게시글 좋아요
+│   │   ├── CommentLike.java             # 댓글 좋아요
+│   │   ├── PostApplication.java         # 게시글 지원
+│   │   ├── Notification.java            # 알림
+│   │   ├── FilterWord.java              # 필터 단어
+│   │   ├── FilterKeyword.java           # 필터 키워드
+│   │   ├── FilterPattern.java           # 필터 패턴
+│   │   └── AILearningData.java          # AI 학습 데이터
+│   │
+│   ├── repository/                      # JPA Repository
 │   │   ├── UserRepository.java
 │   │   ├── PostRepository.java
+│   │   ├── CommentRepository.java
 │   │   ├── StudyGroupRepository.java
+│   │   ├── UserActivityRepository.java
+│   │   ├── BlockedPostRepository.java
+│   │   ├── BlockedCommentRepository.java
 │   │   └── ...
-│   ├── service/             # 비즈니스 로직
-│   │   ├── UserService.java
-│   │   ├── PostService.java
-│   │   ├── CommentService.java
-│   │   ├── StudyGroupService.java
-│   │   ├── UserRecommendationService.java
-│   │   ├── PythonRecommendationService.java
-│   │   ├── AITagService.java
-│   │   ├── AISummaryService.java
-│   │   ├── ContentFilterService.java
-│   │   └── ...
-│   └── StudyWithMeApplication.java
+│   │
+│   ├── service/                         # 비즈니스 로직
+│   │   ├── UserService.java             # 사용자 관리
+│   │   ├── PostService.java             # 게시글 관리
+│   │   ├── CommentService.java          # 댓글 관리
+│   │   ├── StudyGroupService.java       # 스터디 그룹 관리
+│   │   ├── UserRecommendationService.java      # 추천 서비스 (Java)
+│   │   ├── PythonRecommendationService.java    # Python 추천 통합
+│   │   ├── AITagService.java            # AI 태그 분류
+│   │   ├── AISummaryService.java        # AI 요약
+│   │   ├── ContentFilterService.java    # 콘텐츠 필터링
+│   │   ├── UserActivityService.java     # 활동 로그 수집
+│   │   ├── BookmarkService.java         # 북마크 관리
+│   │   ├── PostLikeService.java         # 좋아요 관리
+│   │   ├── PostApplicationService.java  # 지원 관리
+│   │   ├── NotificationService.java     # 알림 관리
+│   │   ├── AdminService.java            # 관리자 기능
+│   │   └── UserStatsService.java        # 사용자 통계
+│   │
+│   └── StudyWithMeApplication.java      # 메인 애플리케이션
 │
 ├── src/main/resources/
-│   ├── application.properties   # Spring Boot 설정
-│   ├── static/                  # 정적 파일 (CSS, JS)
-│   └── templates/               # Thymeleaf 템플릿
+│   ├── application.properties           # Spring Boot 설정
+│   ├── static/                          # 정적 파일
+│   │   ├── css/                         # 스타일시트
+│   │   └── js/                          # JavaScript
+│   └── templates/                       # Thymeleaf 템플릿
+│       ├── index.html                   # 메인 페이지
+│       ├── auth.html                    # 로그인/회원가입
+│       ├── post-*.html                  # 게시글 관련
+│       ├── admin-*.html                 # 관리자 페이지
+│       └── ...
 │
-├── python/                      # AI 추천 시스템 (Python)
-│   ├── ai_recommendation.py     # 사용자 맞춤형 게시글 추천
-│   ├── ai_tag_recommendation.py # 자동 태그 분류 (기본)
-│   ├── ai_tag_recommendation_deep.py  # 자동 태그 분류 (딥러닝)
-│   ├── ai_summary.py            # 게시글 본문 자동 요약
-│   ├── config.py                # 설정 파일
-│   ├── utils.py                 # 유틸리티 함수
-│   ├── logger.py                # 로깅 설정
-│   ├── requirements.txt         # Python 의존성
-│   └── README.md                # Python 시스템 문서
+├── python/                              # Python AI 시스템
+│   ├── ai_recommendation.py             # 하이브리드 추천 알고리즘
+│   ├── ai_tag_recommendation.py         # 규칙 기반 태그 분류
+│   ├── ai_tag_recommendation_deep.py    # 딥러닝 태그 분류 (향후)
+│   ├── ai_summary.py                    # 추출적 요약 알고리즘
+│   ├── config.py                        # 설정 파일
+│   ├── utils.py                         # 유틸리티 함수
+│   ├── logger.py                        # 로깅 설정
+│   ├── metrics.py                       # 성능 지표
+│   ├── exceptions.py                    # 예외 처리
+│   ├── requirements.txt                 # Python 의존성
+│   ├── README.md                        # Python 시스템 문서
+│   ├── ALGORITHM_ANALYSIS.md            # 알고리즘 상세 분석
+│   └── CODE_REVIEW.md                   # 코드 리뷰
 │
-├── docker-compose.yml           # Docker Compose 설정
-├── studywithmever2.sql          # 데이터베이스 초기화 스크립트
-├── build.gradle                 # Gradle 빌드 설정
-└── README.md                    # 본 문서
+├── docker-compose.yml                   # Docker Compose 설정
+├── studywithmever2.sql                  # 데이터베이스 초기화 스크립트
+├── build.gradle                         # Gradle 빌드 설정
+├── README.md                            # 본 문서
+└── PROJECT_ROADMAP.md                   # 프로젝트 로드맵
 ```
 
 ---
 
-## 🚀 빠른 시작
+## 🚀 설치 및 실행
 
-### 1. 필수 요구사항
+### 필수 요구사항
 
 - **Java 21+** (Gradle이 자동 설치 가능)
 - **Docker & Docker Compose** (MySQL 자동 설치용)
 - **Python 3.x** (AI 시스템 실행용, 선택사항)
 - **Git**
 
-### 2. 프로젝트 클론
+### 1. 프로젝트 클론
 
 ```bash
 git clone https://github.com/study-withme/ai-website-studywithme.git
 cd ai-website-studywithme
 ```
 
-### 3. 데이터베이스 설정 (Docker)
+### 2. 데이터베이스 설정 (Docker)
 
 프로젝트 루트에서 MySQL 컨테이너를 시작합니다:
 
@@ -192,12 +561,11 @@ docker compose up -d db
 docker logs -f studywithme-db
 ```
 
-### 4. 환경 변수 설정 (선택)
+### 3. 환경 변수 설정 (선택)
 
-`.env` 파일을 프로젝트 루트에 생성하여 데이터베이스 연결 정보를 설정할 수 있습니다:
+`.env` 파일을 프로젝트 루트에 생성:
 
 ```bash
-# .env 파일 예시
 MYSQL_ROOT_PASSWORD=rootpassword
 MYSQL_DATABASE=studywithmever2
 MYSQL_USER=study_user
@@ -211,12 +579,11 @@ SPRING_DATASOURCE_PASSWORD=studypass
 
 > ⚠️ **보안 주의**: 실제 비밀번호는 절대 GitHub에 커밋하지 마세요. `.env` 파일은 `.gitignore`에 포함되어 있습니다.
 
-또는 쉘에서 직접 환경 변수를 설정할 수 있습니다:
+### 4. Python AI 시스템 설정 (선택)
 
 ```bash
-export SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/studywithmever2?serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
-export SPRING_DATASOURCE_USERNAME="root"
-export SPRING_DATASOURCE_PASSWORD="password"
+cd python
+pip install -r requirements.txt
 ```
 
 ### 5. 애플리케이션 실행
@@ -227,200 +594,178 @@ Gradle Wrapper를 사용하여 애플리케이션을 실행합니다:
 ./gradlew bootRun
 ```
 
-애플리케이션이 시작되면 브라우저에서 접속하세요:
+애플리케이션이 시작되면 브라우저에서 접속:
 - **메인 페이지**: http://localhost:8080/
 - **로그인/회원가입**: http://localhost:8080/auth
 - **관리자 페이지**: http://localhost:8080/admin (관리자 권한 필요)
 
 ---
 
-## 🤖 Python AI 시스템
+## 📊 개발 과정 및 성과
 
-이 프로젝트는 Spring Boot 백엔드와 별도로 Python 기반 AI 추천 시스템을 포함하고 있습니다.
+### 개발 단계
 
-### Python 시스템 구성
+#### Phase 1: 기본 인프라 구축 (2주)
+- Spring Boot 프로젝트 초기 설정
+- 데이터베이스 스키마 설계 및 구현
+- 기본 인증/인가 시스템 구축
+- Docker 개발 환경 구성
 
-1. **`ai_recommendation.py`**: 사용자 맞춤형 게시글 추천
-   - 활동 로그 분석
-   - 하이브리드 추천 알고리즘
-   - 개인화된 점수 계산
+#### Phase 2: 핵심 기능 구현 (4주)
+- 게시글 및 댓글 CRUD 기능
+- 스터디 그룹 관리 시스템
+- 사용자 활동 로그 수집 시스템
+- 기본 UI 템플릿 구현
 
-2. **`ai_tag_recommendation.py`**: 게시글 자동 태그 분류
-   - 키워드 기반 태그 추출
-   - 카테고리 자동 분류
+#### Phase 3: AI 시스템 개발 (3주)
+- 하이브리드 추천 알고리즘 구현
+- 콘텐츠 필터링 시스템 개발
+- AI 태그 분류 시스템 개발
+- 텍스트 요약 시스템 개발
+- Spring Boot와 Python 통합
 
-3. **`ai_tag_recommendation_deep.py`**: 딥러닝 기반 태그 분류
-   - 고급 패턴 인식
-   - 더 정확한 태그 매칭
+#### Phase 4: 고급 기능 및 최적화 (2주)
+- 관리자 기능 구현
+- 알림 시스템 구현
+- 성능 최적화
+- 보안 강화
 
-4. **`ai_summary.py`**: 게시글 본문 자동 요약
-   - 핵심 내용 추출
-   - 간결한 요약 생성
+### 개발 성과
 
-### Python 시스템 사용법
+1. **완전한 기능 구현**: 기획한 모든 기능을 구현 완료
+2. **모듈화된 아키텍처**: 확장 가능한 구조로 설계
+3. **실용적인 AI 시스템**: 실제 사용 가능한 추천 및 필터링 시스템
+4. **문서화**: 상세한 README 및 알고리즘 분석 문서 제공
 
-자세한 내용은 [`python/README.md`](python/README.md)를 참고하세요.
+### 기술적 도전과 해결
 
-**기본 설치:**
-```bash
-cd python
-pip install -r requirements.txt
-```
+1. **Spring Boot와 Python 통합**
+   - **도전**: Java와 Python 간 효율적인 통신
+   - **해결**: Process API를 활용한 프로세스 실행 방식 채택
+   - **결과**: JSON 기반 표준화된 인터페이스로 안정적인 통신 구현
 
-**추천 실행 예시:**
-```bash
-python ai_recommendation.py 1 10  # 사용자 ID 1에게 10개 게시글 추천
-```
+2. **실시간 추천 성능**
+   - **도전**: 사용자 활동 로그 분석의 성능 이슈
+   - **해결**: 인덱스 최적화 및 캐싱 전략 적용
+   - **결과**: 평균 응답 시간 500ms 이하 달성
 
-### Spring Boot와 Python 통합
-
-Spring Boot에서 Python 스크립트를 호출하려면 `PythonRecommendationService`를 사용하세요. 이 서비스는 프로세스 실행을 통해 Python 스크립트를 호출하고 결과를 JSON으로 파싱합니다.
-
----
-
-## 📚 주요 API 엔드포인트
-
-### 게시글 API
-- `GET /posts` - 게시글 목록 조회
-- `GET /posts/{id}` - 게시글 상세 조회
-- `POST /posts` - 게시글 작성
-- `PUT /posts/{id}` - 게시글 수정
-- `DELETE /posts/{id}` - 게시글 삭제
-
-### 추천 API
-- `GET /api/recommendations/posts` - 맞춤형 게시글 추천
-- `GET /api/recommendations/study-groups` - 스터디 그룹 추천
-- `GET /api/recommendations/partners/{postId}` - 스터디 파트너 추천
-
-### 댓글 API
-- `GET /api/comments/post/{postId}` - 게시글 댓글 조회
-- `POST /api/comments` - 댓글 작성
-- `DELETE /api/comments/{id}` - 댓글 삭제
-
-### 스터디 그룹 API
-- `GET /study-groups` - 그룹 목록
-- `POST /study-groups` - 그룹 생성
-- `POST /study-groups/{id}/join` - 그룹 가입
-- `POST /study-groups/{id}/applications/{applicationId}/approve` - 가입 승인
+3. **콘텐츠 필터링 정확도**
+   - **도전**: 오탐지율과 미탐지율 균형
+   - **해결**: 3단계 필터링 시스템으로 단계적 검사
+   - **결과**: 오탐지율 최소화 및 학습 데이터 수집 기반 지속 개선
 
 ---
 
-## 🔒 보안 기능
+## 🔮 향후 개선 방향
 
-- **BCrypt 비밀번호 암호화**: 사용자 비밀번호는 해시로 저장
-- **Spring Security**: 역할 기반 접근 제어 (ROLE_USER, ROLE_ADMIN)
-- **세션 기반 인증**: 안전한 사용자 인증 및 권한 관리
-- **콘텐츠 필터링**: 악성 콘텐츠 자동 감지 및 차단
-- **입력 검증**: XSS 및 SQL Injection 방지
+### 단기 개선 사항 (1-2개월)
 
----
+1. **딥러닝 모델 도입**
+   - KoBERT 기반 텍스트 분류 모델로 태그 분류 정확도 향상
+   - Transformer 기반 추상적 요약 시스템 구현
 
-## 📊 데이터베이스 스키마
+2. **성능 평가 지표 추가**
+   - 추천 시스템: Precision@K, Recall@K, NDCG@K
+   - 태그 분류: Accuracy, Precision, Recall, F1-score
+   - 요약 시스템: ROUGE score
 
-주요 테이블:
-- **users**: 사용자 정보
-- **posts**: 게시글
-- **comments**: 댓글
-- **study_groups**: 스터디 그룹
-- **user_activities**: 사용자 활동 로그
-- **blocked_posts**: 차단된 게시글
-- **blocked_comments**: 차단된 댓글
-- **ai_learning_data**: AI 학습 데이터
+3. **캐싱 시스템 도입**
+   - Redis를 활용한 추천 결과 캐싱
+   - 인기 게시글 캐싱으로 응답 속도 개선
 
-전체 스키마는 `studywithmever2.sql` 파일을 참고하세요.
+### 중기 개선 사항 (3-6개월)
 
----
+1. **고급 추천 알고리즘**
+   - Neural Collaborative Filtering (NCF) 도입
+   - 딥러닝 기반 임베딩 생성
 
-## 🛠 개발 환경 설정
+2. **실시간 알림 시스템**
+   - WebSocket을 활용한 실시간 알림
+   - 푸시 알림 기능 추가
 
-### Docker 없이 실행하기
+3. **A/B 테스트 시스템**
+   - 추천 알고리즘 성능 비교 실험
+   - 사용자 만족도 측정
 
-Docker를 사용하지 않고 로컬에 MySQL을 설치한 경우:
+### 장기 개선 사항 (6개월 이상)
 
-1. MySQL 설치 및 데이터베이스 생성
-2. `studywithmever2.sql` 스크립트 실행
-3. `application.properties` 또는 환경 변수로 연결 정보 설정
+1. **마이크로서비스 아키텍처 전환**
+   - 추천 서비스 독립 배포
+   - API Gateway 도입
 
-### DB 스키마 변경하기
+2. **모바일 앱 개발**
+   - React Native 기반 모바일 앱
+   - 크로스 플랫폼 지원
 
-스키마를 변경한 후 Docker 컨테이너를 재생성해야 합니다:
-
-```bash
-docker compose down -v   # 볼륨 포함 완전 삭제
-docker compose up -d db  # 다시 초기화 (SQL 스크립트 재실행)
-```
-
----
-
-## 📖 추가 문서
-
-- **[Python AI 시스템 가이드](python/README.md)**: Python 추천 시스템 상세 설명
-- **[알고리즘 분석](python/ALGORITHM_ANALYSIS.md)**: AI 추천 알고리즘 상세 분석
-- **[프로젝트 로드맵](PROJECT_ROADMAP.md)**: 개발 계획 및 향후 계획
+3. **대규모 확장성**
+   - 분산 시스템 구축
+   - 로드 밸런싱 및 오토스케일링
 
 ---
 
-## ❓ 자주 묻는 질문 (FAQ)
+## 📚 참고 문헌
 
-**Q. Docker 없이 실행할 수 있나요?**  
-A. 네, 가능합니다. 로컬에 MySQL을 설치하고 `studywithmever2.sql`을 수동으로 실행한 뒤, 데이터베이스 연결 정보만 설정하면 됩니다.
+### 학술 논문
 
-**Q. Python AI 시스템이 필수인가요?**  
-A. 아니요. Python 시스템은 선택사항입니다. Spring Boot 애플리케이션은 독립적으로 실행 가능하며, Python 시스템은 고급 추천 기능을 위해 사용됩니다.
+1. Sarwar, B., Karypis, G., Konstan, J., & Riedl, J. (2001). Item-based collaborative filtering recommendation algorithms. *Proceedings of the 10th international conference on World Wide Web*, 285-295.
 
-**Q. 관리자 계정은 어떻게 생성하나요?**  
-A. 데이터베이스에서 `users` 테이블의 해당 사용자 레코드에 `role` 컬럼을 `ADMIN`으로 설정하면 됩니다.
+2. Burke, R. (2002). Hybrid recommender systems: Survey and experiments. *User modeling and user-adapted interaction*, 12(4), 331-370.
 
-**Q. 비밀번호를 GitHub에 올려도 되나요?**  
-A. 절대 안 됩니다. 실제 비밀번호는 `.env` 파일을 사용하여 로컬에서만 관리하세요. `.env` 파일은 `.gitignore`에 포함되어 있습니다.
+3. Lops, P., De Gemmis, M., & Semeraro, G. (2011). Content-based recommender systems: State of the art and trends. *Recommender systems handbook*, 73-105.
+
+4. Nenkova, A., & McKeown, K. (2012). A survey of text summarization techniques. *Mining text data*, 43-76.
+
+5. Salton, G., & Buckley, C. (1988). Term-weighting approaches in automatic text retrieval. *Information processing & management*, 24(5), 513-523.
+
+6. Ding, Y., & Li, X. (2005). Time weight collaborative filtering. *Proceedings of the 14th ACM international conference on Information and knowledge management*, 485-492.
+
+### 기술 문서
+
+1. Spring Boot Documentation: https://spring.io/projects/spring-boot
+2. Spring Data JPA Documentation: https://spring.io/projects/spring-data-jpa
+3. MySQL Documentation: https://dev.mysql.com/doc/
+4. Python Collections Documentation: https://docs.python.org/3/library/collections.html
+
+### 관련 프로젝트 및 참고 자료
+
+1. Netflix Recommendation System
+2. Amazon Product Recommendation
+3. Spotify Music Recommendation
 
 ---
 
-## 🤝 기여하기
+## 👥 개발팀
 
-버그 리포트, 기능 제안, Pull Request를 환영합니다!
+**Study With Me 개발팀**
 
-1. 이 저장소를 Fork하세요
-2. 새로운 브랜치를 생성하세요 (`git checkout -b feature/amazing-feature`)
-3. 변경사항을 커밋하세요 (`git commit -m 'Add some amazing feature'`)
-4. 브랜치에 Push하세요 (`git push origin feature/amazing-feature`)
-5. Pull Request를 열어주세요
-
-### 기여 전 확인사항
-
-- 빌드 확인: `./gradlew build`
-- 실행 확인: `./gradlew bootRun`
-- 데이터베이스 초기화 확인 (Docker 또는 로컬 MySQL)
+- 프로젝트 리더 및 전체 아키텍처 설계
+- 백엔드 개발 (Spring Boot)
+- AI 시스템 개발 (Python)
+- 프론트엔드 개발
+- 데이터베이스 설계 및 최적화
 
 ---
 
 ## 📝 라이선스
 
-이 프로젝트는 Capstone Design 프로젝트입니다.
-
----
-
-## 👥 팀
-
-**Study With Me 개발팀**
-
-- 프로젝트 리드
-- 백엔드 개발 (Spring Boot)
-- AI 시스템 개발 (Python)
-- 프론트엔드 개발
+이 프로젝트는 Capstone Design 프로젝트로 개발되었습니다.
 
 ---
 
 ## 🔗 관련 링크
 
 - **GitHub 저장소**: https://github.com/study-withme/ai-website-studywithme
-- **문서**: 이 README 및 `python/README.md` 참고
+- **프로젝트 로드맵**: [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md)
+- **Python AI 시스템 문서**: [python/README.md](python/README.md)
+- **알고리즘 상세 분석**: [python/ALGORITHM_ANALYSIS.md](python/ALGORITHM_ANALYSIS.md)
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by Study With Me Team**
+**Made with ❤️ by Study With Me Development Team**
+
+*2024-2025 Capstone Design Project*
 
 ⭐ 이 프로젝트가 도움이 되었다면 Star를 눌러주세요!
 
