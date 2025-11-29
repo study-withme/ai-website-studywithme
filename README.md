@@ -99,7 +99,8 @@
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  Controller Layer                                      │ │
 │  │  - MainController, AdminController,                    │ │
-│  │    CommentApiController, NotificationApiController     │ │
+│  │    CommentApiController, NotificationApiController,   │ │
+│  │    ChatbotController                                    │ │
 │  └────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  Service Layer                                         │ │
@@ -108,18 +109,23 @@
 │  │  - ContentFilterService                                │ │
 │  │  - AITagService, AISummaryService                      │ │
 │  │  - PythonRecommendationService                         │ │
+│  │  - ChatbotService                                      │ │
 │  └────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  Repository Layer (JPA)                                │ │
+│  └────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  Config Layer                                          │ │
+│  │  - SecurityConfig, PythonInitializer                  │ │
 │  └────────────────────────────────────────────────────────┘ │
 └──────────────────────┬──────────────────────────────────────┘
                        │ JDBC
 ┌──────────────────────▼──────────────────────────────────────┐
 │              MySQL/MariaDB Database                          │
-│  - users, posts, comments, study_groups                     │
+│  - users, user_profiles, posts, comments, study_groups       │
 │  - user_activities, blocked_posts, blocked_comments         │
-│  - filter_words, filter_keywords, filter_patterns           │
-│  - ai_learning_data                                         │
+│  - filter_words, filter_keywords, filter_patterns            │
+│  - ai_learning_data, chat_messages                          │
 └─────────────────────────────────────────────────────────────┘
                        │ Process Execution
 ┌──────────────────────▼──────────────────────────────────────┐
@@ -133,8 +139,16 @@
 │  │  - 규칙 기반 태그 분류                                 │ │
 │  └────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────┐ │
+│  │  ai_tag_recommendation_deep.py                        │ │
+│  │  - 딥러닝 기반 태그 분류 (선택적)                      │ │
+│  └────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
 │  │  ai_summary.py                                         │ │
-│  │  - 추출적 요약 알고리즘                                │ │
+│  │  - Gemini API 기반 추상적 요약                         │ │
+│  └────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  config.py, logger.py, utils.py, metrics.py           │ │
+│  │  exceptions.py                                         │ │
 │  └────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -304,19 +318,29 @@ boolean matched = regexPattern.matcher(text).find();
 
 ### 4. 텍스트 요약 알고리즘
 
-#### 4.1 추출적 요약 (Extractive Summarization)
+#### 4.1 Gemini API 기반 추상적 요약
 
-**휴리스틱 기반 문장 선택** 방식:
+**Google Gemini API**를 활용한 고품질 텍스트 요약:
 
-1. **문장 점수 계산**: 키워드 포함 여부, 문장 길이 가중치
-2. **위치 가중치**: 문서 앞부분 문장에 높은 가중치 부여
-3. **그리디 알고리즘**: 점수 순으로 정렬 후 최대 길이 내에서 선택
+1. **추상적 요약**: 단순 추출이 아닌 의미 기반 요약 생성
+2. **구조화된 정보 추출**: 
+   - 사용자 프로필 정보 ("이런 사람을 원함")
+   - 추정 레벨 (초급/중급/고급)
+   - 진행 방식
+3. **규칙 기반 보강**: Gemini API 결과를 정규표현식으로 구조화
 
-**수식**:
+**프로세스**:
 ```
-위치 가중치 = 1.0 - (문장 인덱스 / 전체 문장 수) × 0.3
-최종 점수 = 문장 점수 × 위치 가중치
+게시글 본문 → Gemini API 요청 → 추상적 요약 생성 
+→ 정규표현식으로 구조화 → 구조화된 요약 반환
 ```
+
+#### 4.2 폴백 메커니즘
+
+Gemini API 실패 시 **추출적 요약**으로 폴백:
+- 키워드 기반 문장 선택
+- 위치 가중치 적용
+- 최대 길이 제한 내에서 요약 생성
 
 ---
 
@@ -365,21 +389,36 @@ boolean matched = regexPattern.matcher(text).find();
 ### 7. AI 콘텐츠 분석
 
 - **자동 태그 분류**: 게시글 내용 분석을 통한 태그/카테고리 자동 분류
-- **본문 요약**: 긴 게시글의 핵심 내용 자동 요약
+- **본문 요약**: Gemini API를 활용한 게시글 핵심 내용 자동 요약
+- **구조화된 요약**: 사용자 프로필, 추정 레벨 등 구조화된 정보 추출
 - **신뢰도 제공**: 분류 및 요약 결과의 신뢰도 점수 제공
 
-### 8. 사용자 활동 추적
+### 8. AI 챗봇 시스템
+
+- **대화형 AI 어시스턴트**: Gemini API 기반 자연어 대화 지원
+- **컨텍스트 인식**: 최근 대화 기록을 기반으로 맥락 파악
+- **액션 지원**: 게시글 검색, 마이페이지 이동 등 액션 실행
+- **대화 기록 저장**: 사용자별 대화 기록 저장 및 관리
+
+### 9. 사용자 활동 추적
 
 - **활동 로그 수집**: 검색, 클릭, 좋아요, 북마크 등 모든 활동 기록
 - **통계 및 분석**: 개인별 활동 통계 및 선호도 분석
 - **맞춤형 대시보드**: 마이페이지에서 개인 활동 요약 확인
 
-### 9. 관리자 기능
+### 10. 관리자 기능
 
 - **차단된 콘텐츠 관리**: 악성 게시글/댓글 검토 및 처리
 - **필터 규칙 관리**: 필터 키워드, 패턴, 단어 관리
 - **AI 학습 데이터 관리**: AI 학습에 사용된 데이터 확인
 - **사용자 통계**: 플랫폼 이용 통계 및 분석
+
+### 11. 자동 환경 초기화
+
+- **Python 환경 자동 검증**: 애플리케이션 시작 시 Python 스크립트 및 패키지 확인
+- **문법 검사**: 모든 Python 파일의 문법 오류 사전 검사
+- **테스트 실행**: 실행 가능한 스크립트들의 기본 기능 테스트
+- **설정 스크립트**: setup.sh/setup.bat을 통한 자동 환경 설정
 
 ---
 
@@ -406,9 +445,11 @@ boolean matched = regexPattern.matcher(text).find();
 
 | 기술 | 버전 | 용도 | 선택 이유 |
 |------|------|------|----------|
-| **Python** | 3.x | AI 스크립트 언어 | 풍부한 ML 라이브러리, 데이터 처리 |
+| **Python** | 3.7+ | AI 스크립트 언어 | 풍부한 ML 라이브러리, 데이터 처리 |
+| **Google Gemini API** | v1beta | 텍스트 요약, 챗봇 | 고품질 자연어 처리, 추상적 요약 지원 |
 | **mysql-connector-python** | - | DB 연결 | MySQL과의 효율적인 통신 |
 | **Collections** | - | 데이터 구조 | Counter, defaultdict 등 효율적인 자료구조 |
+| **torch, transformers** | - | 딥러닝 (선택적) | 딥러닝 기반 태그 분류 (향후 확장) |
 
 ### 인프라 및 도구
 
@@ -434,16 +475,19 @@ boolean matched = regexPattern.matcher(text).find();
 studywithmever2/
 ├── src/main/java/com/example/studywithme/
 │   ├── config/                          # Spring 설정
-│   │   └── SecurityConfig.java          # 보안 설정
+│   │   ├── SecurityConfig.java          # 보안 설정
+│   │   └── PythonInitializer.java       # Python 환경 자동 초기화
 │   │
 │   ├── controller/                      # MVC 컨트롤러
 │   │   ├── MainController.java          # 메인 페이지 라우팅
 │   │   ├── AdminController.java         # 관리자 페이지
 │   │   ├── CommentApiController.java    # 댓글 REST API
-│   │   └── NotificationApiController.java # 알림 API
+│   │   ├── NotificationApiController.java # 알림 API
+│   │   └── ChatbotController.java       # 챗봇 API
 │   │
 │   ├── entity/                          # JPA 엔티티
 │   │   ├── User.java                    # 사용자
+│   │   ├── UserProfile.java             # 사용자 프로필
 │   │   ├── Post.java                    # 게시글
 │   │   ├── Comment.java                 # 댓글
 │   │   ├── StudyGroup.java              # 스터디 그룹
@@ -456,6 +500,7 @@ studywithmever2/
 │   │   ├── CommentLike.java             # 댓글 좋아요
 │   │   ├── PostApplication.java         # 게시글 지원
 │   │   ├── Notification.java            # 알림
+│   │   ├── ChatMessage.java             # 챗봇 메시지
 │   │   ├── FilterWord.java              # 필터 단어
 │   │   ├── FilterKeyword.java           # 필터 키워드
 │   │   ├── FilterPattern.java           # 필터 패턴
@@ -479,7 +524,8 @@ studywithmever2/
 │   │   ├── UserRecommendationService.java      # 추천 서비스 (Java)
 │   │   ├── PythonRecommendationService.java    # Python 추천 통합
 │   │   ├── AITagService.java            # AI 태그 분류
-│   │   ├── AISummaryService.java        # AI 요약
+│   │   ├── AISummaryService.java        # AI 요약 (Gemini API)
+│   │   ├── ChatbotService.java          # 챗봇 서비스 (Gemini API)
 │   │   ├── ContentFilterService.java    # 콘텐츠 필터링
 │   │   ├── UserActivityService.java     # 활동 로그 수집
 │   │   ├── BookmarkService.java         # 북마크 관리
@@ -520,8 +566,13 @@ studywithmever2/
 │
 ├── docker-compose.yml                   # Docker Compose 설정
 ├── studywithmever2.sql                  # 데이터베이스 초기화 스크립트
+├── chat_messages_table.sql             # 챗봇 메시지 테이블 스크립트
+├── setup.sh                             # 자동 설정 스크립트 (Mac/Linux)
+├── setup.bat                             # 자동 설정 스크립트 (Windows)
 ├── build.gradle                         # Gradle 빌드 설정
 ├── README.md                            # 본 문서
+├── QUICK_START.md                       # 빠른 시작 가이드
+├── SETUP.md                             # 상세 설치 가이드
 └── PROJECT_ROADMAP.md                   # 프로젝트 로드맵
 ```
 
@@ -531,73 +582,112 @@ studywithmever2/
 
 ### 필수 요구사항
 
-- **Java 21+** (Gradle이 자동 설치 가능)
-- **Docker & Docker Compose** (MySQL 자동 설치용)
-- **Python 3.x** (AI 시스템 실행용, 선택사항)
+- **Java 21+** (Gradle Wrapper가 자동 설치)
+- **Docker & Docker Compose** (MySQL 자동 설치용, 권장)
+- **Python 3.7+** (AI 시스템 실행용, 선택사항)
 - **Git**
 
-### 1. 프로젝트 클론
+### 빠른 시작 (권장)
+
+자동 설정 스크립트를 사용하면 모든 설정이 자동으로 완료됩니다:
+
+**Mac/Linux:**
+```bash
+git clone https://github.com/study-withme/ai-website-studywithme.git
+cd ai-website-studywithme
+chmod +x setup.sh
+./setup.sh
+./gradlew bootRun
+```
+
+**Windows:**
+```cmd
+git clone https://github.com/study-withme/ai-website-studywithme.git
+cd ai-website-studywithme
+setup.bat
+gradlew.bat bootRun
+```
+
+자동 설정 스크립트가 다음을 수행합니다:
+- ✅ `application.properties` 파일 생성 및 DB 비밀번호 설정
+- ✅ Python 패키지 자동 설치
+- ✅ Docker Compose로 데이터베이스 자동 시작 (Docker 설치 시)
+- ✅ 필요한 설정 확인
+
+> 📖 **자세한 설치 가이드**: [QUICK_START.md](QUICK_START.md) 또는 [SETUP.md](SETUP.md) 참고
+
+### 수동 설치
+
+#### 1. 프로젝트 클론
 
 ```bash
 git clone https://github.com/study-withme/ai-website-studywithme.git
 cd ai-website-studywithme
 ```
 
-### 2. 데이터베이스 설정 (Docker)
+#### 2. 애플리케이션 설정
 
-프로젝트 루트에서 MySQL 컨테이너를 시작합니다:
+```bash
+# 설정 파일 복사
+cp src/main/resources/application.properties.example src/main/resources/application.properties
 
+# application.properties 파일을 열어서 DB 비밀번호 및 Gemini API 키 설정
+# - db.password=your_password_here → 실제 비밀번호로 변경
+# - gemini.api.key=your_gemini_api_key_here → Gemini API 키 설정
+```
+
+#### 3. 데이터베이스 설정
+
+**Docker 사용 (권장):**
 ```bash
 docker compose up -d db
 ```
 
-이 명령은 다음을 자동으로 수행합니다:
-- MariaDB 10.4 컨테이너 생성
-- `studywithmever2.sql` 스크립트 자동 실행
-- 데이터베이스 및 테이블 생성
-
-데이터베이스 상태 확인:
+**로컬 MySQL 사용:**
 ```bash
-docker logs -f studywithme-db
+mysql -u root -p
+CREATE DATABASE studywithmever2 CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+source studywithmever2.sql;
+source chat_messages_table.sql;  # 챗봇 기능 사용 시
 ```
 
-### 3. 환경 변수 설정 (선택)
-
-`.env` 파일을 프로젝트 루트에 생성:
-
-```bash
-MYSQL_ROOT_PASSWORD=rootpassword
-MYSQL_DATABASE=studywithmever2
-MYSQL_USER=study_user
-MYSQL_PASSWORD=studypass
-MYSQL_PORT=3306
-
-SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/studywithmever2?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-SPRING_DATASOURCE_USERNAME=study_user
-SPRING_DATASOURCE_PASSWORD=studypass
-```
-
-> ⚠️ **보안 주의**: 실제 비밀번호는 절대 GitHub에 커밋하지 마세요. `.env` 파일은 `.gitignore`에 포함되어 있습니다.
-
-### 4. Python AI 시스템 설정 (선택)
+#### 4. Python AI 시스템 설정 (선택)
 
 ```bash
 cd python
 pip install -r requirements.txt
 ```
 
-### 5. 애플리케이션 실행
+> 💡 Python이 설치되어 있지 않아도 웹사이트는 정상 동작합니다. (AI 기능만 제한됨)
 
-Gradle Wrapper를 사용하여 애플리케이션을 실행합니다:
+#### 5. 애플리케이션 실행
 
+**Mac/Linux:**
 ```bash
 ./gradlew bootRun
+```
+
+**Windows:**
+```cmd
+gradlew.bat bootRun
 ```
 
 애플리케이션이 시작되면 브라우저에서 접속:
 - **메인 페이지**: http://localhost:8080/
 - **로그인/회원가입**: http://localhost:8080/auth
 - **관리자 페이지**: http://localhost:8080/admin (관리자 권한 필요)
+- **AI 챗봇**: 메인 페이지에서 챗봇 아이콘 클릭
+
+### 환경 변수 설정 (선택)
+
+`.env` 파일을 프로젝트 루트에 생성:
+
+```bash
+DB_PASSWORD=your_password
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+> ⚠️ **보안 주의**: 실제 비밀번호와 API 키는 절대 GitHub에 커밋하지 마세요. `.env` 파일은 `.gitignore`에 포함되어 있습니다.
 
 ---
 
@@ -776,9 +866,11 @@ Gradle Wrapper를 사용하여 애플리케이션을 실행합니다:
 ## 🔗 관련 링크
 
 - **GitHub 저장소**: https://github.com/study-withme/ai-website-studywithme
+- **빠른 시작 가이드**: [QUICK_START.md](QUICK_START.md)
+- **상세 설치 가이드**: [SETUP.md](SETUP.md) (있는 경우)
 - **프로젝트 로드맵**: [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md)
 - **Python AI 시스템 문서**: [python/README.md](python/README.md)
-- **알고리즘 상세 분석**: [python/ALGORITHM_ANALYSIS.md](python/ALGORITHM_ANALYSIS.md)
+- **알고리즘 상세 분석**: [python/ALGORITHM_ANALYSIS.md](python/ALGORITHM_ANALYSIS.md) (있는 경우)
 
 ---
 
