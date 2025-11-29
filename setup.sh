@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# -*- coding: utf-8 -*-
 # Study With Me 프로젝트 자동 설정 스크립트 (Mac/Linux)
 
 echo "=========================================="
