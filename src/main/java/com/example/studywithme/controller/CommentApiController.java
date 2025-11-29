@@ -15,6 +15,7 @@ import java.util.Map;
 public class CommentApiController {
 
     private final CommentService commentService;
+    private final com.example.studywithme.service.UserActivityService userActivityService;
 
     // 댓글 목록 조회
     @GetMapping("/api/posts/{postId}/comments")
@@ -44,6 +45,8 @@ public class CommentApiController {
             String ip = request.getRemoteAddr();
             String ua = request.getHeader("User-Agent");
             CommentResponse res = commentService.addComment(loginUser.getId(), postId, content, parentId, ip, ua);
+            // 댓글 작성 시 활동 로그 기록
+            userActivityService.logComment(loginUser, postId);
             return Map.of("success", true, "comment", res);
         } catch (RuntimeException e) {
             return Map.of("success", false, "message", e.getMessage());

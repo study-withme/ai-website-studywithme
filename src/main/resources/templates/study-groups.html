@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>진행중인 스터디 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .group-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .group-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        .group-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .group-meta {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+        .group-members {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .member-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            margin-left: -8px;
+        }
+        .member-avatar:first-child {
+            margin-left: 0;
+        }
+        .member-count {
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+            <a href="/study-groups" class="active">진행중인 스터디</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/my-applications" class="btn btn-outline">내 지원현황</a>
+                <a href="/bookmarks" class="btn btn-outline">북마크</a>
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="toolbar-top">
+        <h1>진행중인 스터디</h1>
+        <p>승인되어 참여 중인 스터디 그룹입니다.</p>
+    </div>
+
+    <!-- 스터디 그룹 목록 -->
+    <div>
+        <div th:each="group : ${groups}" class="group-card" th:onclick="'location.href=\'/study-groups/' + ${group.id} + '\''">
+            <div class="group-header">
+                <div style="flex: 1;">
+                    <div class="group-title" th:text="${group.title}">스터디 그룹 이름</div>
+                    <div class="group-meta">
+                        <span th:text="${group.category ?: '기타'}">카테고리</span> · 
+                        <span th:text="${group.currentMembers}">0</span> / <span th:text="${group.maxMembers}">0</span>명
+                    </div>
+                    <div th:if="${group.description != null}" style="font-size: 14px; color: var(--text); margin-top: 8px; line-height: 1.6;">
+                        <span th:text="${#strings.abbreviate(group.description, 100)}">그룹 설명</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="group-members">
+                <span class="member-count" th:text="${group.currentMembers} + '명 참여중'">0명 참여중</span>
+            </div>
+        </div>
+        
+        <div th:if="${groups.isEmpty()}" style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+            <p>진행중인 스터디가 없습니다.</p>
+            <a href="/" class="btn btn-primary" style="margin-top: 16px;">스터디 찾아보기</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>
+

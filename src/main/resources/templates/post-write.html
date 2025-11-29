@@ -202,6 +202,112 @@ function showError(message) {
     }, 100);
 }
 
+function showSuccess(message) {
+    const successBox = document.getElementById('successBox');
+    if (successBox) {
+        successBox.remove();
+    }
+    const form = document.querySelector('.post-form');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert-box success';
+    alertDiv.id = 'successBox';
+    alertDiv.innerHTML = `
+        <span class="alert-icon">✓</span>
+        <span>${message}</span>
+        <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    form.insertBefore(alertDiv, form.firstChild.nextSibling);
+}
+
+// AI 태그 추천 기능
+document.getElementById('aiTagBtn')?.addEventListener('click', async function() {
+    const btn = this;
+    const titleInput = document.getElementById('postTitle');
+    const editor = document.getElementById('editor');
+    const tagsInput = document.getElementById('tagsInput');
+    const categorySelect = document.getElementById('categorySelect');
+    
+    if (!titleInput || !editor) {
+        showError('제목과 본문을 먼저 입력해주세요.');
+        return;
+    }
+    
+    const title = titleInput.value.trim();
+    const content = editor.innerHTML;
+    
+    if (!title) {
+        showError('제목을 먼저 입력해주세요.');
+        return;
+    }
+    
+    if (!content || content.trim().length < 10) {
+        showError('본문 내용을 더 입력해주세요. (최소 10자 이상)');
+        return;
+    }
+    
+    // 버튼 비활성화 및 로딩 표시
+    btn.disabled = true;
+    btn.textContent = '⏳ AI 분석 중...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('content', content);
+        
+        const response = await fetch('/api/posts/ai-tags', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            showError('AI 태그 추천에 실패했습니다: ' + result.error);
+            return;
+        }
+        
+        // 카테고리 적용
+        if (result.category && categorySelect) {
+            categorySelect.value = result.category;
+            // 미리보기 업데이트
+            const previewCategory = document.getElementById('previewCategory');
+            if (previewCategory) {
+                previewCategory.textContent = result.category;
+            }
+        }
+        
+        // 태그 적용
+        if (result.tags && result.tags.length > 0) {
+            const recommendedTags = result.tags.join(', ');
+            if (tagsInput.value.trim()) {
+                tagsInput.value = tagsInput.value + ', ' + recommendedTags;
+            } else {
+                tagsInput.value = recommendedTags;
+            }
+            
+            // 미리보기 업데이트
+            const previewTags = document.getElementById('previewTags');
+            if (previewTags) {
+                previewTags.innerHTML = result.tags.map(tag => 
+                    `<span class="tag">${tag}</span>`
+                ).join('');
+            }
+            
+            const confidence = result.category_confidence || 0;
+            showSuccess(`AI 태그 추천 완료! (정확도: ${Math.round(confidence * 100)}%)`);
+        } else {
+            showError('추천할 태그를 찾지 못했습니다.');
+        }
+        
+    } catch (error) {
+        console.error('AI 태그 추천 오류:', error);
+        showError('AI 태그 추천 중 오류가 발생했습니다.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '✨ AI 태그 추천';
+    }
+});
+
 // 폼 제출 전 에디터 내용을 textarea에 복사
 document.querySelector('form')?.addEventListener('submit', function(e) {
     const editor = document.getElementById('editor');

@@ -47,6 +47,40 @@ public class UserActivityService {
         ua.setTargetId(postId);
         userActivityRepository.save(ua);
     }
+
+    @Transactional
+    public void logBookmark(User user, Long postId) {
+        if (user == null || postId == null) return;
+        UserActivity ua = new UserActivity();
+        ua.setUser(user);
+        ua.setRealName(user.getRealName());
+        ua.setActionType(UserActivity.ActionType.BOOKMARK);
+        ua.setTargetId(postId);
+        userActivityRepository.save(ua);
+    }
+
+    @Transactional
+    public void logComment(User user, Long postId) {
+        if (user == null || postId == null) return;
+        UserActivity ua = new UserActivity();
+        ua.setUser(user);
+        ua.setRealName(user.getRealName());
+        ua.setActionType(UserActivity.ActionType.COMMENT);
+        ua.setTargetId(postId);
+        userActivityRepository.save(ua);
+    }
+
+    @Transactional
+    public void logAIClick(User user, String categories) {
+        if (user == null) return;
+        UserActivity ua = new UserActivity();
+        ua.setUser(user);
+        ua.setRealName(user.getRealName());
+        ua.setActionType(UserActivity.ActionType.AI_CLICK);
+        ua.setTargetKeyword(categories);
+        ua.setActionDetail("AI 프로필 분석 완료: " + categories);
+        userActivityRepository.save(ua);
+    }
 }
 
 

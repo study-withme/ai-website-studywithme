@@ -45,7 +45,10 @@ public class UserActivity {
         SEARCH,
         CLICK,
         LIKE,
-        RECOMMEND
+        RECOMMEND,
+        BOOKMARK,
+        COMMENT,
+        AI_CLICK
     }
 }
 

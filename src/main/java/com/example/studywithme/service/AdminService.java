@@ -18,6 +18,7 @@ import java.util.Optional;
 public class AdminService {
 
     private final BlockedPostRepository blockedPostRepository;
+    private final BlockedCommentRepository blockedCommentRepository;
     private final FilterWordRepository filterWordRepository;
     private final FilterKeywordRepository filterKeywordRepository;
     private final FilterPatternRepository filterPatternRepository;
@@ -165,10 +166,37 @@ public class AdminService {
         return filterPatternRepository.findAll();
     }
 
+    // 차단된 댓글 목록 조회
+    public Page<BlockedComment> getBlockedComments(int page, int size, BlockedComment.BlockStatus status) {
+        Pageable pageable = PageRequest.of(page, size);
+        if (status != null) {
+            return blockedCommentRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+        }
+        return blockedCommentRepository.findAllByOrderByCreatedAtDesc(pageable);
+    }
+
+    // 차단된 댓글 복구
+    @Transactional
+    public void restoreComment(Long blockedCommentId, Integer adminId) {
+        BlockedComment blockedComment = blockedCommentRepository.findById(blockedCommentId)
+                .orElseThrow(() -> new RuntimeException("차단된 댓글을 찾을 수 없습니다."));
+        
+        blockedComment.setStatus(BlockedComment.BlockStatus.RESTORED);
+        blockedComment.setIsReviewed(true);
+        blockedComment.setReviewedAt(LocalDateTime.now());
+        
+        User admin = new User();
+        admin.setId(adminId);
+        blockedComment.setReviewedBy(admin);
+        
+        blockedCommentRepository.save(blockedComment);
+    }
+
     // 통계 정보
     public AdminStats getStats() {
         AdminStats stats = new AdminStats();
         stats.setTotalBlockedPosts(blockedPostRepository.countBlocked());
+        stats.setTotalBlockedComments(blockedCommentRepository.countBlocked());
         stats.setTotalFilterWords(filterWordRepository.count());
         stats.setTotalFilterKeywords(filterKeywordRepository.count());
         stats.setTotalFilterPatterns(filterPatternRepository.count());
@@ -177,6 +205,7 @@ public class AdminService {
 
     public static class AdminStats {
         private long totalBlockedPosts;
+        private long totalBlockedComments;
         private long totalFilterWords;
         private long totalFilterKeywords;
         private long totalFilterPatterns;
@@ -184,6 +213,8 @@ public class AdminService {
         // Getters and Setters
         public long getTotalBlockedPosts() { return totalBlockedPosts; }
         public void setTotalBlockedPosts(long totalBlockedPosts) { this.totalBlockedPosts = totalBlockedPosts; }
+        public long getTotalBlockedComments() { return totalBlockedComments; }
+        public void setTotalBlockedComments(long totalBlockedComments) { this.totalBlockedComments = totalBlockedComments; }
         public long getTotalFilterWords() { return totalFilterWords; }
         public void setTotalFilterWords(long totalFilterWords) { this.totalFilterWords = totalFilterWords; }
         public long getTotalFilterKeywords() { return totalFilterKeywords; }

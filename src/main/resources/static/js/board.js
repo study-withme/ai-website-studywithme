@@ -71,14 +71,35 @@ const isCreate = path.includes("/posts/write");
       data.forEach((n) => {
         const item = document.createElement("div");
         item.className = "notif-item" + (n.isRead ? "" : " unread");
+        
+        // 알림 타입별 아이콘
+        let icon = "🔔";
+        if (n.type === "NEW_APPLICATION") icon = "📝";
+        else if (n.type === "APPLICATION_ACCEPTED") icon = "✅";
+        else if (n.type === "APPLICATION_REJECTED") icon = "❌";
+        else if (n.type === "APPLICATION_CANCELLED") icon = "🚫";
+        else if (n.type === "STUDY_GROUP_JOINED") icon = "👥";
+        else if (n.type === "NEW_COMMENT") icon = "💬";
+        else if (n.type === "NEW_REPLY") icon = "↩️";
+        else if (n.type === "COMMENT_LIKE") icon = "❤️";
+        
         item.innerHTML = `
-          <div class="notif-item-title">${n.title}</div>
-          ${n.body ? `<div class="notif-item-body">${n.body}</div>` : ""}
-          <div class="notif-item-time">${formatTime(n.createdAt)}</div>
+          <div class="notif-item-header">
+            <span class="notif-icon">${icon}</span>
+            <div class="notif-item-content">
+              <div class="notif-item-title">${n.title}</div>
+              ${n.body ? `<div class="notif-item-body">${n.body}</div>` : ""}
+              <div class="notif-item-time">${formatTime(n.createdAt)}</div>
+            </div>
+            ${!n.isRead ? '<span class="notif-unread-dot"></span>' : ''}
+          </div>
         `;
         item.addEventListener("click", async () => {
           try {
             await fetch(`/api/notifications/${n.id}/read`, { method: "POST" });
+            item.classList.remove("unread");
+            const unreadDot = item.querySelector(".notif-unread-dot");
+            if (unreadDot) unreadDot.remove();
           } catch {}
           if (n.linkUrl) {
             location.href = n.linkUrl;

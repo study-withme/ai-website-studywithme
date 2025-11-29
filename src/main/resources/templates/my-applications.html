@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>내 지원현황 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .application-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .application-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .application-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        .application-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .application-meta {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+        .application-message {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text);
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-accepted {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .status-cancelled {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+            <a href="/study-groups">진행중인 스터디</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/bookmarks" class="btn btn-outline">북마크</a>
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="toolbar-top">
+        <h1>내 지원현황</h1>
+        <p>지원한 스터디의 상태를 확인할 수 있습니다.</p>
+    </div>
+
+    <!-- 필터 탭 -->
+    <div class="filter-tabs">
+        <div class="filter-tab" th:classappend="${status == null} ? 'active'" onclick="location.href='/my-applications'">전체</div>
+        <div class="filter-tab" th:classappend="${status == 'PENDING'} ? 'active'" onclick="location.href='/my-applications?status=PENDING'">대기중</div>
+        <div class="filter-tab" th:classappend="${status == 'ACCEPTED'} ? 'active'" onclick="location.href='/my-applications?status=ACCEPTED'">승인됨</div>
+        <div class="filter-tab" th:classappend="${status == 'REJECTED'} ? 'active'" onclick="location.href='/my-applications?status=REJECTED'">거절됨</div>
+    </div>
+
+    <!-- 지원 목록 -->
+    <div>
+        <div th:each="app : ${applications}" class="application-card">
+            <div class="application-header">
+                <div style="flex: 1;">
+                    <a th:href="@{/posts/{id}(id=${app.post.id})}" class="application-title" th:text="${app.post.title}">게시글 제목</a>
+                    <div class="application-meta">
+                        <span th:text="${#temporals.format(app.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-11</span>
+                    </div>
+                </div>
+                <span class="status-badge" 
+                      th:classappend="${app.status == 'PENDING'} ? 'status-pending' : 
+                                     (${app.status == 'ACCEPTED'} ? 'status-accepted' : 
+                                     (${app.status == 'REJECTED'} ? 'status-rejected' : 'status-cancelled'))"
+                      th:text="${app.status == 'PENDING'} ? '대기중' : 
+                               (${app.status == 'ACCEPTED'} ? '승인됨' : 
+                               (${app.status == 'REJECTED'} ? '거절됨' : '취소됨'))">상태</span>
+            </div>
+            
+            <div th:if="${app.message != null && !app.message.isEmpty()}" class="application-message" th:text="${app.message}">지원 메시지</div>
+            
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <a th:href="@{/posts/{id}(id=${app.post.id})}" class="btn btn-outline sm">게시글 보기</a>
+                <a th:if="${app.status == 'ACCEPTED'}" th:href="@{/study-groups}" class="btn btn-primary sm">스터디 그룹 가기</a>
+                <button th:if="${app.status == 'PENDING'}" 
+                        th:onclick="'cancelApplication(' + ${app.post.id} + ')'"
+                        class="btn btn-outline sm">지원 취소</button>
+            </div>
+        </div>
+        
+        <div th:if="${applications.isEmpty()}" style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+            <p>지원 내역이 없습니다.</p>
+            <a href="/" class="btn btn-primary" style="margin-top: 16px;">스터디 찾아보기</a>
+        </div>
+    </div>
+</main>
+
+<script>
+function cancelApplication(postId) {
+    if (!confirm('지원을 취소하시겠습니까?')) return;
+    
+    fetch('/posts/' + postId + '/cancel-apply', {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+</script>
+</body>
+</html>
+

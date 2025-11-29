@@ -227,12 +227,15 @@ CREATE TABLE `user_activity` (
   `id` bigint(20) NOT NULL,
   `user_id` int(11) NOT NULL,
   `real_name` varchar(50) NOT NULL,
-  `action_type` enum('SEARCH','CLICK','LIKE','RECOMMEND') NOT NULL,
+  `action_type` enum('SEARCH','CLICK','LIKE','RECOMMEND','BOOKMARK','COMMENT','AI_CLICK') NOT NULL,
   `target_id` bigint(20) DEFAULT NULL,
   `target_keyword` varchar(100) DEFAULT NULL,
   `action_detail` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 기존 테이블에 action_type enum 값 추가 (마이그레이션)
+-- ALTER TABLE `user_activity` MODIFY COLUMN `action_type` enum('SEARCH','CLICK','LIKE','RECOMMEND','BOOKMARK','COMMENT','AI_CLICK') NOT NULL;
 
 -- --------------------------------------------------------
 
@@ -638,8 +641,9 @@ ALTER TABLE `user_profiles`
 -- 테이블 구조 `study_groups` - 스터디 모임 정보
 --
 
-CREATE TABLE `study_groups` (
-  `id` bigint(20) NOT NULL,
+CREATE TABLE IF NOT EXISTS `study_groups` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `post_id` bigint(20) DEFAULT NULL,
   `creator_id` int(11) NOT NULL,
   `title` varchar(200) NOT NULL,
   `description` text DEFAULT NULL,
@@ -656,8 +660,18 @@ CREATE TABLE `study_groups` (
   `ai_analyzed_at` timestamp NULL DEFAULT NULL,
   `embedding_updated_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_post_group` (`post_id`),
+  KEY `creator_id` (`creator_id`),
+  CONSTRAINT `study_groups_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `study_groups_ibfk_2` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 기존 테이블에 post_id 컬럼 추가 (마이그레이션)
+-- ALTER TABLE `study_groups` ADD COLUMN `post_id` bigint(20) DEFAULT NULL AFTER `id`;
+-- ALTER TABLE `study_groups` ADD UNIQUE KEY `unique_post_group` (`post_id`);
+-- ALTER TABLE `study_groups` ADD CONSTRAINT `study_groups_ibfk_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE SET NULL;
 
 -- --------------------------------------------------------
 
@@ -1270,6 +1284,41 @@ CREATE TABLE IF NOT EXISTS `ai_learning_data` (
   PRIMARY KEY (`id`),
   KEY `idx_learning_type` (`content_type`),
   KEY `idx_learning_frequency` (`frequency`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 테이블 구조 `blocked_comments` - AI에 의해 차단된 댓글
+--
+
+CREATE TABLE IF NOT EXISTS `blocked_comments` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `comment_id` bigint(20) NOT NULL,
+  `post_id` bigint(20) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `content` text NOT NULL,
+  `block_reason` varchar(255) DEFAULT NULL COMMENT '차단 사유 (욕설, 스팸, 광고 등)',
+  `block_type` enum('PROFANITY','SPAM','AD','PATTERN','KEYWORD','AI_DETECTED') DEFAULT 'AI_DETECTED',
+  `detected_keywords` text DEFAULT NULL COMMENT '감지된 키워드 목록 (JSON)',
+  `ai_confidence` float DEFAULT NULL COMMENT 'AI 신뢰도 (0.0 ~ 1.0)',
+  `blocked_by` int(11) DEFAULT NULL COMMENT '차단한 관리자 ID (NULL이면 AI 자동)',
+  `is_reviewed` tinyint(1) DEFAULT 0 COMMENT '관리자 검토 여부',
+  `reviewed_by` int(11) DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `status` enum('BLOCKED','RESTORED','PENDING') DEFAULT 'BLOCKED',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_blocked_comment` (`comment_id`),
+  KEY `idx_blocked_comment_user` (`user_id`),
+  KEY `idx_blocked_comment_post` (`post_id`),
+  KEY `idx_blocked_comment_type` (`block_type`),
+  KEY `idx_blocked_comment_status` (`status`),
+  CONSTRAINT `blocked_comments_ibfk_1` FOREIGN KEY (`comment_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `blocked_comments_ibfk_2` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `blocked_comments_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `blocked_comments_ibfk_4` FOREIGN KEY (`blocked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `blocked_comments_ibfk_5` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- COMMIT; -- 주석 처리: 트랜잭션을 사용하지 않으므로 불필요

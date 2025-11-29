@@ -14,6 +14,7 @@
         <nav class="nav-links">
             <a href="/">모집 게시판</a>
             <a href="/recommend">AI 추천</a>
+            <a th:if="${loginUser != null}" href="/study-groups">진행중인 스터디</a>
         </nav>
         <div class="nav-actions">
             <div th:if="${loginUser == null}">

@@ -1,6 +1,9 @@
 package com.example.studywithme.controller;
 
 import com.example.studywithme.entity.Post;
+import com.example.studywithme.entity.PostApplication;
+import com.example.studywithme.entity.StudyGroup;
+import com.example.studywithme.entity.StudyGroupMember;
 import com.example.studywithme.entity.User;
 import com.example.studywithme.service.*;
 import jakarta.servlet.http.HttpSession;
@@ -29,6 +32,9 @@ public class MainController {
     private final UserActivityService userActivityService;
     private final UserRecommendationService userRecommendationService;
     private final com.example.studywithme.repository.UserProfileRepository userProfileRepository;
+    private final com.example.studywithme.service.AITagService aiTagService;
+    private final com.example.studywithme.service.AISummaryService aiSummaryService;
+    private final com.example.studywithme.service.StudyGroupService studyGroupService;
 
     /* ===========================
        PAGE ROUTING (GET)
@@ -119,6 +125,9 @@ public class MainController {
         if (loginUser == null) {
             return "redirect:/auth?error=login_required";
         }
+        // 활동 로그 기록
+        String categoriesStr = String.join(",", categories);
+        userActivityService.logAIClick(loginUser, categoriesStr);
         // TODO: 선택한 카테고리를 user_preferences 테이블에 저장
         // 현재는 바로 홈으로 리다이렉트
         return "redirect:/?success=ai_profile_completed";
@@ -409,6 +418,10 @@ public class MainController {
 
         try {
             boolean isBookmarked = bookmarkService.toggleBookmark(loginUser.getId(), id);
+            // 북마크 시 활동 로그 기록
+            if (isBookmarked) {
+                userActivityService.logBookmark(loginUser, id);
+            }
             return Map.of("success", true, "isBookmarked", isBookmarked);
         } catch (RuntimeException e) {
             return Map.of("success", false, "message", e.getMessage());
@@ -533,5 +546,163 @@ public class MainController {
         User loginUser = (User) session.getAttribute("loginUser");
         Integer userId = loginUser != null ? loginUser.getId() : null;
         return userRecommendationService.recommendPosts(userId, size);
+    }
+
+    // AI 태그 추천 API
+    @PostMapping("/api/posts/ai-tags")
+    @ResponseBody
+    public Map<String, Object> recommendAITags(@RequestParam("title") String title,
+                                                @RequestParam("content") String content) {
+        try {
+            return aiTagService.recommendTags(title, content);
+        } catch (Exception e) {
+            return Map.of("error", e.getMessage());
+        }
+    }
+
+    // AI 요약 API
+    @PostMapping("/api/posts/{id}/ai-summary")
+    @ResponseBody
+    public Map<String, Object> getAISummary(@PathVariable Long id,
+                                            @RequestParam(defaultValue = "200") int maxLength) {
+        try {
+            Post post = postService.getPost(id);
+            String content = post.getContent();
+            // HTML 태그 제거
+            content = content.replaceAll("<[^>]*>", " ").replaceAll("\\s+", " ").trim();
+            return aiSummaryService.summarizeContent(content, maxLength);
+        } catch (Exception e) {
+            return Map.of("error", e.getMessage());
+        }
+    }
+
+    // 내 지원현황 페이지
+    @GetMapping("/my-applications")
+    public String myApplications(HttpSession session, Model model,
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "20") int size,
+                                  @RequestParam(required = false) String status) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return "redirect:/auth?error=login_required";
+        }
+
+        PostApplication.ApplicationStatus appStatus = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                appStatus = PostApplication.ApplicationStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // 무시
+            }
+        }
+
+        List<PostApplication> applications = postApplicationService.getApplicationsByUser(
+                loginUser.getId(), appStatus);
+
+        model.addAttribute("loginUser", loginUser);
+        model.addAttribute("applications", applications);
+        model.addAttribute("status", status);
+        
+        return "my-applications";
+    }
+
+    // 지원받기 페이지 (게시글 작성자가 받은 지원 목록)
+    @GetMapping("/posts/{id}/applications")
+    public String postApplications(@PathVariable Long id, HttpSession session, Model model) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return "redirect:/auth?error=login_required";
+        }
+
+        try {
+            Post post = postService.getPost(id);
+            
+            // 권한 확인 (게시글 작성자만)
+            if (!post.getUser().getId().equals(loginUser.getId())) {
+                return "redirect:/posts/" + id + "?error=no_permission";
+            }
+
+            List<PostApplication> applications = postApplicationService.getApplicationsByPost(id, null);
+
+            model.addAttribute("loginUser", loginUser);
+            model.addAttribute("post", post);
+            model.addAttribute("applications", applications);
+            
+            return "post-applications";
+        } catch (RuntimeException e) {
+            return "redirect:/?error=" + e.getMessage();
+        }
+    }
+
+    // 지원 승인 API
+    @PostMapping("/api/applications/{id}/accept")
+    @ResponseBody
+    public Map<String, Object> acceptApplication(@PathVariable Long id, HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return Map.of("success", false, "message", "로그인이 필요합니다.");
+        }
+
+        try {
+            postApplicationService.acceptApplication(id, loginUser.getId());
+            return Map.of("success", true, "message", "지원이 승인되었습니다.");
+        } catch (RuntimeException e) {
+            return Map.of("success", false, "message", e.getMessage());
+        }
+    }
+
+    // 지원 거절 API
+    @PostMapping("/api/applications/{id}/reject")
+    @ResponseBody
+    public Map<String, Object> rejectApplication(@PathVariable Long id, HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return Map.of("success", false, "message", "로그인이 필요합니다.");
+        }
+
+        try {
+            postApplicationService.rejectApplication(id, loginUser.getId());
+            return Map.of("success", true, "message", "지원이 거절되었습니다.");
+        } catch (RuntimeException e) {
+            return Map.of("success", false, "message", e.getMessage());
+        }
+    }
+
+    // 진행중인 스터디 페이지
+    @GetMapping("/study-groups")
+    public String studyGroups(HttpSession session, Model model) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return "redirect:/auth?error=login_required";
+        }
+
+        List<StudyGroup> groups = studyGroupService.getActiveGroupsByUser(loginUser.getId());
+
+        model.addAttribute("loginUser", loginUser);
+        model.addAttribute("groups", groups);
+        
+        return "study-groups";
+    }
+
+    // 스터디 그룹 상세 페이지
+    @GetMapping("/study-groups/{id}")
+    public String studyGroupDetail(@PathVariable Long id, HttpSession session, Model model) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return "redirect:/auth?error=login_required";
+        }
+
+        try {
+            StudyGroup group = studyGroupService.getGroupById(id);
+            List<StudyGroupMember> members = studyGroupService.getGroupMembers(id);
+
+            model.addAttribute("loginUser", loginUser);
+            model.addAttribute("group", group);
+            model.addAttribute("members", members);
+            
+            return "study-group-detail";
+        } catch (RuntimeException e) {
+            return "redirect:/study-groups?error=" + e.getMessage();
+        }
     }
 }

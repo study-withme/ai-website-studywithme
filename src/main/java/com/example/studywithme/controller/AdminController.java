@@ -267,5 +267,53 @@ public class AdminController {
         
         return "admin-ai-learning";
     }
+
+    // 차단된 댓글 목록
+    @GetMapping("/blocked-comments")
+    public String blockedComments(HttpSession session, Model model,
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "20") int size,
+                                  @RequestParam(required = false) String status) {
+        if (!isAdmin(session)) {
+            return "redirect:/?error=admin_required";
+        }
+
+        User loginUser = (User) session.getAttribute("loginUser");
+        BlockedComment.BlockStatus blockStatus = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                blockStatus = BlockedComment.BlockStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // 무시
+            }
+        }
+
+        Page<BlockedComment> blockedComments = adminService.getBlockedComments(page, size, blockStatus);
+        
+        model.addAttribute("loginUser", loginUser);
+        model.addAttribute("blockedComments", blockedComments);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", blockedComments.getTotalPages());
+        model.addAttribute("status", status);
+        
+        return "admin-blocked-comments";
+    }
+
+    // 차단된 댓글 복구
+    @PostMapping("/blocked-comments/{id}/restore")
+    @ResponseBody
+    public Map<String, Object> restoreComment(@PathVariable Long id, HttpSession session) {
+        if (!isAdmin(session)) {
+            return Map.of("success", false, "message", "관리자 권한이 필요합니다.");
+        }
+
+        User loginUser = (User) session.getAttribute("loginUser");
+        try {
+            adminService.restoreComment(id, loginUser.getId());
+            return Map.of("success", true, "message", "댓글이 복구되었습니다.");
+        } catch (Exception e) {
+            return Map.of("success", false, "message", e.getMessage());
+        }
+    }
 }
 

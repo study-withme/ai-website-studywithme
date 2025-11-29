@@ -26,6 +26,8 @@ public class CommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final ContentFilterService contentFilterService;
+    private final com.example.studywithme.repository.BlockedCommentRepository blockedCommentRepository;
 
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -33,6 +35,18 @@ public class CommentService {
     @Transactional(readOnly = true)
     public List<CommentResponse> getComments(Long postId, String sort, Integer currentUserId) {
         List<Comment> all = commentRepository.findByPost_IdAndDeletedFalseOrderByCreatedAtAsc(postId);
+
+        // 차단된 댓글 ID 목록 가져오기 (해당 게시글의 차단된 댓글만)
+        List<Long> blockedCommentIds = blockedCommentRepository.findAll().stream()
+                .filter(bc -> bc.getStatus() == com.example.studywithme.entity.BlockedComment.BlockStatus.BLOCKED 
+                           && bc.getPostId().equals(postId))
+                .map(com.example.studywithme.entity.BlockedComment::getCommentId)
+                .collect(Collectors.toList());
+
+        // 차단된 댓글 제외
+        List<Comment> filtered = all.stream()
+                .filter(c -> !blockedCommentIds.contains(c.getId()))
+                .collect(Collectors.toList());
 
         Comparator<Comment> comparator;
         if ("popular".equalsIgnoreCase(sort)) {
@@ -43,7 +57,7 @@ public class CommentService {
             comparator = Comparator.comparing(Comment::getId).reversed();
         }
 
-        return all.stream()
+        return filtered.stream()
                 .sorted(comparator)
                 .map(c -> toResponse(c, currentUserId))
                 .collect(Collectors.toList());
@@ -61,10 +75,18 @@ public class CommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
+        String trimmedContent = content.trim();
+
+        // AI 필터링 체크
+        ContentFilterService.FilterResult filterResult = contentFilterService.filterComment(trimmedContent, null, postId, userId);
+        if (filterResult.isBlocked()) {
+            throw new RuntimeException("댓글이 차단되었습니다: " + filterResult.getBlockReason());
+        }
+
         Comment comment = new Comment();
         comment.setUser(user);
         comment.setPost(post);
-        comment.setContent(content.trim());
+        comment.setContent(trimmedContent);
         comment.setLikeCount(0);
         comment.setReportCount(0);
         comment.setDeleted(false);
@@ -78,6 +100,15 @@ public class CommentService {
         }
 
         Comment saved = commentRepository.save(comment);
+        
+        // 저장 후 다시 필터링하여 blocked_comments 테이블에 기록
+        ContentFilterService.FilterResult finalCheck = contentFilterService.filterComment(trimmedContent, saved.getId(), postId, userId);
+        if (finalCheck.isBlocked()) {
+            // 차단된 경우 댓글 삭제 처리
+            saved.setDeleted(true);
+            commentRepository.save(saved);
+            throw new RuntimeException("댓글이 차단되었습니다: " + finalCheck.getBlockReason());
+        }
 
         // 알림: 대댓글이면 부모 댓글 작성자, 아니면 게시글 작성자
         try {

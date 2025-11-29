@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>지원받기 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .application-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .application-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        .applicant-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .applicant-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .applicant-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .application-message {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text);
+        }
+        .application-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-accepted {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="toolbar-top">
+        <h1>지원받기</h1>
+        <p th:text="'게시글: ' + ${post.title}">게시글 제목</p>
+        <a th:href="@{/posts/{id}(id=${post.id})}" class="btn btn-outline" style="margin-top: 8px;">← 게시글 보기</a>
+    </div>
+
+    <!-- 지원 목록 -->
+    <div>
+        <div th:each="app : ${applications}" class="application-card">
+            <div class="application-header">
+                <div class="applicant-info">
+                    <img class="applicant-avatar" 
+                         th:src="'https://i.pravatar.cc/48?img=' + ${app.user.id}"
+                         alt="프로필">
+                    <div>
+                        <div class="applicant-name" th:text="${app.user.realName}">지원자 이름</div>
+                        <div style="font-size: 12px; color: #6b7280;" 
+                             th:text="${#temporals.format(app.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-11</div>
+                    </div>
+                </div>
+                <span class="status-badge" 
+                      th:classappend="${app.status == 'PENDING'} ? 'status-pending' : 
+                                     (${app.status == 'ACCEPTED'} ? 'status-accepted' : 'status-rejected')"
+                      th:text="${app.status == 'PENDING'} ? '대기중' : 
+                               (${app.status == 'ACCEPTED'} ? '승인됨' : '거절됨')">상태</span>
+            </div>
+            
+            <div th:if="${app.message != null && !app.message.isEmpty()}" class="application-message" th:text="${app.message}">지원 메시지</div>
+            
+            <div th:if="${app.status == 'PENDING'}" class="application-actions">
+                <button class="btn btn-primary sm" 
+                        th:onclick="'acceptApplication(' + ${app.id} + ')'">승인</button>
+                <button class="btn btn-outline sm" 
+                        th:onclick="'rejectApplication(' + ${app.id} + ')'">거절</button>
+            </div>
+        </div>
+        
+        <div th:if="${applications.isEmpty()}" style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+            <p>아직 지원이 없습니다.</p>
+        </div>
+    </div>
+</main>
+
+<script>
+function acceptApplication(applicationId) {
+    if (!confirm('이 지원을 승인하시겠습니까? 승인된 지원자는 스터디 그룹에 자동으로 추가됩니다.')) return;
+    
+    fetch('/api/applications/' + applicationId + '/accept', {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function rejectApplication(applicationId) {
+    if (!confirm('이 지원을 거절하시겠습니까?')) return;
+    
+    fetch('/api/applications/' + applicationId + '/reject', {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+</script>
+</body>
+</html>
+

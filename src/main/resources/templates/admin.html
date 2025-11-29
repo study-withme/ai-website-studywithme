@@ -92,6 +92,10 @@
             <div class="stat-value" th:text="${stats.totalBlockedPosts}">0</div>
         </div>
         <div class="stat-card">
+            <h3>차단된 댓글</h3>
+            <div class="stat-value" th:text="${stats.totalBlockedComments}">0</div>
+        </div>
+        <div class="stat-card">
             <h3>필터 단어</h3>
             <div class="stat-value" th:text="${stats.totalFilterWords}">0</div>
         </div>
@@ -110,6 +114,10 @@
         <div class="admin-menu-item" onclick="location.href='/admin/blocked-posts'">
             <h3>🚫 차단된 게시글</h3>
             <p>AI에 의해 차단된 게시글 목록 확인 및 복구</p>
+        </div>
+        <div class="admin-menu-item" onclick="location.href='/admin/blocked-comments'">
+            <h3>💬 차단된 댓글</h3>
+            <p>AI에 의해 차단된 댓글 목록 확인 및 복구</p>
         </div>
         <div class="admin-menu-item" onclick="location.href='/admin/filter-words'">
             <h3>🔤 욕설 필터</h3>

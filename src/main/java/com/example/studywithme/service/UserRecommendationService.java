@@ -16,8 +16,30 @@ public class UserRecommendationService {
 
     private final UserActivityRepository userActivityRepository;
     private final PostRepository postRepository;
+    private final PythonRecommendationService pythonRecommendationService;
 
+    /**
+     * AI 기반 추천 게시글 조회 (Python 스크립트 사용)
+     */
     public List<Post> recommendPosts(Integer userId, int limit) {
+        // Python 기반 추천 시도
+        try {
+            List<Post> pythonRecommended = pythonRecommendationService.getRecommendedPosts(userId, limit);
+            if (!pythonRecommended.isEmpty()) {
+                return pythonRecommended;
+            }
+        } catch (Exception e) {
+            // Python 추천 실패 시 기존 방식 사용
+        }
+        
+        // 기존 키워드 기반 추천 (Fallback)
+        return recommendPostsByKeyword(userId, limit);
+    }
+
+    /**
+     * 키워드 기반 추천 (기존 방식)
+     */
+    private List<Post> recommendPostsByKeyword(Integer userId, int limit) {
         // 비로그인 또는 활동 부족: 최신 글
         if (userId == null) {
             return postRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit)).getContent();

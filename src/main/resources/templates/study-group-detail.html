@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${group.title}">스터디 그룹 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <style>
+        .group-header {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .group-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .group-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+        .member-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .member-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .member-info {
+            flex: 1;
+        }
+        .member-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .member-role {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .role-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+            <a href="/study-groups" class="active">진행중인 스터디</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/my-applications" class="btn btn-outline">내 지원현황</a>
+                <a href="/mypage" class="btn btn-outline">마이페이지</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <button class="btn-link" onclick="location.href='/study-groups'">← 진행중인 스터디</button>
+
+    <div class="group-header">
+        <div class="group-title" th:text="${group.title}">스터디 그룹 이름</div>
+        <div class="group-meta">
+            <span th:text="${group.category ?: '기타'}">카테고리</span> · 
+            <span th:text="${group.currentMembers}">0</span> / <span th:text="${group.maxMembers}">0</span>명 · 
+            <span th:if="${group.post != null}">
+                <a th:href="@{/posts/{id}(id=${group.post.id})}" style="color: var(--primary);">원본 게시글 보기</a>
+            </span>
+        </div>
+        <div th:if="${group.description != null}" style="margin-top: 12px; line-height: 1.8; color: var(--text);" th:utext="${group.description}">그룹 설명</div>
+    </div>
+
+    <div>
+        <h2 style="font-size: 18px; margin-bottom: 16px;">멤버 (<span th:text="${members.size()}">0</span>명)</h2>
+        
+        <div class="member-grid">
+            <div th:each="member : ${members}" class="member-card">
+                <img class="member-avatar" 
+                     th:src="'https://i.pravatar.cc/40?img=' + ${member.user.id}"
+                     alt="프로필">
+                <div class="member-info">
+                    <div class="member-name" th:text="${member.user.realName}">멤버 이름</div>
+                    <div class="member-role">
+                        <span th:if="${member.role == 'CREATOR'}" class="role-badge">리더</span>
+                        <span th:if="${member.role == 'MEMBER'}">멤버</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
+
