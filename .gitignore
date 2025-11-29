@@ -35,3 +35,12 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### macOS ###
+.DS_Store
+**/.DS_Store
+
+### Personal Notes ###
+dev-notes.ipynb
+*.ipynb
+!python/**/*.ipynb
