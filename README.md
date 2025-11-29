@@ -707,30 +707,50 @@ Gradle Wrapper를 사용하여 애플리케이션을 실행합니다:
 
 ### 학술 논문
 
-1. Sarwar, B., Karypis, G., Konstan, J., & Riedl, J. (2001). Item-based collaborative filtering recommendation algorithms. *Proceedings of the 10th international conference on World Wide Web*, 285-295.
+1. Sarwar, B., Karypis, G., Konstan, J., & Riedl, J. (2001). Item-based collaborative filtering recommendation algorithms. *Proceedings of the 10th International Conference on World Wide Web (WWW)*, 285–295.
+2. Burke, R. (2002). Hybrid recommender systems: Survey and experiments. *User Modeling and User-Adapted Interaction*, 12(4), 331–370.
+3. Adomavicius, G., & Tuzhilin, A. (2005). Toward the next generation of recommender systems: A survey of the state-of-the-art and possible extensions. *IEEE Transactions on Knowledge and Data Engineering*, 17(6), 734–749.
+4. Lops, P., De Gemmis, M., & Semeraro, G. (2011). Content-based recommender systems: State of the art and trends. In *Recommender Systems Handbook* (pp. 73–105). Springer.
+5. Ding, Y., & Li, X. (2005). Time weight collaborative filtering. *Proceedings of the 14th ACM International Conference on Information and Knowledge Management (CIKM)*, 485–492.
+6. Nenkova, A., & McKeown, K. (2012). A survey of text summarization techniques. In *Mining Text Data* (pp. 43–76). Springer.
+7. Salton, G., & Buckley, C. (1988). Term-weighting approaches in automatic text retrieval. *Information Processing & Management*, 24(5), 513–523.
 
-2. Burke, R. (2002). Hybrid recommender systems: Survey and experiments. *User modeling and user-adapted interaction*, 12(4), 331-370.
+### 기술 문서 및 가이드
 
-3. Lops, P., De Gemmis, M., & Semeraro, G. (2011). Content-based recommender systems: State of the art and trends. *Recommender systems handbook*, 73-105.
+1. Spring Boot Reference Documentation: `https://spring.io/projects/spring-boot`
+2. Spring Data JPA Reference Documentation: `https://spring.io/projects/spring-data-jpa`
+3. Spring Security Reference Documentation: `https://spring.io/projects/spring-security`
+4. MySQL 8.0 Reference Manual: `https://dev.mysql.com/doc/`
+5. Docker & Docker Compose Documentation: `https://docs.docker.com/`
+6. Python 3 Standard Library Documentation: `https://docs.python.org/3/`
+7. Python `collections` 모듈 문서: `https://docs.python.org/3/library/collections.html`
+8. scikit-learn User Guide (머신러닝/추천 알고리즘 참고): `https://scikit-learn.org/stable/user_guide.html`
 
-4. Nenkova, A., & McKeown, K. (2012). A survey of text summarization techniques. *Mining text data*, 43-76.
+### 오픈소스 프로젝트 및 참고 자료 (유사 시스템)
 
-5. Salton, G., & Buckley, C. (1988). Term-weighting approaches in automatic text retrieval. *Information processing & management*, 24(5), 513-523.
+1. **Hybrid Recommendation System (Content-based + Collaborative Filtering)**  
+   - GitHub: `https://github.com/jhihan/Hybrid-Recommendation-System`  
+   - MovieLens 데이터를 활용한 하이브리드 추천 알고리즘 구현 예제로, 본 프로젝트의 하이브리드 추천 설계에 참고.
 
-6. Ding, Y., & Li, X. (2005). Time weight collaborative filtering. *Proceedings of the 14th ACM international conference on Information and knowledge management*, 485-492.
+2. **AI Study Assistant (Flask 기반 학습 보조 웹 앱)**  
+   - GitHub: `https://github.com/JiteshShelke/AI-Study-Assistant-Flask`  
+   - 텍스트 요약, 질문 생성 등 학습 지원용 NLP 기능을 제공하는 웹 애플리케이션으로, AI 학습 도우미/스터디 플랫폼 기능과 유사.
 
-### 기술 문서
+3. **TextRank 기반 요약 및 키워드 추출 라이브러리**  
+   - GitHub: `https://github.com/summanlp/textrank`  
+   - Python 3 환경에서 TextRank 알고리즘으로 키워드 추출과 추출적 요약을 제공하며, 본 프로젝트의 규칙 기반 요약/분석 로직 설계 시 참고.
 
-1. Spring Boot Documentation: https://spring.io/projects/spring-boot
-2. Spring Data JPA Documentation: https://spring.io/projects/spring-data-jpa
-3. MySQL Documentation: https://dev.mysql.com/doc/
-4. Python Collections Documentation: https://docs.python.org/3/library/collections.html
+4. **NLTK 기반 텍스트 요약 예제**  
+   - GitHub: `https://github.com/colombomf/text-summarizer`  
+   - NLTK를 활용한 간단한 텍스트 요약 구현 예제로, Python 기반 요약 파이프라인 구조 설계에 참고.
 
-### 관련 프로젝트 및 참고 자료
+5. **AI Content Moderation / Filtering 예제 프로젝트**  
+   - content-checker (AI 콘텐츠 검열 도구): `https://github.com/utilityfueled/content-checker`  
+   - Open-source content moderation toolkit으로, 욕설/부적절 표현 필터링 구조와 정책 설계에 참고.
 
-1. Netflix Recommendation System
-2. Amazon Product Recommendation
-3. Spotify Music Recommendation
+6. **교육/학습 도메인 추천 관련 GitHub 토픽**  
+   - Educational App Projects: `https://github.com/topics/educational-app`  
+   - 학습 관리, 퀴즈, 스터디 매칭 등 다양한 교육용 웹/모바일 프로젝트 모음으로, UX/UI 및 기능 구성을 벤치마킹하는 데 활용.
 
 ---
 
