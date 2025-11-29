@@ -17,7 +17,7 @@ public interface BlockedPostRepository extends JpaRepository<BlockedPost, Long> 
     
     Page<BlockedPost> findByStatusOrderByCreatedAtDesc(BlockedPost.BlockStatus status, Pageable pageable);
     
-    @Query("SELECT COUNT(b) FROM BlockedPost b WHERE b.status = 'BLOCKED'")
+    @Query(value = "SELECT COUNT(*) FROM blocked_posts WHERE status = 'BLOCKED'", nativeQuery = true)
     long countBlocked();
 }
 

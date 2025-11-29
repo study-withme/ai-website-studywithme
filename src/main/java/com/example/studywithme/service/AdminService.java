@@ -195,11 +195,48 @@ public class AdminService {
     // 통계 정보
     public AdminStats getStats() {
         AdminStats stats = new AdminStats();
-        stats.setTotalBlockedPosts(blockedPostRepository.countBlocked());
-        stats.setTotalBlockedComments(blockedCommentRepository.countBlocked());
-        stats.setTotalFilterWords(filterWordRepository.count());
-        stats.setTotalFilterKeywords(filterKeywordRepository.count());
-        stats.setTotalFilterPatterns(filterPatternRepository.count());
+        
+        // 각 통계를 개별적으로 처리하여 하나가 실패해도 나머지는 조회 가능하도록
+        try {
+            stats.setTotalBlockedPosts(blockedPostRepository.countBlocked());
+        } catch (Exception e) {
+            stats.setTotalBlockedPosts(0);
+            System.err.println("차단된 게시글 통계 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        try {
+            stats.setTotalBlockedComments(blockedCommentRepository.countBlocked());
+        } catch (Exception e) {
+            stats.setTotalBlockedComments(0);
+            System.err.println("차단된 댓글 통계 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        try {
+            stats.setTotalFilterWords(filterWordRepository.count());
+        } catch (Exception e) {
+            stats.setTotalFilterWords(0);
+            System.err.println("필터 단어 통계 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        try {
+            stats.setTotalFilterKeywords(filterKeywordRepository.count());
+        } catch (Exception e) {
+            stats.setTotalFilterKeywords(0);
+            System.err.println("필터 키워드 통계 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        try {
+            stats.setTotalFilterPatterns(filterPatternRepository.count());
+        } catch (Exception e) {
+            stats.setTotalFilterPatterns(0);
+            System.err.println("필터 패턴 통계 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         return stats;
     }
 
