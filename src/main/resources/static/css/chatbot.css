@@ -117,6 +117,12 @@ body.dark .chatbot-window {
     gap: 8px;
 }
 
+.chatbot-header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .chatbot-header button {
     background: rgba(255, 255, 255, 0.2);
     border: none;
@@ -129,10 +135,19 @@ body.dark .chatbot-window {
     align-items: center;
     justify-content: center;
     transition: background 0.2s;
+    font-size: 16px;
 }
 
 .chatbot-header button:hover {
     background: rgba(255, 255, 255, 0.3);
+}
+
+.chatbot-clear-btn {
+    font-size: 18px !important;
+}
+
+.chatbot-clear-btn:hover {
+    background: rgba(239, 68, 68, 0.3) !important;
 }
 
 /* 메시지 영역 */

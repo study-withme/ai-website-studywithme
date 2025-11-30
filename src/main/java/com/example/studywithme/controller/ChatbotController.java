@@ -44,8 +44,11 @@ public class ChatbotController {
             String action = (String) response.get("action");
             if (action != null) {
                 handleAction(action, userId, response);
+                // JavaScript가 기대하는 형식으로 action 필드 명시적으로 설정
+                response.put("action", action);
             }
 
+            log.debug("챗봇 응답: action={}, hasData={}", action, response.containsKey("data"));
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("챗봇 메시지 처리 오류", e);
@@ -119,6 +122,31 @@ public class ChatbotController {
         } catch (Exception e) {
             log.error("대화 내역 조회 오류", e);
             return ResponseEntity.ok(List.of());
+        }
+    }
+
+    /**
+     * 대화 내역 초기화 (삭제)
+     */
+    @DeleteMapping("/history")
+    public ResponseEntity<Map<String, Object>> clearHistory(HttpSession session) {
+        try {
+            User loginUser = (User) session.getAttribute("loginUser");
+            Integer userId = loginUser != null ? loginUser.getId() : null;
+
+            chatbotService.clearChatHistory(userId);
+            log.info("사용자 ID {}의 대화 내역 초기화 완료", userId);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "대화 내역이 초기화되었습니다."
+            ));
+        } catch (Exception e) {
+            log.error("대화 내역 초기화 오류", e);
+            return ResponseEntity.ok(Map.of(
+                "success", false,
+                "message", "대화 내역 초기화 중 오류가 발생했습니다."
+            ));
         }
     }
 }

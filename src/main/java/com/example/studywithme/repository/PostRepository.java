@@ -20,6 +20,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 전체 게시글 최신순 조회
     Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    // 전체 게시글 인기순 조회 (좋아요 + 조회수 기준)
+    @Query("SELECT p FROM Post p ORDER BY (COALESCE(p.likeCount, 0) * 2 + COALESCE(p.viewCount, 0) * 0.1) DESC, p.createdAt DESC")
+    Page<Post> findAllByOrderByPopularityDesc(Pageable pageable);
+
+    // 카테고리별 게시글 인기순 조회
+    @Query("SELECT p FROM Post p WHERE p.category = :category ORDER BY (COALESCE(p.likeCount, 0) * 2 + COALESCE(p.viewCount, 0) * 0.1) DESC, p.createdAt DESC")
+    Page<Post> findByCategoryOrderByPopularityDesc(@Param("category") String category, Pageable pageable);
+
     // 게시글 상세 조회 (작성자까지 로딩)
     @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.id = :id")
     Optional<Post> findByIdWithUser(@Param("id") Long id);

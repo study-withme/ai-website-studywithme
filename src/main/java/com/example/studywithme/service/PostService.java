@@ -104,15 +104,21 @@ public class PostService {
         return post;
     }
 
-    // 게시글 목록 조회 (최신순)
+    // 게시글 목록 조회 (최신순 또는 인기순)
     @Transactional(readOnly = true)
-    public Page<Post> getPosts(Pageable pageable) {
+    public Page<Post> getPosts(Pageable pageable, String sort) {
+        if ("popular".equals(sort)) {
+            return postRepository.findAllByOrderByPopularityDesc(pageable);
+        }
         return postRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
-    // 카테고리별 게시글 조회
+    // 카테고리별 게시글 조회 (최신순 또는 인기순)
     @Transactional(readOnly = true)
-    public Page<Post> getPostsByCategory(String category, Pageable pageable) {
+    public Page<Post> getPostsByCategory(String category, Pageable pageable, String sort) {
+        if ("popular".equals(sort)) {
+            return postRepository.findByCategoryOrderByPopularityDesc(category, pageable);
+        }
         return postRepository.findByCategoryOrderByCreatedAtDesc(category, pageable);
     }
 

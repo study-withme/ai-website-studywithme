@@ -171,7 +171,8 @@ if (isList) {
 
   async function fetchPosts() {
     try {
-      const response = await fetch('/api/posts');
+      const sort = $("#sortFilter")?.value || "latest";
+      const response = await fetch(`/api/posts?sort=${sort}&size=100`);
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       return data.content || data || [];
@@ -347,9 +348,31 @@ if (isList) {
     renderTagFilter(allTags);
     initSearchSuggest();
 
-    $("#searchBtn")?.addEventListener("click", () => renderList(1));
-    $("#categoryFilter")?.addEventListener("change", () => renderList(1));
-    $("#sortFilter")?.addEventListener("change", () => renderList(1));
+    $("#searchBtn")?.addEventListener("click", () => {
+      postsData = [];
+      fetchPosts().then(data => {
+        postsData = data;
+        renderList(1);
+      });
+    });
+    $("#categoryFilter")?.addEventListener("change", () => {
+      postsData = [];
+      fetchPosts().then(data => {
+        postsData = data;
+        renderList(1);
+      });
+    });
+    $("#sortFilter")?.addEventListener("change", () => {
+      postsData = [];
+      fetchPosts().then(data => {
+        postsData = data;
+        renderList(1);
+        // URL 업데이트
+        const url = new URL(window.location);
+        url.searchParams.set('sort', $("#sortFilter").value);
+        window.history.pushState({}, '', url);
+      });
+    });
 
     $("#prevPage")?.addEventListener("click", () => {
       if (currentPage > 1) renderList(currentPage - 1);
@@ -360,6 +383,90 @@ if (isList) {
     });
   })();
 }
+
+/* =========================================================
+   자격증 슬라이드쇼
+========================================================= */
+(function initCertSlider() {
+  const track = document.getElementById("certSliderTrack");
+  const prevBtn = document.getElementById("certSliderPrev");
+  const nextBtn = document.getElementById("certSliderNext");
+  const dotsContainer = document.getElementById("certSliderDots");
+  
+  if (!track) return;
+  
+  const cards = track.querySelectorAll(".cert-card");
+  if (cards.length === 0) return;
+  
+  let currentIndex = 0;
+  const cardsPerView = window.innerWidth > 768 ? 3 : 1;
+  const totalSlides = Math.ceil(cards.length / cardsPerView);
+  
+  function updateSlider() {
+    const offset = -currentIndex * (cards[0].offsetWidth + 20);
+    track.style.transform = `translateX(${offset}px)`;
+    
+    // Dots 업데이트
+    if (dotsContainer) {
+      const dots = dotsContainer.querySelectorAll(".slider-dot");
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("active", i === currentIndex);
+      });
+    }
+  }
+  
+  // Dots 생성
+  if (dotsContainer && totalSlides > 1) {
+    dotsContainer.innerHTML = "";
+    for (let i = 0; i < totalSlides; i++) {
+      const dot = document.createElement("div");
+      dot.className = "slider-dot" + (i === 0 ? " active" : "");
+      dot.addEventListener("click", () => {
+        currentIndex = i;
+        updateSlider();
+      });
+      dotsContainer.appendChild(dot);
+    }
+  }
+  
+  prevBtn?.addEventListener("click", () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+    } else {
+      currentIndex = totalSlides - 1;
+    }
+    updateSlider();
+  });
+  
+  nextBtn?.addEventListener("click", () => {
+    if (currentIndex < totalSlides - 1) {
+      currentIndex++;
+    } else {
+      currentIndex = 0;
+    }
+    updateSlider();
+  });
+  
+  // 자동 슬라이드
+  setInterval(() => {
+    if (currentIndex < totalSlides - 1) {
+      currentIndex++;
+    } else {
+      currentIndex = 0;
+    }
+    updateSlider();
+  }, 5000);
+  
+  // 반응형 처리
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      currentIndex = 0;
+      updateSlider();
+    }, 250);
+  });
+})();
 
 /* =========================================================
    상세 페이지

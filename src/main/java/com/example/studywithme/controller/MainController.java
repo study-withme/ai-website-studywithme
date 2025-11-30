@@ -5,14 +5,18 @@ import com.example.studywithme.entity.PostApplication;
 import com.example.studywithme.entity.StudyGroup;
 import com.example.studywithme.entity.StudyGroupMember;
 import com.example.studywithme.entity.User;
+import com.example.studywithme.entity.UserPreference;
 import com.example.studywithme.repository.UserRepository;
+import com.example.studywithme.repository.UserPreferenceRepository;
 import com.example.studywithme.service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +26,7 @@ import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class MainController {
 
     private final UserService userService;
@@ -37,6 +42,8 @@ public class MainController {
     private final com.example.studywithme.service.AITagService aiTagService;
     private final com.example.studywithme.service.AISummaryService aiSummaryService;
     private final com.example.studywithme.service.StudyGroupService studyGroupService;
+    private final com.example.studywithme.repository.CertificationRepository certificationRepository;
+    private final UserPreferenceRepository userPreferenceRepository;
 
     /* ===========================
        PAGE ROUTING (GET)
@@ -47,14 +54,15 @@ public class MainController {
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "9") int size,
                         @RequestParam(required = false) String category,
-                        @RequestParam(required = false) String keyword) {
+                        @RequestParam(required = false) String keyword,
+                        @RequestParam(defaultValue = "latest") String sort) {
         // 로그인 유저 세션에서 꺼내기
         User loginUser = (User) session.getAttribute("loginUser");
         model.addAttribute("loginUser", loginUser);
 
         // 게시글 목록 조회
         Pageable pageable = PageRequest.of(page, size);
-        Page<Post> posts;
+        Page<Post> posts = Page.empty(pageable); // 기본값으로 빈 페이지 설정
 
         try {
             if (keyword != null && !keyword.trim().isEmpty()) {
@@ -64,19 +72,39 @@ public class MainController {
                     userActivityService.logSearch(loginUser, keyword);
                 }
             } else if (category != null && !category.trim().isEmpty()) {
-                posts = postService.getPostsByCategory(category, pageable);
+                posts = postService.getPostsByCategory(category, pageable, sort);
                 model.addAttribute("category", category);
             } else {
-                posts = postService.getPosts(pageable);
+                posts = postService.getPosts(pageable, sort);
             }
         } catch (Exception e) {
             // 오류 발생 시 빈 페이지 반환
+            log.error("게시글 목록 조회 오류", e);
+            posts = Page.empty(pageable);
+        }
+        
+        // posts가 null이 되지 않도록 보장 (이중 체크)
+        if (posts == null) {
+            log.warn("posts가 null입니다. 빈 페이지로 대체합니다.");
             posts = Page.empty(pageable);
         }
 
+        // 안전하게 모델에 추가
         model.addAttribute("posts", posts);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", posts != null ? posts.getTotalPages() : 0);
+        model.addAttribute("sort", sort);
+
+        // 자격증 정보 조회 (다가오는 시험일정 최대 10개)
+        try {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            List<com.example.studywithme.entity.Certification> certifications = 
+                certificationRepository.findUpcomingExams(today);
+            model.addAttribute("certifications", certifications);
+        } catch (Exception e) {
+            // 자격증 정보가 없어도 메인 페이지는 정상 동작
+            model.addAttribute("certifications", java.util.Collections.emptyList());
+        }
 
         return "index";  // templates/index.html
     }
@@ -85,9 +113,10 @@ public class MainController {
     @GetMapping("/api/posts")
     @ResponseBody
     public Page<Post> getPostsApi(@RequestParam(defaultValue = "0") int page,
-                                  @RequestParam(defaultValue = "100") int size) {
+                                  @RequestParam(defaultValue = "100") int size,
+                                  @RequestParam(defaultValue = "latest") String sort) {
         Pageable pageable = PageRequest.of(page, size);
-        return postService.getPosts(pageable);
+        return postService.getPosts(pageable, sort);
     }
 
     @GetMapping("/auth")
@@ -124,20 +153,82 @@ public class MainController {
         return "recommend";
     }
     
+    /**
+     * 사용자가 선택한 카테고리를 실제 게시글 카테고리로 매핑
+     */
+    private List<String> mapCategoriesToActualCategories(String selectedCategory) {
+        String trimmed = selectedCategory.trim();
+        
+        // 카테고리 매핑 규칙 (실제 DB 카테고리: 개발, 자격증, 영어, 독서, 취업, 기타)
+        if (trimmed.contains("코딩") || trimmed.contains("개발") || trimmed.contains("프로그래밍")) {
+            return List.of("개발");  // "프로그래밍" 제거 - 실제 DB에는 "개발"만 존재
+        } else if (trimmed.contains("자격증") || trimmed.contains("기술")) {
+            return List.of("자격증");
+        } else if (trimmed.contains("영어") || trimmed.contains("어학")) {
+            return List.of("영어");  // "언어" 제거 - 실제 DB에는 "영어"만 존재
+        } else if (trimmed.contains("취업") || trimmed.contains("면접")) {
+            return List.of("취업");
+        } else if (trimmed.contains("독서") || trimmed.contains("인문학")) {
+            return List.of("독서");
+        } else if (trimmed.contains("AI") || trimmed.contains("데이터")) {
+            return List.of("개발");  // "프로그래밍" 제거
+        } else if (trimmed.contains("자기계발") || trimmed.contains("루틴")) {
+            return List.of("기타");
+        } else if (trimmed.contains("디자인") || trimmed.contains("창의")) {
+            return List.of("기타");
+        }
+        
+        // 매핑 규칙에 없으면 원본 반환
+        return List.of(trimmed);
+    }
+    
     // AI 프로필 분석 완료 처리
     @PostMapping("/ai/complete")
+    @Transactional
     public String completeAiProfile(@RequestParam("categories") List<String> categories,
                                    HttpSession session) {
         User loginUser = (User) session.getAttribute("loginUser");
         if (loginUser == null) {
             return "redirect:/auth?error=login_required";
         }
-        // 활동 로그 기록
-        String categoriesStr = String.join(",", categories);
-        userActivityService.logAIClick(loginUser, categoriesStr);
-        // TODO: 선택한 카테고리를 user_preferences 테이블에 저장
-        // 현재는 바로 홈으로 리다이렉트
-        return "redirect:/?success=ai_profile_completed";
+        
+        try {
+            // 활동 로그 기록
+            String categoriesStr = String.join(",", categories);
+            userActivityService.logAIClick(loginUser, categoriesStr);
+            
+            // 기존 선호도 삭제 (새로운 선택으로 덮어쓰기)
+            userPreferenceRepository.deleteAllByUserId(loginUser.getId());
+            
+            // 선택한 카테고리를 실제 게시글 카테고리로 매핑하여 저장
+            for (String selectedCategory : categories) {
+                // 카테고리 이름 정리 (앞뒤 공백 제거)
+                String categoryName = selectedCategory.trim();
+                if (categoryName.isEmpty()) {
+                    continue;
+                }
+                
+                // 실제 게시글 카테고리로 매핑
+                List<String> actualCategories = mapCategoriesToActualCategories(categoryName);
+                
+                // 매핑된 각 카테고리를 저장
+                for (String actualCategory : actualCategories) {
+                    UserPreference preference = new UserPreference();
+                    preference.setUser(loginUser);
+                    preference.setRealName(loginUser.getRealName());
+                    preference.setCategoryName(actualCategory);
+                    preference.setPreferenceScore(5.0f); // AI 선택은 높은 점수 부여
+                    userPreferenceRepository.save(preference);
+                }
+            }
+            
+            return "redirect:/recommend?success=ai_profile_completed";
+        } catch (Exception e) {
+            // 에러 발생 시 로그 출력하고 홈으로 리다이렉트
+            System.err.println("AI 프로필 완료 처리 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return "redirect:/ai?error=save_failed";
+        }
     }
 
     // 게시글 작성 페이지
@@ -365,7 +456,8 @@ public class MainController {
             Post createdPost = postService.createPost(loginUser.getId(), title.trim(), content, 
                                                       (category != null && !category.trim().isEmpty()) ? category.trim() : null,
                                                       (tags != null && !tags.trim().isEmpty()) ? tags.trim() : null);
-            return "redirect:/posts/" + createdPost.getId() + "?success=post_created";
+            // 게시글 작성 후 메인 페이지로 리다이렉트 (최신순으로 표시되도록)
+            return "redirect:/?success=post_created";
         } catch (Exception e) {
             e.printStackTrace();
             return "redirect:/posts/write?error=create_failed&msg=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
@@ -569,6 +661,17 @@ public class MainController {
         User loginUser = (User) session.getAttribute("loginUser");
         Integer userId = loginUser != null ? loginUser.getId() : null;
         return userRecommendationService.recommendPosts(userId, size);
+    }
+
+    // 사용자 선호도 조회 API
+    @GetMapping("/api/user/preferences")
+    @ResponseBody
+    public java.util.List<com.example.studywithme.entity.UserPreference> getUserPreferences(HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return java.util.Collections.emptyList();
+        }
+        return userPreferenceRepository.findByUser_Id(loginUser.getId());
     }
 
     // AI 태그 추천 API
