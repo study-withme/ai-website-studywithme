@@ -136,11 +136,15 @@
 │              Python AI System                                │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  ai_recommendation.py                                  │ │
+│  │  - 협업 필터링 (User-based/Item-based CF)              │ │
+│  │  - 콘텐츠 기반 필터링                                   │ │
 │  │  - 하이브리드 추천 알고리즘                            │ │
 │  └────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  ai_tag_recommendation.py                              │ │
-│  │  - 규칙 기반 태그 분류                                 │ │
+│  │  - TF-IDF 기반 태그 추출                                │ │
+│  │  - 기술 스택 매칭                                      │ │
+│  │  - 하이브리드 태그 추천                                │ │
 │  └────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  ai_tag_recommendation_deep.py                        │ │
@@ -148,7 +152,9 @@
 │  └────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  ai_summary.py                                         │ │
-│  │  - 규칙 기반 구조화된 요약                             │ │
+│  │  - TF-IDF 기반 요약                                     │ │
+│  │  - TextRank 기반 요약                                   │ │
+│  │  - 하이브리드 요약 알고리즘                            │ │
 │  └────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  config.py, logger.py, utils.py, metrics.py           │ │
@@ -185,13 +191,39 @@
 
 #### 1.1 알고리즘 개요
 
-본 시스템은 **3단계 하이브리드 추천 시스템**을 구현합니다:
+본 시스템은 **하이브리드 추천 시스템**을 구현합니다:
 
-1. **콘텐츠 기반 필터링 (Content-Based Filtering)**
-2. **협업 필터링 (Collaborative Filtering) 요소**
+1. **협업 필터링 (Collaborative Filtering)**
+   - User-based CF: 비슷한 사용자들이 좋아한 게시글 추천
+   - Item-based CF: 비슷한 게시글 추천
+2. **콘텐츠 기반 필터링 (Content-Based Filtering)**
 3. **인기도 기반 추천 (Popularity-Based Recommendation)**
+4. **하이브리드 결합**: 협업 필터링(60%) + 콘텐츠 기반(40%)
 
-#### 1.2 사용자 선호도 분석 알고리즘
+#### 1.2 협업 필터링 알고리즘
+
+**User-based Collaborative Filtering**:
+- 비슷한 취향을 가진 사용자들을 찾아 그들이 좋아한 게시글을 추천
+- **유사도 계산**: 코사인 유사도 또는 피어슨 상관계수 사용
+  ```
+  similarity(u1, u2) = cosine(user_vector1, user_vector2)
+  ```
+- **예상 평점 계산**:
+  ```
+  predicted_rating = Σ(similarity_i × rating_i) / Σ|similarity_i|
+  ```
+
+**Item-based Collaborative Filtering**:
+- 사용자가 좋아한 게시글과 유사한 게시글을 추천
+- 게시글 간 유사도를 계산하여 추천
+- **장점**: 안정적이고 계산 효율적
+
+**사용자-아이템 행렬 구축**:
+- 사용자 활동 로그(SEARCH, CLICK, LIKE, BOOKMARK, COMMENT, AI_CLICK)를 가중치로 변환
+- 좋아요와 북마크 데이터를 추가로 반영
+- 0-5 스케일로 정규화하여 평점 행렬 생성
+
+#### 1.3 사용자 선호도 분석 알고리즘
 
 **가중치 기반 선호도 계산**을 통해 사용자의 관심사를 수치화합니다:
 
@@ -218,7 +250,7 @@ action_weights = {
 - 정규화(Normalization): 0~1 사이의 값으로 변환하여 일관성 확보
 - 다중 신호 통합: 다양한 사용자 행동을 통합하여 선호도 모델 구축
 
-#### 1.3 추천 점수 계산 알고리즘
+#### 1.4 추천 점수 계산 알고리즘
 
 **다중 요소 점수화 (Multi-Factor Scoring)** 방식을 사용합니다:
 
@@ -258,7 +290,20 @@ if days_old <= 7:
   - k: 후보 게시글 수
 - 공간 복잡도: O(n + m + k)
 
-#### 1.4 콜드 스타트 문제 해결
+#### 1.5 하이브리드 추천 결합
+
+협업 필터링과 콘텐츠 기반 필터링을 결합하여 최종 추천 점수를 계산합니다:
+
+```
+final_score = CF_score × 0.6 + Content_score × 0.4
+```
+
+**User-based CF와 Item-based CF 결합**:
+```
+CF_score = User_based_score × 0.6 + Item_based_score × 0.4
+```
+
+#### 1.6 콜드 스타트 문제 해결
 
 - **인기도 기반 폴백**: 활동 로그가 부족한 신규 사용자에게는 인기 게시글 추천
 - **시간 가중치 감소**: 활동이 적은 사용자에게는 전체 기간 데이터 활용
@@ -301,49 +346,100 @@ boolean matched = regexPattern.matcher(text).find();
 
 ### 3. AI 태그 분류 시스템
 
-#### 3.1 규칙 기반 분류 알고리즘
+#### 3.1 하이브리드 태그 추천 알고리즘
 
-**키워드 매칭 기반 분류**를 통해 게시글의 카테고리와 태그를 자동으로 분류합니다:
+**TF-IDF 기반 태그 추출**과 **기술 스택 매칭**을 결합한 하이브리드 시스템:
 
-1. **카테고리 분류**: 사전 정의된 키워드 사전과의 매칭 점수 계산
-2. **태그 추출**: 기술 스택 매칭 + 키워드 빈도 분석 + 카테고리 관련 키워드 보강
+1. **TF-IDF 기반 태그 추출**
+   - 문서에서 중요한 키워드를 TF-IDF로 추출
+   - Term Frequency (TF): 단어가 문서에 등장하는 빈도
+   - Inverse Document Frequency (IDF): 단어의 희귀도
+   - 상위 15개 키워드를 태그 후보로 선택
 
-**신뢰도 계산**:
-```
-신뢰도 = 최고 점수 / 전체 점수 합
-```
+2. **기술 스택 매칭**
+   - 사전 정의된 기술 태그 목록과 텍스트 매칭
+   - Java, Python, Spring, React 등 기술 스택 자동 인식
+   - 최고 신뢰도(0.95) 부여
+
+3. **키워드 빈도 분석**
+   - 자주 등장하는 단어를 태그로 추천
+   - 빈도 기반 점수 계산
+
+4. **카테고리 기반 추론**
+   - 추천된 카테고리와 관련된 키워드를 태그로 추가
+
+5. **제목 가중치**
+   - 제목에 등장하는 키워드에 추가 가중치 부여
+
+**최종 태그 선택**: 점수 0.5 이상인 태그만 선택, 상위 10개 반환
 
 **알고리즘 복잡도**:
-- 시간 복잡도: O(n + c × k + t)
+- 시간 복잡도: O(n + c × k + t + m)
   - n: 텍스트 길이
   - c: 카테고리 수
   - k: 키워드 수
   - t: 기술 태그 수
+  - m: TF-IDF 계산 복잡도
 
 ### 4. 텍스트 요약 알고리즘
 
-#### 4.1 규칙 기반 추출적 요약
+#### 4.1 하이브리드 요약 알고리즘
 
-**정규표현식 및 키워드 매칭 기반** 구조화된 요약 생성:
+**TF-IDF**, **TextRank**, **규칙 기반 추출**을 결합한 하이브리드 요약 시스템:
 
-1. **구조화된 정보 추출**: 정규표현식 패턴 매칭을 통한 정보 추출
+1. **TF-IDF 기반 요약**
+   - 문서에서 중요한 키워드를 추출
+   - 키워드를 포함한 문장에 높은 점수 부여
+   - 상위 3개 문장을 원래 순서대로 정렬하여 요약 생성
+   - **수식**:
+     ```
+     sentence_score = Σ(TF-IDF(keyword)) / √(sentence_length)
+     ```
+
+2. **TextRank 기반 요약**
+   - PageRank 알고리즘을 텍스트에 적용
+   - 문장 간 유사도를 그래프로 표현
+   - 문장의 중요도를 반복 계산으로 수렴
+   - **수식**:
+     ```
+     score(sent_i) = (1 - d) + d × Σ(score(sent_j) × similarity(sent_j, sent_i) / out_degree(sent_j))
+     ```
+     - d: damping factor (기본값: 0.85)
+
+3. **하이브리드 결합**
+   - TF-IDF 점수와 TextRank 점수를 가중 평균
+   - `combined_score = TF-IDF_score × 0.5 + TextRank_score × 0.5`
+   - 상위 3개 문장을 선택하여 요약 생성
+
+4. **규칙 기반 구조화된 정보 추출**
+   - 정규표현식 패턴 매칭을 통한 정보 추출
    - 사용자 프로필 정보 ("이런 사람을 원함", "원하는 사람", "참여 대상", "모집 대상")
    - 추정 레벨 (초급/중급/고급) - 키워드 매칭 기반
    - 진행 방식 ("진행 방식", "일정" 등)
-2. **문장 추출 및 선택**: 문장 단위 분리 후 앞부분 문장 우선 선택
-3. **레벨 추정**: 내용 분석을 통한 자동 레벨 분류
-   - 초급: 초보, 입문, 기초, 처음, 신입, 비전공
-   - 중급: 중급, 중간, 어느정도, 경험, 실무
-   - 고급: 고급, 심화, 전문, 시니어, 리드, 아키텍트
+   - 레벨 추정:
+     - 초급: 초보, 입문, 기초, 처음, 신입, 비전공
+     - 중급: 중급, 중간, 어느정도, 경험, 실무
+     - 고급: 고급, 심화, 전문, 시니어, 리드, 아키텍트
 
 **프로세스**:
 ```
 게시글 본문 → 텍스트 정리 (HTML 태그 제거) 
+→ TF-IDF 키워드 추출 → 문장 점수 계산
+→ TextRank 문장 중요도 계산
+→ 하이브리드 점수 결합
 → 정규표현식으로 구조화된 정보 추출 
 → 레벨 추정 → 구조화된 요약 생성
 ```
 
-#### 4.2 향후 개선 방향
+#### 4.2 알고리즘 비교
+
+| 알고리즘 | 장점 | 단점 | 사용 시기 |
+|---------|------|------|----------|
+| TF-IDF | 빠름, 키워드 중심 | 문맥 고려 부족 | 짧은 문서 |
+| TextRank | 문맥 고려, 문장 관계 반영 | 계산 비용 높음 | 긴 문서 |
+| Hybrid | 정확도 높음 | 계산 비용 높음 | 일반적인 경우 |
+
+#### 4.3 향후 개선 방향
 
 향후 **Gemini API 기반 추상적 요약**으로 업그레이드 예정:
 - 의미 기반 요약 생성
@@ -396,9 +492,15 @@ boolean matched = regexPattern.matcher(text).find();
 
 ### 7. AI 콘텐츠 분석
 
-- **자동 태그 분류**: 게시글 내용 분석을 통한 태그/카테고리 자동 분류 (Python 스크립트 기반)
-- **본문 요약**: 정규표현식 기반 구조화된 정보 추출 및 요약 생성 (Python 스크립트 기반)
-- **구조화된 요약**: 사용자 프로필, 추정 레벨 등 구조화된 정보 추출
+- **자동 태그 분류**: 
+  - TF-IDF 기반 키워드 추출
+  - 기술 스택 자동 매칭
+  - 하이브리드 태그 추천 시스템
+- **본문 요약**: 
+  - TF-IDF 기반 키워드 중요도 요약
+  - TextRank 기반 문장 중요도 요약
+  - 하이브리드 요약 알고리즘
+  - 구조화된 정보 추출 (사용자 프로필, 레벨, 진행 방식)
 - **신뢰도 제공**: 분류 및 요약 결과의 신뢰도 점수 제공
 
 ### 8. AI 챗봇 시스템
@@ -558,10 +660,10 @@ studywithmever2/
 │       └── ...
 │
 ├── python/                              # Python AI 시스템
-│   ├── ai_recommendation.py             # 하이브리드 추천 알고리즘
-│   ├── ai_tag_recommendation.py         # 규칙 기반 태그 분류
-│   ├── ai_tag_recommendation_deep.py    # 딥러닝 태그 분류 (향후)
-│   ├── ai_summary.py                    # 규칙 기반 구조화된 요약 알고리즘
+│   ├── ai_recommendation.py             # 협업 필터링 + 콘텐츠 기반 하이브리드 추천
+│   ├── ai_tag_recommendation.py         # TF-IDF 기반 하이브리드 태그 추천
+│   ├── ai_tag_recommendation_deep.py    # 딥러닝 태그 분류 (선택적)
+│   ├── ai_summary.py                    # TF-IDF + TextRank 하이브리드 요약
 │   ├── config.py                        # 설정 파일
 │   ├── utils.py                         # 유틸리티 함수
 │   ├── logger.py                        # 로깅 설정
@@ -569,6 +671,7 @@ studywithmever2/
 │   ├── exceptions.py                    # 예외 처리
 │   ├── requirements.txt                 # Python 의존성
 │   ├── README.md                        # Python 시스템 문서
+│   ├── PythonREADME.md                  # 알고리즘 상세 문서 (신규)
 │   ├── ALGORITHM_ANALYSIS.md            # 알고리즘 상세 분석
 │   └── CODE_REVIEW.md                   # 코드 리뷰
 │
@@ -716,10 +819,12 @@ GEMINI_API_KEY=your_gemini_api_key
 - 기본 UI 템플릿 구현
 
 #### Phase 3: AI 시스템 개발 (3주)
+- 협업 필터링 알고리즘 구현 (User-based, Item-based CF)
+- 콘텐츠 기반 필터링 알고리즘 구현
 - 하이브리드 추천 알고리즘 구현
+- TF-IDF 기반 태그 추출 시스템 개발
+- TF-IDF 및 TextRank 기반 요약 시스템 개발
 - 콘텐츠 필터링 시스템 개발
-- AI 태그 분류 시스템 개발
-- 텍스트 요약 시스템 개발
 - Spring Boot와 Python 통합
 
 #### Phase 4: 고급 기능 및 최적화 (2주)
@@ -810,8 +915,10 @@ GEMINI_API_KEY=your_gemini_api_key
 3. Adomavicius, G., & Tuzhilin, A. (2005). Toward the next generation of recommender systems: A survey of the state-of-the-art and possible extensions. *IEEE Transactions on Knowledge and Data Engineering*, 17(6), 734–749.
 4. Lops, P., De Gemmis, M., & Semeraro, G. (2011). Content-based recommender systems: State of the art and trends. In *Recommender Systems Handbook* (pp. 73–105). Springer.
 5. Ding, Y., & Li, X. (2005). Time weight collaborative filtering. *Proceedings of the 14th ACM International Conference on Information and Knowledge Management (CIKM)*, 485–492.
-6. Nenkova, A., & McKeown, K. (2012). A survey of text summarization techniques. In *Mining Text Data* (pp. 43–76). Springer.
-7. Salton, G., & Buckley, C. (1988). Term-weighting approaches in automatic text retrieval. *Information Processing & Management*, 24(5), 513–523.
+6. Mihalcea, R., & Tarau, P. (2004). TextRank: Bringing order into text. *Proceedings of the 2004 Conference on Empirical Methods in Natural Language Processing (EMNLP)*, 404–411.
+7. Nenkova, A., & McKeown, K. (2012). A survey of text summarization techniques. In *Mining Text Data* (pp. 43–76). Springer.
+8. Salton, G., & Buckley, C. (1988). Term-weighting approaches in automatic text retrieval. *Information Processing & Management*, 24(5), 513–523.
+9. Page, L., Brin, S., Motwani, R., & Winograd, T. (1999). The PageRank citation ranking: Bringing order to the web. *Stanford InfoLab Technical Report*.
 
 ### 기술 문서 및 가이드
 
@@ -878,6 +985,7 @@ GEMINI_API_KEY=your_gemini_api_key
 - **상세 설치 가이드**: [SETUP.md](SETUP.md) (있는 경우)
 - **프로젝트 로드맵**: [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md)
 - **Python AI 시스템 문서**: [python/README.md](python/README.md)
+- **Python 알고리즘 상세 문서**: [python/PythonREADME.md](python/PythonREADME.md)
 - **알고리즘 상세 분석**: [python/ALGORITHM_ANALYSIS.md](python/ALGORITHM_ANALYSIS.md) (있는 경우)
 
 ---
