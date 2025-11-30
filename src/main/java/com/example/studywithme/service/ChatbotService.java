@@ -233,21 +233,32 @@ public class ChatbotService {
             // HTTP 요청
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("x-goog-api-key", geminiApiKey);  // 헤더로 API 키 전달
+            // API 키는 URL 쿼리 파라미터로 전달 (헤더도 함께 사용 가능하지만 쿼리 파라미터가 더 안정적)
+            // headers.set("x-goog-api-key", geminiApiKey);
             
             // URL 구성 (application.properties에 URL이 없으면 기본값 사용)
-            String url;
+            String baseUrl;
             if (geminiApiUrl != null && !geminiApiUrl.isEmpty()) {
-                url = geminiApiUrl;
+                baseUrl = geminiApiUrl;
             } else {
-                // 기본 URL 구성
-                url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", 
-                                   geminiModel != null ? geminiModel : "gemini-1.5-pro");
+                // 기본 URL 구성 - 모델명을 URL 인코딩
+                String model = geminiModel != null && !geminiModel.isEmpty() ? geminiModel : "gemini-1.5-pro";
+                // 모델명에 하이픈이 있어도 그대로 사용 (Gemini API는 하이픈을 지원함)
+                baseUrl = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", model);
             }
             
-            log.debug("Gemini API 호출 URL: {}", url);
-            log.debug("사용 모델: {}", geminiModel);
-            log.debug("요청 본문: {}", requestBody);
+            // API 키를 쿼리 파라미터로 추가
+            // URL에 이미 key 파라미터가 있으면 추가하지 않음
+            String url;
+            if (baseUrl.contains("?key=") || baseUrl.contains("&key=")) {
+                url = baseUrl;
+            } else {
+                String separator = baseUrl.contains("?") ? "&" : "?";
+                url = baseUrl + separator + "key=" + geminiApiKey;
+            }
+            
+            log.info("Gemini API 호출 - Base URL: {}, 최종 URL: {}, 모델: {}", baseUrl, url.replace(geminiApiKey, "***"), geminiModel);
+            log.debug("요청 본문 크기: {} bytes", requestBody.toString().length());
             
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
             
@@ -446,6 +457,29 @@ public class ChatbotService {
                 return item;
             })
             .collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자의 대화 내역 삭제 (초기화)
+     */
+    @Transactional
+    public void clearChatHistory(Integer userId) {
+        try {
+            if (userId != null) {
+                // 사용자별 메시지 삭제
+                List<ChatMessage> messages = chatMessageRepository.findByUserIdOrderByCreatedAtDesc(userId);
+                chatMessageRepository.deleteAll(messages);
+                log.info("사용자 ID {}의 대화 내역 {}개 삭제 완료", userId, messages.size());
+            } else {
+                // 비로그인 사용자 메시지 삭제 (user_id가 NULL인 메시지)
+                List<ChatMessage> messages = chatMessageRepository.findByUserIdOrderByCreatedAtDesc(null);
+                chatMessageRepository.deleteAll(messages);
+                log.info("비로그인 사용자의 대화 내역 {}개 삭제 완료", messages.size());
+            }
+        } catch (Exception e) {
+            log.error("대화 내역 삭제 오류", e);
+            throw new RuntimeException("대화 내역 삭제 중 오류가 발생했습니다.", e);
+        }
     }
 
     /**

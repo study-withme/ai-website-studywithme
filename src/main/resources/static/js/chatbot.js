@@ -10,6 +10,7 @@
     const chatbotInput = document.getElementById('chatbotInput');
     const chatbotSendBtn = document.getElementById('chatbotSendBtn');
     const chatbotCloseBtn = document.getElementById('chatbotCloseBtn');
+    const chatbotClearBtn = document.getElementById('chatbotClearBtn');
 
     let isOpen = false;
     let isLoading = false;
@@ -24,6 +25,11 @@
         // 닫기 버튼
         if (chatbotCloseBtn) {
             chatbotCloseBtn.addEventListener('click', closeChatbot);
+        }
+
+        // 초기화 버튼
+        if (chatbotClearBtn) {
+            chatbotClearBtn.addEventListener('click', clearChatHistory);
         }
 
         // 전송 버튼
@@ -306,6 +312,45 @@
             }
         } catch (error) {
             console.error('대화 내역 로드 오류:', error);
+        }
+    }
+
+    // 대화 내역 초기화
+    async function clearChatHistory() {
+        if (!confirm('대화 내역을 모두 삭제하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/chatbot/history', {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // 메시지 영역 초기화 (초기 환영 메시지만 남김)
+                if (chatbotMessages) {
+                    chatbotMessages.innerHTML = `
+                        <div class="chatbot-message assistant">
+                            <div class="chatbot-message-avatar">🤖</div>
+                            <div class="chatbot-message-content">
+                                안녕하세요! Study With Me AI 어시스턴트입니다. 무엇을 도와드릴까요?<br><br>
+                                예시:<br>
+                                • "마이페이지 보여줘"<br>
+                                • "프로그래밍 스터디 찾아줘"<br>
+                                • "북마크 보여줘"<br>
+                                • "게시글 작성하는 방법 알려줘"
+                            </div>
+                        </div>
+                    `;
+                }
+                console.log('대화 내역이 초기화되었습니다.');
+            } else {
+                alert('대화 내역 초기화에 실패했습니다: ' + (result.message || '알 수 없는 오류'));
+            }
+        } catch (error) {
+            console.error('대화 내역 초기화 오류:', error);
+            alert('대화 내역 초기화 중 오류가 발생했습니다.');
         }
     }
 

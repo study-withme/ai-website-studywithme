@@ -43,6 +43,37 @@
 
 <main class="page">
 
+    <!-- 자격증 정보 슬라이드쇼 -->
+    <section class="certification-slider" th:if="${certifications != null and !certifications.isEmpty()}">
+        <div class="slider-header">
+            <h2>📚 다가오는 자격증 시험일정</h2>
+            <p>공부할 때 필요한 자격증 정보를 확인하세요</p>
+        </div>
+        <div class="slider-container">
+            <div class="slider-track" id="certSliderTrack">
+                <div class="cert-card" th:each="cert : ${certifications}">
+                    <div class="cert-badge" th:text="${cert.category ?: '자격증'}"></div>
+                    <h3 th:text="${cert.name}">자격증 이름</h3>
+                    <div class="cert-info">
+                        <div class="cert-date">
+                            <span class="cert-label">시험일</span>
+                            <span th:text="${#temporals.format(cert.examDate, 'yyyy-MM-dd')}">2025-01-01</span>
+                        </div>
+                        <div class="cert-registration" th:if="${cert.registrationStart != null}">
+                            <span class="cert-label">접수기간</span>
+                            <span th:text="${#temporals.format(cert.registrationStart, 'MM-dd')} + ' ~ ' + ${#temporals.format(cert.registrationEnd, 'MM-dd')}">01-01 ~ 01-15</span>
+                        </div>
+                    </div>
+                    <p class="cert-desc" th:text="${cert.description ?: ''}">자격증 설명</p>
+                    <a th:if="${cert.website != null}" th:href="${cert.website}" target="_blank" class="cert-link">자세히 보기 →</a>
+                </div>
+            </div>
+            <button class="slider-btn prev" id="certSliderPrev">‹</button>
+            <button class="slider-btn next" id="certSliderNext">›</button>
+        </div>
+        <div class="slider-dots" id="certSliderDots"></div>
+    </section>
+
     <section class="board-toolbar">
         <div class="toolbar-top">
             <h1>스터디 모집 게시판</h1>
@@ -71,8 +102,8 @@
                 </select>
 
                 <select id="sortFilter">
-                    <option value="latest">최신순</option>
-                    <option value="popular">인기순</option>
+                    <option value="latest" th:selected="${sort == 'latest' or sort == null}">최신순</option>
+                    <option value="popular" th:selected="${sort == 'popular'}">인기순</option>
                 </select>
             </div>
 
@@ -84,7 +115,7 @@
     <!-- 게시글 목록 -->
     <section class="board-grid" id="boardList">
         <!-- Thymeleaf로 서버 사이드 렌더링 (초기 로드) -->
-        <div th:if="${posts != null and posts.content != null}" th:each="post : ${posts.content}" class="card" th:onclick="'location.href=\'/posts/' + ${post.id} + '\''">
+        <div th:if="${posts != null and posts.content != null and !posts.empty}" th:each="post : ${posts.content}" class="card" th:onclick="'location.href=\'/posts/' + ${post.id} + '\''">
             <div class="card-thumb" 
                  th:style="'background-image:url(https://picsum.photos/seed/' + ${post.id} + '/400/300)'"></div>
             <div class="card-body">
@@ -97,7 +128,7 @@
             </div>
         </div>
         
-        <div th:if="${posts == null or posts.totalElements == 0}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #9ca3af;">
+        <div th:if="${posts == null or posts.empty}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #9ca3af;">
             <p>조건에 맞는 게시글이 없습니다.</p>
         </div>
     </section>
@@ -105,7 +136,7 @@
     <!-- 페이지네이션 -->
     <div class="pagination">
         <button id="prevPage" class="page-btn">이전</button>
-        <span id="pageInfo" th:text="${(posts != null ? (currentPage + 1) : 1) + ' / ' + (posts != null ? posts.totalPages : 1)}">1 / 1</span>
+        <span id="pageInfo" th:text="${posts != null ? ((currentPage + 1) + ' / ' + posts.totalPages) : '1 / 1'}">1 / 1</span>
         <button id="nextPage" class="page-btn">다음</button>
     </div>
 
