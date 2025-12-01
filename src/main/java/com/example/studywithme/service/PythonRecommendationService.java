@@ -40,7 +40,7 @@ public class PythonRecommendationService {
     @Value("${db.user:root}")
     private String dbUser;
 
-    @Value("${db.password:password}")
+    @Value("${db.password:Xmflslxl2@}")
     private String dbPassword;
 
     @Value("${db.name:studywithmever2}")

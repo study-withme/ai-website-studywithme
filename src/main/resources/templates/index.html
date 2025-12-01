@@ -115,7 +115,7 @@
     <!-- 게시글 목록 -->
     <section class="board-grid" id="boardList">
         <!-- Thymeleaf로 서버 사이드 렌더링 (초기 로드) -->
-        <div th:if="${posts != null and posts.content != null and !posts.empty}" th:each="post : ${posts.content}" class="card" th:onclick="'location.href=\'/posts/' + ${post.id} + '\''">
+        <div th:if="${posts != null and posts.content != null}" th:each="post : ${posts.content}" class="card" th:onclick="'location.href=\'/posts/' + ${post.id} + '\''">
             <div class="card-thumb" 
                  th:style="'background-image:url(https://picsum.photos/seed/' + ${post.id} + '/400/300)'"></div>
             <div class="card-body">

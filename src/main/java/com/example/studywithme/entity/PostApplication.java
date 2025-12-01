@@ -32,7 +32,7 @@ public class PostApplication {
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "ENUM('PENDING','ACCEPTED','REJECTED','CANCELLED') DEFAULT 'PENDING'")
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
     @Column(name = "created_at", insertable = false, updatable = false)

@@ -14,5 +14,7 @@ public interface StudyGroupMemberRepository extends JpaRepository<StudyGroupMemb
     List<StudyGroupMember> findByStudyGroup_IdAndStatus(Long studyGroupId, StudyGroupMember.MemberStatus status);
     
     List<StudyGroupMember> findByUser_IdAndStatus(Integer userId, StudyGroupMember.MemberStatus status);
+    
+    long countByStudyGroup_IdAndStatus(Long studyGroupId, StudyGroupMember.MemberStatus status);
 }
 
