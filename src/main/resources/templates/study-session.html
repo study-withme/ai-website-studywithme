@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>학습 시작 | Study With Me</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/board.css" />
+    <link rel="stylesheet" href="/css/study-group.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .session-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        
+        .session-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .timer-section {
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
+        }
+        
+        .timer-display {
+            font-size: 64px;
+            font-weight: 700;
+            margin: 16px 0;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        
+        .timer-info {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .timer-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+        
+        .timer-btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .timer-btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .timer-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .timer-btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .cycle-info {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+        
+        .attendance-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #10b981;
+        }
+        
+        .study-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .mood-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .mood-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
+        
+        .mood-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+        
+        .attendance-btn {
+            width: 100%;
+            padding: 16px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .attendance-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        
+        .attendance-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .attendance-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .celebration.active {
+            display: flex;
+        }
+        
+        .celebration-content {
+            background: white;
+            border-radius: 24px;
+            padding: 48px;
+            text-align: center;
+            max-width: 500px;
+            animation: popIn 0.5s ease;
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .celebration-emoji {
+            font-size: 80px;
+            margin-bottom: 16px;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .status-message-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body class="light">
+
+<header class="swm-header">
+    <div class="nav-inner">
+        <div class="logo" onclick="location.href='/'">Study With Me</div>
+        <nav class="nav-links">
+            <a href="/">모집 게시판</a>
+            <a href="/recommend">AI 추천</a>
+            <a href="/study-groups" class="active">진행중인 스터디</a>
+        </nav>
+        <div class="nav-actions">
+            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+                <a href="/study-groups" class="btn btn-outline">← 돌아가기</a>
+                <a href="/logout" class="btn btn-outline">로그아웃</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="session-container">
+    <div th:if="${group != null}" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="session-content">
+        <div style="margin-bottom: 16px;">
+            <h1 style="font-size: 28px; margin-bottom: 8px;" th:text="${group.title}">스터디 그룹</h1>
+            <p style="color: #6b7280; font-size: 14px;">함께 공부하며 목표를 달성해요!</p>
+        </div>
+
+        <!-- 타이머 섹션 -->
+        <div class="timer-section" id="timerSection">
+            <div class="timer-info" id="timerInfo">학습 시간</div>
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            <div class="timer-info" id="nextBreakInfo">다음 쉬는시간까지: --:--</div>
+            
+            <div class="cycle-info">
+                <div>현재 사이클: <span id="currentCycle">0</span> / <span id="targetCycles">4</span></div>
+                <div style="margin-top: 8px; font-size: 14px; opacity: 0.9;">
+                    학습시간: <span id="studyDuration">50</span>분 · 쉬는시간: <span id="breakDuration">10</span>분
+                </div>
+            </div>
+            
+            <div class="timer-controls">
+                <button class="timer-btn timer-btn-primary" id="startBtn" onclick="startTimer()">학습 시작</button>
+                <button class="timer-btn timer-btn-secondary" id="pauseBtn" onclick="pauseTimer()" style="display: none;">일시정지</button>
+                <button class="timer-btn timer-btn-secondary" id="endBtn" onclick="endSession()" style="display: none;">종료</button>
+            </div>
+            
+            <!-- 상태 메시지 입력 -->
+            <div style="margin-top: 24px;">
+                <input type="text" class="status-message-input" id="statusMessageInput" 
+                       placeholder="지금 무엇을 공부하고 있나요? (예: 자바스크립트 함수 파트)" 
+                       maxlength="50">
+            </div>
+        </div>
+
+        <!-- 출석체크 섹션 (쉬는시간에만 표시) -->
+        <div class="attendance-section" id="attendanceSection" style="display: none;">
+            <h3 style="margin-bottom: 16px; color: #10b981;">쉬는 시간 출석체크</h3>
+            <p style="color: #6b7280; margin-bottom: 16px;">
+                쉬는시간 동안 출석체크를 완료하면 오늘의 학습량으로 인정됩니다!
+            </p>
+            <textarea id="attendanceMessage" placeholder="오늘의 다짐이나 격려 메시지를 남겨보세요 (선택사항)" 
+                      style="width: 100%; min-height: 80px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; resize: vertical;"></textarea>
+            <button class="attendance-btn" id="attendanceBtn" onclick="checkAttendance()">출석체크 완료</button>
+            <div class="attendance-status" id="attendanceStatus" style="display: none;">
+                <span>출석 현황:</span>
+                <span id="attendanceCount">0/0명 출석 완료</span>
+            </div>
+        </div>
+
+        <!-- 채팅 및 팀원 정보 -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+            <!-- 채팅 영역 -->
+            <div class="study-section">
+                <div class="section-title">
+                    <span class="section-icon"></span>
+                    그룹 채팅
+                </div>
+                <div class="chat-section">
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- 채팅 메시지가 여기에 동적으로 추가됨 -->
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." 
+                               onkeypress="if(event.key==='Enter') sendChatMessage()">
+                        <button onclick="sendChatMessage()">전송</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 팀원 정보 -->
+            <div class="study-section">
+                <div class="section-title">
+                    <span class="section-icon"></span>
+                    함께 공부하는 팀원
+                </div>
+                <div id="membersList">
+                    <!-- 팀원 정보가 여기에 동적으로 추가됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 학습 일지 -->
+        <div class="study-section">
+                <div class="section-title">
+                    <span class="section-icon"></span>
+                    오늘의 학습 일지
+                </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">오늘 배운 것</label>
+                    <textarea id="studyContent" placeholder="오늘 무엇을 배웠나요?" 
+                              style="width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); resize: vertical;"></textarea>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">느낀 점</label>
+                    <textarea id="feeling" placeholder="오늘 공부하며 느낀 점은?" 
+                              style="width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div style="margin-top: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">다음 목표</label>
+                <textarea id="nextGoal" placeholder="다음에 무엇을 공부할 계획인가요?" 
+                          style="width: 100%; min-height: 60px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); resize: vertical;"></textarea>
+            </div>
+            <div style="margin-top: 16px; display: flex; align-items: center; gap: 16px;">
+                <label style="font-weight: 600;">오늘의 기분:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button class="mood-btn" data-rating="1" onclick="setMood(1)" title="매우 나쁨">1</button>
+                    <button class="mood-btn" data-rating="2" onclick="setMood(2)" title="나쁨">2</button>
+                    <button class="mood-btn" data-rating="3" onclick="setMood(3)" title="보통">3</button>
+                    <button class="mood-btn" data-rating="4" onclick="setMood(4)" title="좋음">4</button>
+                    <button class="mood-btn" data-rating="5" onclick="setMood(5)" title="매우 좋음">5</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 16px; width: 100%; padding: 14px; font-size: 16px; font-weight: 600;" onclick="saveJournal()">일지 저장</button>
+        </div>
+        </div>
+    </div>
+</main>
+
+<!-- 목표 달성 축하 애니메이션 -->
+<div class="celebration" id="celebration">
+    <div class="celebration-content">
+        <div class="celebration-emoji"></div>
+        <h2 style="font-size: 32px; margin-bottom: 16px;">축하합니다!</h2>
+        <p id="celebrationMessage" style="font-size: 18px; color: #6b7280; margin-bottom: 24px;">
+            목표를 달성했습니다!
+        </p>
+        <button class="btn btn-primary" onclick="closeCelebration()">확인</button>
+    </div>
+</div>
+
+<script>
+const groupId = /*[[${group.id}]]*/ null;
+let timerInterval = null;
+let remainingSeconds = 0;
+let isStudyTime = true; // true: 학습시간, false: 쉬는시간
+let currentCycle = 0;
+let studyDuration = 50; // 분
+let breakDuration = 10; // 분
+let targetCycles = 4;
+let sessionId = null;
+let selectedMood = null;
+
+// groupId 확인
+if (!groupId) {
+    console.error('그룹 ID가 없습니다. 페이지를 새로고침해주세요.');
+}
+
+// 타이머 시작
+function startTimer() {
+    if (sessionId === null) {
+        // 세션 시작
+        const statusMessage = document.getElementById('statusMessageInput').value || '공부 중';
+        fetch(`/api/study-groups/${groupId}/sessions/start?statusMessage=${encodeURIComponent(statusMessage)}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                sessionId = data.session.id;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                document.getElementById('endBtn').style.display = 'inline-block';
+                loadSettings();
+            }
+        });
+    } else {
+        // 재개
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('pauseBtn').style.display = 'inline-block';
+    }
+    
+    remainingSeconds = isStudyTime ? studyDuration * 60 : breakDuration * 60;
+    updateTimerDisplay();
+    
+    timerInterval = setInterval(() => {
+        remainingSeconds--;
+        updateTimerDisplay();
+        
+        if (remainingSeconds <= 0) {
+            if (isStudyTime) {
+                // 학습시간 종료 → 쉬는시간 시작
+                isStudyTime = false;
+                remainingSeconds = breakDuration * 60;
+                document.getElementById('timerInfo').textContent = '쉬는 시간';
+                document.getElementById('attendanceSection').style.display = 'block';
+                showNotification('쉬는시간입니다! 출석체크를 해주세요!');
+            } else {
+                // 쉬는시간 종료 → 다음 사이클
+                currentCycle++;
+                isStudyTime = true;
+                remainingSeconds = studyDuration * 60;
+                document.getElementById('timerInfo').textContent = '학습 시간';
+                document.getElementById('attendanceSection').style.display = 'none';
+                document.getElementById('currentCycle').textContent = currentCycle;
+                
+                if (currentCycle >= targetCycles) {
+                    // 모든 사이클 완료
+                    endSession();
+                    showNotification('모든 사이클을 완료했습니다! 수고하셨습니다!');
+                } else {
+                    showNotification(`${currentCycle}사이클 완료! 다음 사이클을 시작합니다!`);
+                }
+            }
+        }
+    }, 1000);
+}
+
+// 타이머 일시정지
+function pauseTimer() {
+    clearInterval(timerInterval);
+    document.getElementById('startBtn').style.display = 'inline-block';
+    document.getElementById('pauseBtn').style.display = 'none';
+}
+
+// 타이머 표시 업데이트
+function updateTimerDisplay() {
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    document.getElementById('timerDisplay').textContent = 
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    if (isStudyTime) {
+        const nextBreak = Math.floor(remainingSeconds / 60);
+        document.getElementById('nextBreakInfo').textContent = 
+            `다음 쉬는시간까지: ${nextBreak}분 ${remainingSeconds % 60}초`;
+    } else {
+        document.getElementById('nextBreakInfo').textContent = 
+            `학습 재개까지: ${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초`;
+    }
+}
+
+// 세션 종료
+function endSession() {
+    clearInterval(timerInterval);
+    if (sessionId) {
+        fetch(`/api/study-groups/sessions/${sessionId}/end`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.href = '/study-groups';
+            }
+        });
+    }
+}
+
+// 출석체크
+function checkAttendance() {
+    const message = document.getElementById('attendanceMessage').value;
+    if (!sessionId) return;
+    
+    fetch(`/api/study-groups/sessions/${sessionId}/attendance?message=${encodeURIComponent(message || '')}`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('attendanceBtn').disabled = true;
+            document.getElementById('attendanceBtn').textContent = '출석체크 완료';
+            showNotification('출석체크가 완료되었습니다!');
+            updateAttendanceStatus();
+        }
+    });
+}
+
+// 채팅 메시지 전송
+function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message || !groupId) {
+        console.error('메시지 또는 그룹 ID가 없습니다.');
+        return;
+    }
+    
+    fetch(`/api/study-groups/${groupId}/chat?message=${encodeURIComponent(message)}`, {
+        method: 'POST'
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.success) {
+            input.value = '';
+            loadMessages();
+        } else {
+            console.error('메시지 전송 실패:', data.error);
+            alert('메시지 전송에 실패했습니다: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(error => {
+        console.error('메시지 전송 중 오류:', error);
+        alert('메시지 전송 중 오류가 발생했습니다.');
+    });
+}
+
+// 메시지 로드
+function loadMessages() {
+    if (!groupId) {
+        console.error('그룹 ID가 없습니다.');
+        return;
+    }
+    
+    fetch(`/api/study-groups/${groupId}/chat?limit=50`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const container = document.getElementById('chatMessages');
+                if (!container) {
+                    console.error('채팅 메시지 컨테이너를 찾을 수 없습니다.');
+                    return;
+                }
+                container.innerHTML = '';
+                
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.reverse().forEach(msg => {
+                        const isOwn = msg.userId === /*[[${loginUser != null ? loginUser.id : null}]]*/ null;
+                        const div = document.createElement('div');
+                        div.className = `chat-message ${isOwn ? 'own' : ''}`;
+                        div.innerHTML = `
+                            <img class="chat-avatar" src="https://i.pravatar.cc/32?img=${msg.userId}" alt="프로필">
+                            <div>
+                                <div class="chat-name">${msg.userName}</div>
+                                <div class="chat-bubble">
+                                    <div class="chat-text">${escapeHtml(msg.message)}</div>
+                                    <div class="chat-time">${formatTime(msg.createdAt)}</div>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">아직 메시지가 없습니다.</div>';
+                }
+                container.scrollTop = container.scrollHeight;
+            } else {
+                console.error('메시지 로드 실패:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('메시지 로드 중 오류:', error);
+        });
+}
+
+// HTML 이스케이프 함수
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 팀원 정보 로드
+function loadMembers() {
+    fetch(`/api/study-groups/${groupId}/members`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const container = document.getElementById('membersList');
+                container.innerHTML = '';
+                data.members.forEach(member => {
+                    const div = document.createElement('div');
+                    div.className = 'online-member';
+                    div.style.marginBottom = '12px';
+                    
+                    const statusColor = member.isOnline ? '#10b981' : '#9ca3af';
+                    const statusText = getStatusText(member.status);
+                    const lastActive = formatLastActive(member.lastActiveTime);
+                    
+                    div.innerHTML = `
+                        <div style="position: relative;">
+                            <img class="online-member-avatar" src="https://i.pravatar.cc/36?img=${member.id}" alt="프로필">
+                            <span class="online-badge" style="background: ${statusColor};"></span>
+                        </div>
+                        <div style="flex: 1;">
+                            <div class="online-member-name">
+                                ${member.name} ${member.role === 'CREATOR' ? '<span style="font-size: 11px; color: #f59e0b;">(팀장)</span>' : ''}
+                            </div>
+                            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+                                ${statusText} · ${lastActive}
+                            </div>
+                            ${member.statusMessage ? `<div style="font-size: 11px; color: var(--primary); margin-top: 2px;">"${member.statusMessage}"</div>` : ''}
+                            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+                                오늘: ${formatTime(member.todayStudyTime)} · 스트릭: ${member.consecutiveDays}일
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        });
+}
+
+// 설정 로드
+function loadSettings() {
+    fetch(`/api/study-groups/${groupId}/settings`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                studyDuration = data.settings.studyDuration;
+                breakDuration = data.settings.breakDuration;
+                targetCycles = data.settings.cyclesPerDay;
+                
+                document.getElementById('studyDuration').textContent = studyDuration;
+                document.getElementById('breakDuration').textContent = breakDuration;
+                document.getElementById('targetCycles').textContent = targetCycles;
+            }
+        });
+}
+
+// 학습 일지 저장
+function saveJournal() {
+    if (!groupId || groupId === null) {
+        console.error('그룹 ID가 없습니다. groupId:', groupId);
+        alert('일지를 저장할 수 없습니다. 페이지를 새로고침해주세요.');
+        return;
+    }
+    
+    const studyContent = document.getElementById('studyContent')?.value || '';
+    const feeling = document.getElementById('feeling')?.value || '';
+    const nextGoal = document.getElementById('nextGoal')?.value || '';
+    const moodRating = selectedMood || null;
+    
+    const params = new URLSearchParams();
+    if (studyContent) params.append('studyContent', studyContent);
+    if (feeling) params.append('feeling', feeling);
+    if (nextGoal) params.append('nextGoal', nextGoal);
+    if (moodRating) params.append('moodRating', moodRating.toString());
+    
+    fetch(`/api/study-groups/${groupId}/journal?${params.toString()}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(res => {
+        if (!res.ok) {
+            return res.json().then(err => {
+                throw new Error(err.error || `HTTP error! status: ${res.status}`);
+            });
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification('학습 일지가 저장되었습니다!');
+            // 저장 후 일지 다시 로드
+            loadJournal();
+        } else {
+            console.error('일지 저장 실패:', data.error);
+            alert('일지 저장에 실패했습니다: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(error => {
+        console.error('일지 저장 중 오류:', error);
+        alert('일지 저장 중 오류가 발생했습니다: ' + error.message);
+    });
+}
+
+// 일지 로드
+function loadJournal() {
+    if (!groupId || groupId === null) return;
+    
+    fetch(`/api/study-groups/${groupId}/journal`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.journal) {
+                const journal = data.journal;
+                if (document.getElementById('studyContent')) {
+                    document.getElementById('studyContent').value = journal.studyContent || '';
+                }
+                if (document.getElementById('feeling')) {
+                    document.getElementById('feeling').value = journal.feeling || '';
+                }
+                if (document.getElementById('nextGoal')) {
+                    document.getElementById('nextGoal').value = journal.nextGoal || '';
+                }
+                if (journal.moodRating) {
+                    setMood(journal.moodRating);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('일지 로드 중 오류:', error);
+        });
+}
+
+// 기분 설정
+function setMood(rating) {
+    selectedMood = rating;
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (parseInt(btn.getAttribute('data-rating')) === rating) {
+            btn.classList.add('selected');
+        }
+        btn.style.opacity = btn.dataset.rating == rating ? '1' : '0.5';
+        btn.style.transform = btn.dataset.rating == rating ? 'scale(1.2)' : 'scale(1)';
+    });
+}
+
+// 목표 달성 확인
+function checkGoals() {
+    fetch(`/api/study-groups/${groupId}/goals/check`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.hasAchievement) {
+                showCelebration(data.achievedGoals);
+            }
+        });
+}
+
+// 축하 애니메이션 표시
+function showCelebration(goals) {
+    const celebration = document.getElementById('celebration');
+    const message = document.getElementById('celebrationMessage');
+    
+    if (goals.length > 0) {
+        message.textContent = `팀 목표를 달성했습니다! 🎊`;
+        celebration.classList.add('active');
+    }
+}
+
+function closeCelebration() {
+    document.getElementById('celebration').classList.remove('active');
+}
+
+// 유틸리티 함수
+function formatTime(minutes) {
+    if (typeof minutes === 'number') {
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    }
+    return minutes;
+}
+
+function formatLastActive(time) {
+    if (!time) return '오프라인';
+    const now = new Date();
+    const active = new Date(time);
+    const diff = Math.floor((now - active) / 1000 / 60);
+    
+    if (diff < 1) return '방금 전';
+    if (diff < 60) return `${diff}분 전`;
+    const hours = Math.floor(diff / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    return '오프라인';
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'ONLINE': '온라인',
+        'AWAY': '자리비움',
+        'STUDYING': '학습 중',
+        'BREAK': '쉬는 시간',
+        'OFFLINE': '오프라인'
+    };
+    return statusMap[status] || '오프라인';
+}
+
+function showNotification(message) {
+    // 간단한 알림 (실제로는 더 나은 알림 시스템 사용)
+    alert(message);
+}
+
+function updateAttendanceStatus() {
+    if (!sessionId) return;
+    fetch(`/api/study-groups/sessions/${sessionId}/attendance`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const statusDiv = document.getElementById('attendanceStatus');
+                const countSpan = document.getElementById('attendanceCount');
+                if (statusDiv && countSpan) {
+                    statusDiv.style.display = 'flex';
+                    countSpan.textContent = `${data.count}/${data.attendances.length}명 출석 완료`;
+                }
+            }
+        });
+}
+
+// 팀원 정보 로드
+function loadMembers() {
+    if (!groupId) {
+        console.error('그룹 ID가 없습니다.');
+        return;
+    }
+    
+    fetch(`/api/study-groups/${groupId}/members`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const container = document.getElementById('membersList');
+                if (!container) {
+                    console.error('멤버 리스트 컨테이너를 찾을 수 없습니다.');
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                if (data.members && data.members.length > 0) {
+                    data.members.forEach(member => {
+                        const statusColor = member.isOnline ? '#10b981' : '#9ca3af';
+                        const statusText = getStatusText(member.status);
+                        const lastActive = formatLastActive(member.lastActiveTime);
+                        
+                        const div = document.createElement('div');
+                        div.className = 'online-member';
+                        div.style.marginBottom = '12px';
+                        div.innerHTML = `
+                            <div style="position: relative;">
+                                <img class="online-member-avatar" src="https://i.pravatar.cc/36?img=${member.id}" alt="프로필">
+                                <span class="online-badge" style="background: ${statusColor};"></span>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="online-member-name">
+                                    ${escapeHtml(member.name)} ${member.role === 'CREATOR' ? '<span style="font-size: 11px; color: #f59e0b;">(팀장)</span>' : ''}
+                                </div>
+                                <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">
+                                    ${statusText} · ${lastActive}
+                                </div>
+                                ${member.statusMessage ? `<div style="font-size: 11px; color: var(--primary); margin-top: 2px; font-style: italic;">"${escapeHtml(member.statusMessage)}"</div>` : ''}
+                                <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+                                    오늘: ${formatTime(member.todayStudyTime)} · 스트릭: ${member.consecutiveDays}일
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">멤버 정보를 불러올 수 없습니다.</div>';
+                }
+            } else {
+                console.error('멤버 정보 로드 실패:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('멤버 정보 로드 중 오류:', error);
+        });
+}
+
+// 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    if (groupId) {
+        loadSettings();
+        loadMembers();
+        loadMessages();
+        loadJournal();
+        checkGoals();
+        
+        // 활성 세션 확인
+        fetch('/api/study-groups/sessions/active')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.session && data.session.groupId === groupId) {
+                    sessionId = data.session.id;
+                    currentCycle = data.session.cyclesCompleted;
+                    document.getElementById('currentCycle').textContent = currentCycle;
+                    document.getElementById('startBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-block';
+                    document.getElementById('endBtn').style.display = 'inline-block';
+                }
+            });
+        
+        // 주기적으로 업데이트
+        setInterval(() => {
+            loadMembers();
+            loadMessages();
+            checkGoals();
+            updateAttendanceStatus();
+        }, 5000); // 5초마다
+    }
+});
+</script>
+
+<style>
+.mood-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--card-bg);
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mood-btn:hover {
+    transform: scale(1.1);
+    border-color: var(--primary);
+}
+</style>
+
+</body>
+</html>

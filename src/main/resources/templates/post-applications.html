@@ -67,6 +67,34 @@
             background: #fee2e2;
             color: #991b1b;
         }
+        .status-cancelled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        .filter-tab:hover {
+            background: #f3f4f6;
+        }
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
     </style>
 </head>
 <body class="light">
@@ -94,9 +122,18 @@
         <a th:href="@{/posts/{id}(id=${post.id})}" class="btn btn-outline" style="margin-top: 8px;">← 게시글 보기</a>
     </div>
 
+    <!-- 필터 탭 -->
+    <div class="filter-tabs">
+        <div class="filter-tab active" onclick="filterByStatus('ALL', this)">전체</div>
+        <div class="filter-tab" onclick="filterByStatus('PENDING', this)">대기중</div>
+        <div class="filter-tab" onclick="filterByStatus('ACCEPTED', this)">승인됨</div>
+        <div class="filter-tab" onclick="filterByStatus('REJECTED', this)">거절됨</div>
+        <div class="filter-tab" onclick="filterByStatus('CANCELLED', this)">취소됨</div>
+    </div>
+
     <!-- 지원 목록 -->
-    <div>
-        <div th:each="app : ${applications}" class="application-card">
+    <div class="application-list-container">
+        <div th:each="app : ${applications}" class="application-card" th:data-status="${app.status.name()}">
             <div class="application-header">
                 <div class="applicant-info">
                     <img class="applicant-avatar" 
@@ -109,15 +146,17 @@
                     </div>
                 </div>
                 <span class="status-badge" 
-                      th:classappend="${app.status == 'PENDING'} ? 'status-pending' : 
-                                     (${app.status == 'ACCEPTED'} ? 'status-accepted' : 'status-rejected')"
-                      th:text="${app.status == 'PENDING'} ? '대기중' : 
-                               (${app.status == 'ACCEPTED'} ? '승인됨' : '거절됨')">상태</span>
+                      th:classappend="${app.status.name() == 'PENDING'} ? 'status-pending' : 
+                                     (${app.status.name() == 'ACCEPTED'} ? 'status-accepted' : 
+                                     (${app.status.name() == 'REJECTED'} ? 'status-rejected' : 'status-cancelled'))"
+                      th:text="${app.status.name() == 'PENDING'} ? '대기중' : 
+                               (${app.status.name() == 'ACCEPTED'} ? '승인됨' : 
+                               (${app.status.name() == 'REJECTED'} ? '거절됨' : '취소됨'))">상태</span>
             </div>
             
             <div th:if="${app.message != null && !app.message.isEmpty()}" class="application-message" th:text="${app.message}">지원 메시지</div>
             
-            <div th:if="${app.status == 'PENDING'}" class="application-actions">
+            <div th:if="${app.status.name() == 'PENDING'}" class="application-actions">
                 <button class="btn btn-primary sm" 
                         th:onclick="'acceptApplication(' + ${app.id} + ')'">승인</button>
                 <button class="btn btn-outline sm" 
@@ -165,6 +204,61 @@ function rejectApplication(applicationId) {
         }
     });
 }
+
+function filterByStatus(status, clickedElement) {
+    const cards = document.querySelectorAll('.application-card');
+    let visibleCount = 0;
+    
+    console.log('필터링 상태:', status);
+    cards.forEach(card => {
+        const cardStatus = card.getAttribute('data-status');
+        console.log('카드 상태:', cardStatus, '필터:', status);
+        
+        if (status === 'ALL' || cardStatus === status) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    console.log('표시된 카드 수:', visibleCount);
+    
+    // 활성 탭 표시
+    const tabs = document.querySelectorAll('.filter-tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    
+    if (clickedElement) {
+        clickedElement.classList.add('active');
+    } else if (event && event.target) {
+        event.target.classList.add('active');
+    }
+    
+    // 필터링된 결과가 없을 때 메시지 표시
+    const emptyMessage = document.getElementById('empty-filter-message');
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+    
+    if (visibleCount === 0 && status !== 'ALL') {
+        const container = document.querySelector('.application-list-container');
+        if (container) {
+            const message = document.createElement('div');
+            message.id = 'empty-filter-message';
+            message.style.textAlign = 'center';
+            message.style.padding = '60px 20px';
+            message.style.color = '#9ca3af';
+            message.textContent = '해당 상태의 지원이 없습니다.';
+            container.appendChild(message);
+        }
+    }
+}
+
+// 페이지 로드 시 필터 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    // 기본적으로 전체 표시
+    filterByStatus('ALL');
+});
 </script>
 </body>
 </html>

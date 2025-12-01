@@ -296,17 +296,18 @@ class UserActivityAnalyzer:
             '코딩': '개발'
         }
         
-        # 사용자가 직접 선택한 카테고리에 높은 가중치 부여 (가장 중요!)
+        # 사용자가 직접 선택한 카테고리에 높은 가중치 부여
+        # 단, "고정 프로필"이 행동 로그를 완전히 덮어쓰지 않도록 조정
+        # - 활동 로그가 거의 없을 때: 프로필 가중치 ↑
+        # - 활동 로그가 충분히 쌓였을 때: 행동 기반 가중치가 더 크게 작용
         for pref in user_prefs:
             category_name = pref['category_name']
-            # 카테고리 매핑 적용
             mapped_category = category_mapping.get(category_name, category_name)
             preference_score = pref['preference_score'] or 1.0
-            # AI 선택은 매우 높은 가중치 (10.0 * preference_score)
-            category_scores[mapped_category] += 10.0 * preference_score
-            logger.info(f"사용자 선택 카테고리 반영: {category_name} -> {mapped_category} (점수: {10.0 * preference_score})")
+            category_scores[mapped_category] += 5.0 * preference_score
+            logger.info(f"사용자 선택 카테고리 반영: {category_name} -> {mapped_category} (점수: {5.0 * preference_score})")
         
-        # 활동 로그 기반 선호도 계산
+        # 활동 로그 기반 선호도 계산 (검색/클릭/좋아요/북마크/댓글/AI_CLICK/RECOMMEND)
         for activity in activities:
             action_type = activity['action_type']
             action_counts[action_type] += 1
@@ -329,7 +330,6 @@ class UserActivityAnalyzer:
                 tag_scores[keyword] += weight * 0.8
         
         # 정규화 (총 활동 수로 나누기)
-        # 단, 사용자 선택 카테고리는 정규화하지 않고 그대로 유지
         total_weight = sum(action_weights.get(a, 1.0) * c for a, c in action_counts.items())
         
         # 활동 로그 기반 카테고리 점수만 정규화
@@ -461,6 +461,9 @@ class UserActivityAnalyzer:
         """사용자에게 추천할 게시글 조회 (하이브리드 추천)"""
         preferences = self.analyze_user_preferences(user_id)
         
+        # 사용자가 선호하는 카테고리 집합 (DB 카테고리 기준: 개발, 자격증, 영어, 독서, 취업, 기타)
+        preferred_categories: Set[str] = set(preferences.get('categories', {}).keys())
+        
         # 협업 필터링 추천
         cf_recommendations = []
         if use_collaborative_filtering:
@@ -532,8 +535,8 @@ class UserActivityAnalyzer:
             # 모든 게시글 ID 수집
             all_post_ids = set(final_scores.keys())
             
-            # 게시글 정보 조회
-            recommended_posts = self._get_posts_by_ids(list(all_post_ids), limit)
+            # 게시글 정보 조회 (선호 카테고리에 속한 게시글만 남기기)
+            recommended_posts = self._get_posts_by_ids(list(all_post_ids), limit, preferred_categories)
             
             # 최종 점수 적용
             for post in recommended_posts:
@@ -542,8 +545,14 @@ class UserActivityAnalyzer:
                 post['cf_score'] = round((post['recommendation_score'] / 0.6) if post_id in cf_post_ids else 0, 2)
                 post['content_score'] = round((post['recommendation_score'] / 0.4) if post_id in content_post_ids else 0, 2)
             
+            # 점수 기준 상위 후보군(top_k)을 만든 뒤, 그 안에서 약간의 랜덤성을 주어
+            # 매 새로고침마다 구성이 조금씩 달라지도록 함
             recommended_posts.sort(key=lambda x: x['recommendation_score'], reverse=True)
-            return recommended_posts[:limit]
+            top_k = recommended_posts[:max(limit * 2, limit)]
+            
+            import random
+            random.shuffle(top_k)
+            return top_k[:limit]
         else:
             # 협업 필터링 결과가 없으면 콘텐츠 기반만 사용
             return content_based
@@ -564,12 +573,16 @@ class UserActivityAnalyzer:
         categories = [cat for cat in dict.fromkeys(categories) if cat]
         tags = list(preferences['tags'].keys())[:10]
         
+        # 선호 카테고리/태그가 전혀 없으면 최신 글로 폴백
         if not categories and not tags:
             return self.get_recent_posts(limit)
         
-        category_conditions = " OR ".join([f"p.category = %s" for _ in categories])
+        # 태그 조건
         tag_conditions = " OR ".join([f"p.tags LIKE %s" for _ in tags])
         
+        # 사용자가 실제로 선호/활동한 카테고리에 속한 글만 추천하도록 강하게 제한
+        # - p.category는 반드시 선호 카테고리 중 하나여야 함
+        # - 태그는 점수 계산 및 추가 필터링에만 사용
         query = f"""
             SELECT 
                 p.id,
@@ -583,7 +596,7 @@ class UserActivityAnalyzer:
                     WHEN p.category IN ({','.join(['%s'] * len(categories))}) THEN 1 ELSE 0 
                 END as category_match,
                 CASE 
-                    WHEN ({' OR '.join([f"p.tags LIKE %s" for _ in tags])}) THEN 1 ELSE 0 
+                    WHEN ({tag_conditions if tags else 'FALSE'}) THEN 1 ELSE 0 
                 END as tag_match
             FROM posts p
             WHERE p.id NOT IN (
@@ -591,10 +604,8 @@ class UserActivityAnalyzer:
                 FROM user_activity 
                 WHERE user_id = %s AND target_id IS NOT NULL
             )
-            AND (
-                {category_conditions if categories else 'FALSE'}
-                OR {tag_conditions if tags else 'FALSE'}
-            )
+            AND p.category IN ({','.join(['%s'] * len(categories))})
+            AND ({tag_conditions if tags else 'TRUE'})
             ORDER BY 
                 category_match DESC,
                 tag_match DESC,
@@ -603,14 +614,25 @@ class UserActivityAnalyzer:
             LIMIT %s
         """
         
+        # 파라미터 순서:
+        # 1) category_match IN (...) 용 카테고리 목록
+        # 2) tag_match 조건 / 태그 필터용 LIKE 파라미터
+        # 3) 이미 본 글 제외를 위한 user_id
+        # 4) WHERE p.category IN (...) 필터용 카테고리 목록
+        # 5) AND ({tag_conditions}) 필터용 태그 LIKE 파라미터
         params = []
-        if categories:
-            params.extend(categories)
+        # 1) category_match IN (...)
+        params.extend(categories)
+        # 2) tag_match용 태그
         if tags:
             params.extend([f"%{tag}%" for tag in tags])
+        # 3) user_id
         params.append(user_id)
+        # 4) WHERE p.category IN (...)
         params.extend(categories)
-        params.extend([f"%{tag}%" for tag in tags])
+        # 5) 본문 필터용 태그 LIKE
+        if tags:
+            params.extend([f"%{tag}%" for tag in tags])
         params.append(limit)
         
         cursor.execute(query, params)
@@ -646,11 +668,19 @@ class UserActivityAnalyzer:
             post['recommendation_score'] = round(score, 2)
             scored_posts.append(post)
         
+        # 점수 상위권에서만 랜덤하게 뽑아서 "항상 똑같은 글"이 고정되지 않도록 조정
         scored_posts.sort(key=lambda x: x['recommendation_score'], reverse=True)
-        return scored_posts[:limit]
+        top_k = scored_posts[:max(limit * 2, limit)]
+        
+        import random
+        random.shuffle(top_k)
+        return top_k[:limit]
     
-    def _get_posts_by_ids(self, post_ids: List[int], limit: int) -> List[Dict]:
-        """게시글 ID 리스트로 게시글 조회"""
+    def _get_posts_by_ids(self, post_ids: List[int], limit: int, preferred_categories: Optional[Set[str]] = None) -> List[Dict]:
+        """게시글 ID 리스트로 게시글 조회
+        
+        preferred_categories가 주어지면, 해당 카테고리에 속한 게시글만 반환합니다.
+        """
         if not post_ids:
             return []
         
@@ -673,6 +703,13 @@ class UserActivityAnalyzer:
         cursor.execute(query, post_ids + [limit])
         results = cursor.fetchall()
         cursor.close()
+        
+        # 선호 카테고리가 있다면 그 안에 속한 게시글만 남김
+        if preferred_categories:
+            filtered = [r for r in results if r.get('category') in preferred_categories]
+            # 필터 결과가 비면 원본 결과를 사용 (너무 빡세게 걸러지지 않도록)
+            return filtered or results
+        
         return results
     
     def get_recent_posts(self, limit: int = 20) -> List[Dict]:

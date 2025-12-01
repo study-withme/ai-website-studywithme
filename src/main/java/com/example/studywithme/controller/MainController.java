@@ -253,11 +253,20 @@ public class MainController {
             boolean hasApplied = false;
             int applicationCount = 0;
 
+            PostApplication.ApplicationStatus applicationStatus = null;
             if (loginUser != null) {
                 isLiked = postLikeService.isLiked(loginUser.getId(), id);
                 isBookmarked = bookmarkService.isBookmarked(loginUser.getId(), id);
                 hasApplied = postApplicationService.hasApplied(loginUser.getId(), id);
                 userActivityService.logViewPost(loginUser, id, post.getTitle(), post.getTags());
+                
+                // 지원 상태 가져오기 (지원한 경우)
+                if (hasApplied) {
+                    PostApplication application = postApplicationService.getApplicationByUserAndPost(loginUser.getId(), id);
+                    if (application != null) {
+                        applicationStatus = application.getStatus();
+                    }
+                }
             }
             applicationCount = postApplicationService.getApplicationCount(id);
 
@@ -275,6 +284,7 @@ public class MainController {
             model.addAttribute("isLiked", isLiked);
             model.addAttribute("isBookmarked", isBookmarked);
             model.addAttribute("hasApplied", hasApplied);
+            model.addAttribute("applicationStatus", applicationStatus);
             model.addAttribute("applicationCount", applicationCount);
             model.addAttribute("authorPosts", authorPosts);
             model.addAttribute("authorStats", authorStats);
@@ -748,6 +758,7 @@ public class MainController {
                 return "redirect:/posts/" + id + "?error=no_permission";
             }
 
+            // 모든 상태의 지원 표시 (필터링은 템플릿에서 처리)
             List<PostApplication> applications = postApplicationService.getApplicationsByPost(id, null);
 
             model.addAttribute("loginUser", loginUser);
@@ -802,10 +813,15 @@ public class MainController {
             return "redirect:/auth?error=login_required";
         }
 
-        List<StudyGroup> groups = studyGroupService.getActiveGroupsByUser(loginUser.getId());
-
-        model.addAttribute("loginUser", loginUser);
-        model.addAttribute("groups", groups);
+        try {
+            List<StudyGroup> groups = studyGroupService.getActiveGroupsByUser(loginUser.getId());
+            model.addAttribute("loginUser", loginUser);
+            model.addAttribute("groups", groups != null ? groups : java.util.Collections.emptyList());
+        } catch (Exception e) {
+            // 에러 발생 시 빈 리스트로 설정
+            model.addAttribute("loginUser", loginUser);
+            model.addAttribute("groups", java.util.Collections.emptyList());
+        }
         
         return "study-groups";
     }
@@ -827,6 +843,34 @@ public class MainController {
             model.addAttribute("members", members);
             
             return "study-group-detail";
+        } catch (RuntimeException e) {
+            return "redirect:/study-groups?error=" + e.getMessage();
+        }
+    }
+
+    // 학습 세션 페이지
+    @GetMapping("/study-groups/{id}/session")
+    public String studySession(@PathVariable Long id, HttpSession session, Model model) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return "redirect:/auth?error=login_required";
+        }
+
+        try {
+            StudyGroup group = studyGroupService.getGroupById(id);
+            
+            // 사용자가 멤버인지 확인
+            boolean isMember = studyGroupService.getGroupMembers(id).stream()
+                    .anyMatch(m -> m.getUser().getId().equals(loginUser.getId()));
+            
+            if (!isMember) {
+                return "redirect:/study-groups?error=스터디 멤버만 접근할 수 있습니다.";
+            }
+
+            model.addAttribute("loginUser", loginUser);
+            model.addAttribute("group", group);
+            
+            return "study-session";
         } catch (RuntimeException e) {
             return "redirect:/study-groups?error=" + e.getMessage();
         }

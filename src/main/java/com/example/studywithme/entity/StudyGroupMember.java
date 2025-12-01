@@ -39,7 +39,7 @@ public class StudyGroupMember {
     @Column(name = "joined_at", insertable = false, updatable = false)
     private LocalDateTime joinedAt;
 
-    @Column(name = "left_at")
+    @Column(name = "left_at", insertable = false)
     private LocalDateTime leftAt;
 
     public enum MemberRole {

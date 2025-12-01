@@ -194,6 +194,12 @@
                         th:classappend="${hasApplied} ? 'btn btn-primary sm' : 'btn btn-outline sm'">
                     <span th:text="${hasApplied} ? '지원 취소' : '지원하기'">지원하기</span>
                 </button>
+                <div th:if="${hasApplied && applicationStatus != null}" style="margin-top: 8px; font-size: 12px;">
+                    <span th:if="${applicationStatus == 'PENDING'}" style="color: #92400e; font-weight: 600;">⏳ 대기중</span>
+                    <span th:if="${applicationStatus == 'ACCEPTED'}" style="color: #065f46; font-weight: 600;">✅ 승인됨</span>
+                    <span th:if="${applicationStatus == 'REJECTED'}" style="color: #991b1b; font-weight: 600;">❌ 거절됨</span>
+                    <span th:if="${applicationStatus == 'CANCELLED'}" style="color: #4b5563; font-weight: 600;">🚫 취소됨</span>
+                </div>
             </div>
         </div>
 
