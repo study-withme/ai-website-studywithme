@@ -26,6 +26,9 @@ public class StudySessionService {
      */
     @Transactional
     public StudySession startSession(Integer userId, Long groupId, String statusMessage) {
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
         // 기존 활성 세션이 있으면 종료
         Optional<StudySession> existingSession = sessionRepository.findByUser_IdAndStatus(
                 userId, StudySession.SessionStatus.IN_PROGRESS);
@@ -67,6 +70,9 @@ public class StudySessionService {
      */
     @Transactional
     public StudySession endSession(Long sessionId, Integer userId) {
+        if (sessionId == null) {
+            throw new RuntimeException("세션 ID가 필요합니다.");
+        }
         StudySession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("세션을 찾을 수 없습니다."));
 
@@ -101,6 +107,9 @@ public class StudySessionService {
      */
     @Transactional
     public StudySession completeCycle(Long sessionId, Integer userId) {
+        if (sessionId == null) {
+            throw new RuntimeException("세션 ID가 필요합니다.");
+        }
         StudySession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("세션을 찾을 수 없습니다."));
 
@@ -117,6 +126,12 @@ public class StudySessionService {
      */
     @Transactional
     public void updateUserStats(Integer userId, Long groupId, Integer studyMinutes) {
+        if (userId == null) {
+            throw new RuntimeException("사용자 ID가 필요합니다.");
+        }
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
         UserStudyStats stats = statsRepository.findByUser_IdAndStudyGroup_Id(userId, groupId)
                 .orElseGet(() -> {
                     UserStudyStats newStats = new UserStudyStats();
@@ -148,6 +163,9 @@ public class StudySessionService {
     @Transactional
     public void updateOnlineStatus(Integer userId, Long groupId, 
                                    UserOnlineStatus.OnlineStatus status, String statusMessage) {
+        if (userId == null) {
+            throw new RuntimeException("사용자 ID가 필요합니다.");
+        }
         UserOnlineStatus onlineStatus = onlineStatusRepository.findByUser_Id(userId)
                 .orElseGet(() -> {
                     UserOnlineStatus newStatus = new UserOnlineStatus();
@@ -160,7 +178,10 @@ public class StudySessionService {
         onlineStatus.setCurrentStatus(status);
         onlineStatus.setLastActiveTime(LocalDateTime.now());
         onlineStatus.setCurrentStudyGroupId(groupId);
-        onlineStatus.setStatusMessage(statusMessage);
+        // statusMessage가 null이 아니면 업데이트 (ONLINE 전환 등에서 기존 메시지 보존)
+        if (statusMessage != null) {
+            onlineStatus.setStatusMessage(statusMessage);
+        }
 
         onlineStatusRepository.save(onlineStatus);
     }
@@ -169,6 +190,9 @@ public class StudySessionService {
      * 기본 설정 생성
      */
     private StudyGroupSettings createDefaultSettings(Long groupId) {
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
         StudyGroup group = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("스터디 그룹을 찾을 수 없습니다."));
         

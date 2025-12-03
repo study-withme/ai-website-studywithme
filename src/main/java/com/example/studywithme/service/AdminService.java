@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -23,6 +24,8 @@ public class AdminService {
     private final FilterKeywordRepository filterKeywordRepository;
     private final FilterPatternRepository filterPatternRepository;
     private final AILearningDataRepository aiLearningDataRepository;
+    private final PostRepository postRepository;
+    private final AITagService aiTagService;
 
     // 차단된 게시글 목록 조회
     public Page<BlockedPost> getBlockedPosts(int page, int size, BlockedPost.BlockStatus status) {
@@ -36,6 +39,9 @@ public class AdminService {
     // 차단된 게시글 복구
     @Transactional
     public void restorePost(Long blockedPostId, Integer adminId) {
+        if (blockedPostId == null) {
+            throw new RuntimeException("차단된 게시글 ID가 필요합니다.");
+        }
         BlockedPost blockedPost = blockedPostRepository.findById(blockedPostId)
                 .orElseThrow(() -> new RuntimeException("차단된 게시글을 찾을 수 없습니다."));
         
@@ -78,6 +84,9 @@ public class AdminService {
     // 욕설 필터 단어 삭제
     @Transactional
     public void deleteFilterWord(Long id) {
+        if (id == null) {
+            throw new RuntimeException("필터 단어 ID가 필요합니다.");
+        }
         filterWordRepository.deleteById(id);
     }
 
@@ -112,6 +121,9 @@ public class AdminService {
     // 키워드 삭제
     @Transactional
     public void deleteFilterKeyword(Long id) {
+        if (id == null) {
+            throw new RuntimeException("필터 키워드 ID가 필요합니다.");
+        }
         filterKeywordRepository.deleteById(id);
     }
 
@@ -139,6 +151,9 @@ public class AdminService {
     // 패턴 삭제
     @Transactional
     public void deleteFilterPattern(Long id) {
+        if (id == null) {
+            throw new RuntimeException("필터 패턴 ID가 필요합니다.");
+        }
         filterPatternRepository.deleteById(id);
     }
 
@@ -178,6 +193,9 @@ public class AdminService {
     // 차단된 댓글 복구
     @Transactional
     public void restoreComment(Long blockedCommentId, Integer adminId) {
+        if (blockedCommentId == null) {
+            throw new RuntimeException("차단된 댓글 ID가 필요합니다.");
+        }
         BlockedComment blockedComment = blockedCommentRepository.findById(blockedCommentId)
                 .orElseThrow(() -> new RuntimeException("차단된 댓글을 찾을 수 없습니다."));
         
@@ -238,6 +256,72 @@ public class AdminService {
         }
         
         return stats;
+    }
+
+    /**
+     * 모든 게시글에 대해 AI 기반으로 카테고리/태그를 재분류합니다.
+     * - 제목+본문을 기반으로 Python 태그 추천기를 호출
+     * - 기존 카테고리와 다르고, 신뢰도 기준(예: 0.6 이상)을 넘으면 카테고리를 교체
+     * - 태그가 비어 있는 경우 AI가 추천한 태그를 기본값으로 설정
+     *
+     * @return 재분류된 게시글 수
+     */
+    @Transactional
+    public int reclassifyAllPostsByAI(double minConfidence) {
+        List<Post> posts = postRepository.findAll();
+        int updatedCount = 0;
+
+        for (Post post : posts) {
+            String title = post.getTitle() != null ? post.getTitle() : "";
+            String content = post.getContent() != null ? post.getContent() : "";
+            String originalCategory = post.getCategory();
+            String originalTags = post.getTags();
+
+            try {
+                Map<String, Object> result = aiTagService.recommendTags(title, content);
+
+                String aiCategory = (String) result.getOrDefault("category", originalCategory);
+                Double confidence = (Double) result.getOrDefault("category_confidence", 0.0);
+
+                boolean changed = false;
+
+                // 카테고리 교정
+                if (aiCategory != null
+                        && !aiCategory.isBlank()
+                        && confidence != null
+                        && confidence >= minConfidence) {
+                    if (originalCategory == null || !aiCategory.equals(originalCategory)) {
+                        post.setCategory(aiCategory);
+                        changed = true;
+                    }
+                }
+
+                // 태그 채우기 (비어 있을 때만)
+                if ((originalTags == null || originalTags.isBlank()) && result.get("tags") instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<String> aiTags = (List<String>) result.get("tags");
+                    if (!aiTags.isEmpty()) {
+                        post.setTags(String.join(",", aiTags));
+                        changed = true;
+                    }
+                }
+
+                if (changed) {
+                    post.setAiAnalyzed(true);
+                    post.setAiAnalyzedAt(LocalDateTime.now());
+                    postRepository.save(post);
+                    updatedCount++;
+                }
+
+            } catch (Exception e) {
+                // 개별 게시글 처리 실패는 전체 배치를 멈추지 않음
+                // 필요하다면 로그만 남기고 무시
+                System.err.println("게시글 ID " + post.getId() + " 재분류 중 오류: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        return updatedCount;
     }
 
     public static class AdminStats {

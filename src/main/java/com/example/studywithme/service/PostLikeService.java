@@ -19,6 +19,9 @@ public class PostLikeService {
     // 좋아요 토글 (좋아요가 있으면 취소, 없으면 추가)
     @Transactional
     public boolean toggleLike(Integer userId, Long postId) {
+        if (postId == null) {
+            throw new RuntimeException("게시글 ID가 필요합니다.");
+        }
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 

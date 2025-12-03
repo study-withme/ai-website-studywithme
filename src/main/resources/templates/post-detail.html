@@ -25,10 +25,13 @@
             <a href="/recommend">AI 추천</a>
         </nav>
         <div class="nav-actions">
-            <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
+            <div th:if="${loginUser != null}" class="user-menu">
                 <div class="notif-wrapper">
-                    <button id="notifIcon" class="btn btn-outline" type="button">
-                        🔔
+                    <button id="notifIcon" class="btn btn-icon" type="button" title="알림">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
                         <span id="notifBadge" class="notif-badge hidden"></span>
                     </button>
                     <div id="notifDropdown" class="notif-dropdown hidden"></div>
@@ -40,7 +43,11 @@
             <div th:if="${loginUser == null}">
                 <a href="/auth" class="btn btn-outline">로그인</a>
             </div>
-            <button id="darkModeBtn" class="btn btn-outline">🌙 다크모드</button>
+            <button id="darkModeBtn" class="btn btn-icon" title="다크모드">
+                <svg id="darkModeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
         </div>
     </div>
 </header>
@@ -52,7 +59,11 @@
 
         <!-- 오류/성공 메시지 박스 -->
         <div th:if="${param.error != null}" class="alert-box error" id="errorBox">
-            <span class="alert-icon">⚠️</span>
+            <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
             <span th:text="${param.error[0]}">오류 메시지</span>
             <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
         </div>
@@ -82,7 +93,12 @@
         <article id="detailContent" class="detail-content" style="line-height: 1.8;" th:utext="${post.content}">게시글 내용</article>
 
         <!-- AI 요약 -->
-        <button id="aiSummaryBtn" class="btn btn-outline ai-summary-btn">✨ AI 요약 보기</button>
+        <button id="aiSummaryBtn" class="btn btn-outline ai-summary-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            AI 요약 보기
+        </button>
         <div id="aiSummaryBox" class="ai-summary-box hidden"></div>
 
         <!-- 댓글 -->
@@ -161,7 +177,10 @@
             <h3>실시간 반응</h3>
 
             <div class="reaction-row">
-                ❤️ 좋아요:
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span>좋아요:</span>
                 <span id="likeCount" class="reaction-number" th:text="${post.likeCount}">0</span>
                 <button id="likeBtn" 
                         th:if="${loginUser != null}"
@@ -174,7 +193,10 @@
             </div>
 
             <div class="reaction-row">
-                🔖 북마크:
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>북마크:</span>
                 <span id="bookmarkStatus" th:text="${isBookmarked ? 'ON' : 'OFF'}">OFF</span>
                 <button id="bookmarkBtn"
                         th:if="${loginUser != null}"
@@ -186,7 +208,13 @@
             </div>
 
             <div class="reaction-row" th:if="${loginUser != null && !isAuthor}">
-                🧑‍🤝‍🧑 참여 희망:
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>참여 희망:</span>
                 <span id="applyCount" class="reaction-number" th:text="${applicationCount}">0</span>
                 <button id="applyBtn"
                         th:data-post-id="${post.id}"
@@ -194,11 +222,35 @@
                         th:classappend="${hasApplied} ? 'btn btn-primary sm' : 'btn btn-outline sm'">
                     <span th:text="${hasApplied} ? '지원 취소' : '지원하기'">지원하기</span>
                 </button>
-                <div th:if="${hasApplied && applicationStatus != null}" style="margin-top: 8px; font-size: 12px;">
-                    <span th:if="${applicationStatus == 'PENDING'}" style="color: #92400e; font-weight: 600;">⏳ 대기중</span>
-                    <span th:if="${applicationStatus == 'ACCEPTED'}" style="color: #065f46; font-weight: 600;">✅ 승인됨</span>
-                    <span th:if="${applicationStatus == 'REJECTED'}" style="color: #991b1b; font-weight: 600;">❌ 거절됨</span>
-                    <span th:if="${applicationStatus == 'CANCELLED'}" style="color: #4b5563; font-weight: 600;">🚫 취소됨</span>
+                <div th:if="${hasApplied && applicationStatus != null}" style="margin-top: 8px; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                    <span th:if="${applicationStatus == 'PENDING'}" style="color: #92400e; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        대기중
+                    </span>
+                    <span th:if="${applicationStatus == 'ACCEPTED'}" style="color: #065f46; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        승인됨
+                    </span>
+                    <span th:if="${applicationStatus == 'REJECTED'}" style="color: #991b1b; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        거절됨
+                    </span>
+                    <span th:if="${applicationStatus == 'CANCELLED'}" style="color: #4b5563; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        취소됨
+                    </span>
                 </div>
             </div>
         </div>
@@ -466,8 +518,13 @@ if (window.hljs) {
                         aiSummaryBox.innerHTML = `
                             <div style="padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <h3 style="margin: 0; font-size: 16px; color: var(--text);">✨ AI 요약</h3>
-                                    <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').textContent='✨ AI 요약 보기';" 
+                                    <h3 style="margin: 0; font-size: 16px; color: var(--text); display: flex; align-items: center; gap: 6px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                        AI 요약
+                                    </h3>
+                                    <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').innerHTML='<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display: inline-block; vertical-align: middle; margin-right: 6px;&quot;><polygon points=&quot;12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2&quot;></polygon></svg>AI 요약 보기';" 
                                             style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text);">×</button>
                                 </div>
                                 <p style="color: #ef4444; margin: 0;">오류: ${result.error}</p>
@@ -487,8 +544,13 @@ if (window.hljs) {
                     aiSummaryBox.innerHTML = `
                         <div style="padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <h3 style="margin: 0; font-size: 16px; color: var(--text);">✨ AI 요약</h3>
-                                <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').textContent='✨ AI 요약 보기';" 
+                                <h3 style="margin: 0; font-size: 16px; color: var(--text); display: flex; align-items: center; gap: 6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                    AI 요약
+                                </h3>
+                                <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').innerHTML='<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display: inline-block; vertical-align: middle; margin-right: 6px;&quot;><polygon points=&quot;12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2&quot;></polygon></svg>AI 요약 보기';" 
                                         style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text);">×</button>
                             </div>
                             <p style="margin: 0; line-height: 1.8; color: var(--text); white-space: pre-wrap;">${summaryText}</p>
@@ -506,8 +568,13 @@ if (window.hljs) {
                     aiSummaryBox.innerHTML = `
                         <div style="padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <h3 style="margin: 0; font-size: 16px; color: var(--text);">✨ AI 요약</h3>
-                                <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').textContent='✨ AI 요약 보기';" 
+                                <h3 style="margin: 0; font-size: 16px; color: var(--text); display: flex; align-items: center; gap: 6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                    AI 요약
+                                </h3>
+                                <button onclick="document.getElementById('aiSummaryBox').classList.add('hidden'); document.getElementById('aiSummaryBtn').innerHTML='<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display: inline-block; vertical-align: middle; margin-right: 6px;&quot;><polygon points=&quot;12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2&quot;></polygon></svg>AI 요약 보기';" 
                                         style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text);">×</button>
                             </div>
                             <p style="color: #ef4444; margin: 0;">요약 생성 중 오류가 발생했습니다: ${error.message}</p>
@@ -521,7 +588,7 @@ if (window.hljs) {
             // 요약 박스 숨기기
             console.log('요약 박스 숨기기');
             aiSummaryBox.classList.add('hidden');
-            aiSummaryBtn.textContent = '✨ AI 요약 보기';
+            aiSummaryBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>AI 요약 보기';
         }
     });
 })();

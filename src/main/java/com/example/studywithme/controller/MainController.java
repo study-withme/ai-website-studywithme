@@ -38,7 +38,7 @@ public class MainController {
     private final UserActivityService userActivityService;
     private final UserRecommendationService userRecommendationService;
     private final com.example.studywithme.repository.UserProfileRepository userProfileRepository;
-    private final com.example.studywithme.repository.UserRepository userRepository;
+    private final UserRepository userRepository;
     private final com.example.studywithme.service.AITagService aiTagService;
     private final com.example.studywithme.service.AISummaryService aiSummaryService;
     private final com.example.studywithme.service.StudyGroupService studyGroupService;
@@ -65,15 +65,17 @@ public class MainController {
         Page<Post> posts = Page.empty(pageable); // 기본값으로 빈 페이지 설정
 
         try {
-            if (keyword != null && !keyword.trim().isEmpty()) {
+            // 1순위: 명시적인 카테고리 선택
+            if (category != null && !category.trim().isEmpty()) {
+                posts = postService.getPostsByCategory(category, pageable, sort);
+                model.addAttribute("category", category);
+            } else if (keyword != null && !keyword.trim().isEmpty()) {
+                // 2순위: 키워드 검색 (카테고리 없을 때만)
                 posts = postService.searchPosts(keyword, pageable);
                 model.addAttribute("keyword", keyword);
                 if (loginUser != null) {
                     userActivityService.logSearch(loginUser, keyword);
                 }
-            } else if (category != null && !category.trim().isEmpty()) {
-                posts = postService.getPostsByCategory(category, pageable, sort);
-                model.addAttribute("category", category);
             } else {
                 posts = postService.getPosts(pageable, sort);
             }
@@ -114,8 +116,12 @@ public class MainController {
     @ResponseBody
     public Page<Post> getPostsApi(@RequestParam(defaultValue = "0") int page,
                                   @RequestParam(defaultValue = "100") int size,
-                                  @RequestParam(defaultValue = "latest") String sort) {
+                                  @RequestParam(defaultValue = "latest") String sort,
+                                  @RequestParam(required = false) String category) {
         Pageable pageable = PageRequest.of(page, size);
+        if (category != null && !category.trim().isEmpty()) {
+            return postService.getPostsByCategory(category, pageable, sort);
+        }
         return postService.getPosts(pageable, sort);
     }
 
@@ -327,7 +333,11 @@ public class MainController {
         }
 
         // 세션의 사용자 ID로 DB에서 최신 사용자 정보를 다시 조회 (보안 강화)
-        User loginUser = userRepository.findById(sessionUser.getId())
+        Integer userId = sessionUser.getId();
+        if (userId == null) {
+            return "redirect:/auth?error=login_required";
+        }
+        User loginUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         // 세션의 사용자 정보와 DB의 사용자 정보가 일치하는지 확인
@@ -463,7 +473,7 @@ public class MainController {
                 return "redirect:/posts/write?error=content_required";
             }
             
-            Post createdPost = postService.createPost(loginUser.getId(), title.trim(), content, 
+            postService.createPost(loginUser.getId(), title.trim(), content, 
                                                       (category != null && !category.trim().isEmpty()) ? category.trim() : null,
                                                       (tags != null && !tags.trim().isEmpty()) ? tags.trim() : null);
             // 게시글 작성 후 메인 페이지로 리다이렉트 (최신순으로 표시되도록)

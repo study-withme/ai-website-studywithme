@@ -25,6 +25,9 @@ public class StudyGroupGoalService {
     public StudyGroupGoal createGoal(Long groupId, Integer userId, String goalType,
                                      Integer targetValue, String goalUnit,
                                      LocalDate startDate, LocalDate endDate) {
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
         StudyGroup group = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("스터디 그룹을 찾을 수 없습니다."));
 
@@ -52,6 +55,9 @@ public class StudyGroupGoalService {
      */
     @Transactional
     public void updateGoalProgress(Long goalId) {
+        if (goalId == null) {
+            throw new RuntimeException("목표 ID가 필요합니다.");
+        }
         StudyGroupGoal goal = goalRepository.findById(goalId)
                 .orElseThrow(() -> new RuntimeException("목표를 찾을 수 없습니다."));
 
@@ -91,6 +97,9 @@ public class StudyGroupGoalService {
      */
     @Transactional
     public boolean checkAndCelebrateGoal(Long goalId) {
+        if (goalId == null) {
+            throw new RuntimeException("목표 ID가 필요합니다.");
+        }
         StudyGroupGoal goal = goalRepository.findById(goalId)
                 .orElseThrow(() -> new RuntimeException("목표를 찾을 수 없습니다."));
 

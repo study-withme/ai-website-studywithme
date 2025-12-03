@@ -11,16 +11,21 @@
 <!-- ===== 배경 슬라이드 ===== -->
 <section class="hero">
     <div class="slides">
-        <div class="slide"><img th:src="@{/img/bg1.jpg}" alt=""><div class="overlay"></div></div>
-        <div class="slide"><img th:src="@{/img/bg2.jpg}" alt=""><div class="overlay"></div></div>
-        <div class="slide"><img th:src="@{/img/bg3.jpg}" alt=""><div class="overlay"></div></div>
+        <div class="slide"><img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80" alt="공부하는 사람들"><div class="overlay"></div></div>
+        <div class="slide"><img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&q=80" alt="책과 노트북"><div class="overlay"></div></div>
+        <div class="slide"><img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1920&q=80" alt="도서관"><div class="overlay"></div></div>
     </div>
 </section>
 
 <!-- ===== 회원가입 박스 ===== -->
 <main class="auth-container">
     <section class="auth-box">
-        <div class="toggle-dark" id="toggleDark">🌙 다크모드</div>
+        <div class="toggle-dark" id="toggleDark">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            다크모드
+        </div>
         <div class="auth-logo">회원가입</div>
         <p class="auth-sub">AI가 당신에게 맞는 스터디를 찾아드립니다 🔍</p>
 

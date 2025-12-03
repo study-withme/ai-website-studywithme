@@ -15,7 +15,6 @@ public class StudyGroupChatService {
 
     private final StudyGroupChatRepository chatRepository;
     private final StudyGroupRepository studyGroupRepository;
-    private final UserOnlineStatusRepository onlineStatusRepository;
 
     /**
      * 메시지 전송
@@ -23,6 +22,9 @@ public class StudyGroupChatService {
     @Transactional
     public StudyGroupChat sendMessage(Long groupId, Integer userId, String message, 
                                       StudyGroupChat.MessageType messageType) {
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
         StudyGroup group = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("스터디 그룹을 찾을 수 없습니다."));
 
@@ -44,6 +46,9 @@ public class StudyGroupChatService {
      */
     @Transactional
     public StudyGroupChat sendSystemMessage(Long groupId, String message) {
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
         StudyGroup group = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("스터디 그룹을 찾을 수 없습니다."));
 

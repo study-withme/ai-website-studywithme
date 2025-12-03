@@ -26,6 +26,9 @@ public class StudyGroupService {
      */
     @Transactional
     public StudyGroup createOrAddMember(Long postId, Integer acceptedUserId, Integer postOwnerId) {
+        if (postId == null) {
+            throw new RuntimeException("게시글 ID가 필요합니다.");
+        }
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
@@ -149,11 +152,7 @@ public class StudyGroupService {
             return null; // 그룹이 생성되지 않았음을 반환
         }
 
-        // 그룹이 null이면 안전하게 반환
-        if (group == null) {
-            log.warn("그룹이 null입니다. postId={}, acceptedCount={}", postId, acceptedCount);
-            return null;
-        }
+        // 그룹이 null이면 안전하게 반환 (이미 위에서 null 체크 완료)
 
         // 이미 멤버인지 확인
         if (memberRepository.existsByStudyGroup_IdAndUser_Id(group.getId(), acceptedUserId)) {
@@ -271,6 +270,9 @@ public class StudyGroupService {
      */
     @Transactional(readOnly = true)
     public StudyGroup getGroupById(Long groupId) {
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
         return studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("스터디 그룹을 찾을 수 없습니다."));
     }

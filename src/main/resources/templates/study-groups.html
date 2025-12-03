@@ -2,12 +2,913 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>진행중인 스터디 | Study With Me</title>
+    <title>참여중인 스터디 | Study With Me</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/css/board.css" />
-    <link rel="stylesheet" href="/css/study-group.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #60a5fa;
+            --primary-soft: #eff6ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #111827;
+            --text-light: #6b7280;
+            --text-lighter: #9ca3af;
+            --bg: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --border: #e5e7eb;
+            --border-light: #f3f4f6;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+            background: var(--bg-tertiary);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .study-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* 왼쪽: 스터디 목록 */
+        .study-list-panel {
+            background: var(--bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .study-list-header {
+            padding: 24px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .study-list-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .study-list-header p {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .study-list-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .study-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .study-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .study-card.active {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+            box-shadow: var(--shadow-md);
+        }
+
+        .study-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .study-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .study-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .study-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .study-card-meta {
+            font-size: 12px;
+            color: var(--text-light);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .study-card-progress {
+            margin-top: 12px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--border-light);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .study-card-footer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .online-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            display: inline-block;
+        }
+
+        /* 오른쪽: 상세 패널 */
+        .study-detail-panel {
+            background: var(--bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .study-detail-header {
+            padding: 24px 32px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .study-detail-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .study-detail-meta {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .study-detail-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            overflow: hidden;
+        }
+
+        .study-main-content {
+            padding: 32px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+        }
+
+        .study-sidebar {
+            background: var(--bg-secondary);
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .study-section {
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* 커리큘럼 */
+        .curriculum-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .curriculum-item {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.2s;
+            position: relative;
+            padding-left: 56px;
+        }
+
+        .curriculum-item::before {
+            content: attr(data-week);
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            width: 32px;
+            height: 32px;
+            background: var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+
+        .curriculum-item.completed {
+            border-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .curriculum-item.completed::before {
+            background: var(--success);
+            color: white;
+            content: '✓';
+        }
+
+        .curriculum-item.current {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        .curriculum-item.current::before {
+            background: var(--primary);
+            color: white;
+        }
+
+        .curriculum-item-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .curriculum-item-desc {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        .curriculum-item-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 리소스 */
+        .resource-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .resource-item:hover {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        .resource-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+
+        .resource-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .resource-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .resource-link {
+            font-size: 12px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .resource-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 댓글 */
+        .comment-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .comment-list {
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 12px;
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .comment-body {
+            flex: 1;
+            background: var(--bg);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .comment-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .comment-user {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .comment-time {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .comment-content {
+            font-size: 13px;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .comment-write {
+            display: flex;
+            gap: 8px;
+        }
+
+        .comment-write textarea {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            resize: none;
+            font-family: inherit;
+            min-height: 60px;
+        }
+
+        .comment-write textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* 달력 */
+        .calendar-container {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .calendar-nav-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .calendar-nav-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .calendar-month {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            padding: 8px 4px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            background: var(--bg);
+        }
+
+        .calendar-day:hover {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        .calendar-day.today {
+            background: var(--primary-soft);
+            border-color: var(--primary);
+        }
+
+        .calendar-day-number {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .calendar-day.today .calendar-day-number {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.3;
+        }
+
+        .calendar-event-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary);
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 사이드바 섹션 */
+        .sidebar-section {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .sidebar-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .online-members {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .online-member {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .online-member-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .online-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid white;
+        }
+
+        .online-member-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .online-member-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .online-member-status {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .study-time {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .study-time-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .study-time-label {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .study-time-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-desc {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 24px;
+        }
+
+        /* 모달 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1200px) {
+            .study-container {
+                grid-template-columns: 280px 1fr;
+            }
+            
+            .study-detail-content {
+                grid-template-columns: 1fr 340px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .study-container {
+                grid-template-columns: 1fr;
+                padding: 16px;
+            }
+            
+            .study-list-panel {
+                max-height: 400px;
+            }
+            
+            .study-detail-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .study-sidebar {
+                border-top: 1px solid var(--border);
+            }
+        }
+
+        /* 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-light);
+        }
+    </style>
 </head>
-<body class="light">
+<body>
 
 <header class="swm-header">
     <div class="nav-inner">
@@ -15,7 +916,7 @@
         <nav class="nav-links">
             <a href="/">모집 게시판</a>
             <a href="/recommend">AI 추천</a>
-            <a href="/study-groups" class="active">진행중인 스터디</a>
+            <a href="/study-groups" class="active">참여중인 스터디</a>
         </nav>
         <div class="nav-actions">
             <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
@@ -30,16 +931,21 @@
 
 <main class="page study-page">
     <div class="study-container">
-        <!-- 왼쪽: 스터디 목록 (최대 3개) -->
+        <!-- 왼쪽: 스터디 목록 -->
         <div class="study-list-panel">
             <div class="study-list-header">
-                <h2>진행중인 스터디</h2>
-                <p>최대 3개까지 참여 가능합니다</p>
+                <h2>참여중인 스터디</h2>
+                <p>최대 3개까지 참여 가능</p>
             </div>
             <div class="study-list-scroll">
                 <div th:if="${groups == null || groups.isEmpty()}" class="empty-state">
-                    <div class="empty-state-icon"></div>
-                    <div class="empty-state-text">진행중인 스터디가 없습니다</div>
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="empty-state-text">참여중인 스터디가 없습니다</div>
                     <div class="empty-state-desc">스터디를 찾아보고 참여해보세요!</div>
                     <a href="/" class="btn btn-primary" style="margin-top: 16px;">스터디 찾아보기</a>
                 </div>
@@ -51,644 +957,676 @@
                          th:attr="data-group-id=${group.id}"
                          th:classappend="${iterStat.first ? 'active' : ''}"
                          th:onclick="'selectStudy(' + ${group.id} + ')'">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; flex-shrink: 0; font-weight: 600;">
-                                S
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
+                        <div class="study-card-header">
+                            <div class="study-card-icon" th:text="${#strings.substring(group.title, 0, 1)}">S</div>
+                            <div class="study-card-info">
                                 <div class="study-card-title" th:text="${group.title}">스터디 그룹 이름</div>
-                                <div class="study-card-meta" style="margin-top: 4px;">
-                                    <span th:text="${group.category != null ? group.category : '기타'}">카테고리</span> · 
-                                    <span th:text="${group.currentMembers != null ? group.currentMembers : 0}">0</span> / <span th:text="${group.maxMembers != null ? group.maxMembers : 0}">0</span>명
+                                <div class="study-card-meta">
+                                    <span th:text="${group.category != null ? group.category : '기타'}">카테고리</span>
+                                    <span>·</span>
+                                    <span th:text="${group.currentMembers != null ? group.currentMembers : 0}">0</span>
+                                    <span>/</span>
+                                    <span th:text="${group.maxMembers != null ? group.maxMembers : 0}">0</span>
+                                    <span>명</span>
                                 </div>
                             </div>
                         </div>
                         <div class="study-card-progress">
                             <div class="progress-bar">
-                                <div class="progress-fill" style="width: 45%;"></div>
+                                <div class="progress-fill" style="width: 0%;" th:attr="data-progress=${group.id}"></div>
                             </div>
-                            <span class="progress-text">45%</span>
+                            <span class="progress-text" th:attr="data-progress-text=${group.id}">0%</span>
                         </div>
-                        <div class="study-card-members" style="margin-top: 8px;">
+                        <div class="study-card-footer">
                             <span class="online-indicator"></span>
-                            <span id="onlineCount" th:attr="data-group-id=${group.id}">0명 온라인</span>
+                            <span th:attr="data-online-count=${group.id}">0명 온라인</span>
                         </div>
-                    </div>
-                    
-                    <div th:if="${groups.size() >= 3}" style="padding: 12px; text-align: center; font-size: 12px; color: #ef4444;">
-                        최대 3개까지만 참여 가능합니다
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 오른쪽: 스터디 상세 정보 -->
+        <!-- 오른쪽: 상세 패널 -->
         <div class="study-detail-panel" th:if="${groups != null && !groups.isEmpty()}">
-            <div th:each="group, iterStat : ${groups}" th:if="${iterStat.first}" th:with="firstGroup=${group}">
+            <div th:each="group, iterStat : ${groups}" th:if="${iterStat.first}" th:with="isLeader=${loginUser != null && group.creator.id == loginUser.id}">
                 <div class="study-detail-header">
-                    <div class="study-detail-title" id="detailTitle" th:text="${firstGroup.title}">스터디 그룹 이름</div>
+                    <div class="study-detail-title" th:text="${group.title}">스터디 그룹 이름</div>
                     <div class="study-detail-meta">
-                        <span id="detailCategory" th:text="${firstGroup.category != null ? firstGroup.category : '기타'}">카테고리</span> · 
-                        <span id="detailMembers" th:text="${#strings.concat(firstGroup.currentMembers != null ? firstGroup.currentMembers : 0, ' / ', firstGroup.maxMembers != null ? firstGroup.maxMembers : 0, '명')}">0 / 0명</span>
+                        <span th:text="${group.category != null ? group.category : '기타'}">카테고리</span>
+                        <span>·</span>
+                        <span th:text="${group.currentMembers != null ? group.currentMembers : 0}">0</span>
+                        <span>/</span>
+                        <span th:text="${group.maxMembers != null ? group.maxMembers : 0}">0</span>
+                        <span>명</span>
+                        <span th:if="${isLeader}">
+                            <span>·</span>
+                            <button class="btn btn-outline btn-sm" onclick="openEditModal()">수정</button>
+                            <button class="btn btn-outline btn-sm" onclick="deleteStudyGroup()">삭제</button>
+                        </span>
+                        <span th:if="${!isLeader}">
+                            <span>·</span>
+                            <button class="btn btn-outline btn-sm" style="color: var(--danger);" onclick="leaveStudyGroup()">스터디 나가기</button>
+                        </span>
                     </div>
                 </div>
             
                 <div class="study-detail-content">
-                <!-- 메인 콘텐츠 -->
-                <div class="study-main-content">
-                    <!-- 커리큘럼 -->
-                    <div class="study-section">
-                        <div class="section-title">
-                            <span class="section-icon"></span>
-                            커리큘럼
-                        </div>
-                        <div class="study-section-scrollable">
-                        <ul class="curriculum-list">
-                            <li class="curriculum-item completed">
-                                <div class="curriculum-item-title">1주차: 기초 문법</div>
-                                <div class="curriculum-item-desc">변수, 데이터 타입, 연산자</div>
-                            </li>
-                            <li class="curriculum-item completed">
-                                <div class="curriculum-item-title">2주차: 제어문</div>
-                                <div class="curriculum-item-desc">조건문, 반복문</div>
-                            </li>
-                            <li class="curriculum-item current">
-                                <div class="curriculum-item-title">3주차: 함수와 객체</div>
-                                <div class="curriculum-item-desc">함수 정의, 객체 생성</div>
-                            </li>
-                            <li class="curriculum-item">
-                                <div class="curriculum-item-title">4주차: 배열과 문자열</div>
-                                <div class="curriculum-item-desc">배열 메서드, 문자열 처리</div>
-                            </li>
-                            <li class="curriculum-item">
-                                <div class="curriculum-item-title">5주차: 프로젝트 실습</div>
-                                <div class="curriculum-item-desc">미니 프로젝트 진행</div>
-                            </li>
-                        </ul>
-                        </div>
-                    </div>
-
-                    <!-- 진행중인 진도 -->
-                    <div class="study-section">
-                        <div class="section-title">
-                            <span class="section-icon"></span>
-                            진행 진도
-                        </div>
-                        <div class="progress-section">
-                            <div class="progress-large">
-                                <div class="progress-large-fill" style="width: 45%;"></div>
+                    <div class="study-main-content">
+                        <!-- 커리큘럼 -->
+                        <div class="study-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <span class="section-icon">📋</span>
+                                    커리큘럼
+                                </div>
+                                <button th:if="${isLeader}" class="btn btn-primary btn-sm" onclick="openCurriculumModal()">+ 추가</button>
                             </div>
-                            <div class="progress-percentage">45%</div>
+                            <div id="curriculumList" class="curriculum-list">
+                                <!-- 커리큘럼이 여기에 동적으로 추가됨 -->
+                            </div>
                         </div>
-                        <div style="font-size: 13px; color: #6b7280;">
-                            3주차 진행 중 · 완료까지 약 2주 남음
-                        </div>
-                    </div>
 
-                    <!-- 교재 -->
-                    <div class="study-section">
-                        <div class="section-title">
-                            <span class="section-icon"></span>
-                            교재
+                        <!-- 교재 -->
+                        <div class="study-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    </svg>
+                                    교재
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="openResourceModal('BOOK')">+ 추가</button>
+                            </div>
+                            <div id="bookList" class="resource-list">
+                                <!-- 교재가 여기에 동적으로 추가됨 -->
+                            </div>
                         </div>
-                        <div class="resource-list">
-                            <div class="resource-item">
-                                <div class="resource-icon" style="font-size: 18px; font-weight: 600;">B</div>
-                                <div class="resource-info">
-                                    <div class="resource-name">자바스크립트 완벽 가이드</div>
-                                    <a href="#" class="resource-link">교재 링크 보기 →</a>
+
+                        <!-- 인강 -->
+                        <div class="study-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                    </svg>
+                                    인강
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="openResourceModal('VIDEO')">+ 추가</button>
+                            </div>
+                            <div id="videoList" class="resource-list">
+                                <!-- 인강이 여기에 동적으로 추가됨 -->
+                            </div>
+                        </div>
+
+                        <!-- 댓글 -->
+                        <div class="study-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                    댓글
                                 </div>
                             </div>
-                            <div class="resource-item">
-                                <div class="resource-icon" style="font-size: 18px; font-weight: 600;">B</div>
-                                <div class="resource-info">
-                                    <div class="resource-name">모던 자바스크립트 Deep Dive</div>
-                                    <a href="#" class="resource-link">교재 링크 보기 →</a>
+                            <div class="comment-section">
+                                <div id="commentList" class="comment-list">
+                                    <!-- 댓글이 여기에 동적으로 추가됨 -->
+                                </div>
+                                <div class="comment-write" th:if="${loginUser != null}">
+                                    <textarea id="commentInput" placeholder="댓글을 입력하세요..."></textarea>
+                                    <button class="btn btn-primary" onclick="addComment()">등록</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 인강 -->
-                    <div class="study-section">
-                        <div class="section-title">
-                            <span class="section-icon"></span>
-                            인강
+                    <div class="study-sidebar">
+                        <div class="sidebar-section">
+                            <button class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 600;" 
+                                    th:onclick="'location.href=\'/study-groups/' + ${group.id} + '/session\''">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                학습 시작하기
+                            </button>
                         </div>
-                        <div class="resource-list">
-                            <div class="resource-item">
-                                <div class="resource-icon" style="font-size: 18px; font-weight: 600;">V</div>
-                                <div class="resource-info">
-                                    <div class="resource-name">자바스크립트 기초 강의</div>
-                                    <a href="#" class="resource-link">강의 링크 보기 →</a>
-                                </div>
-                            </div>
-                            <div class="resource-item">
-                                <div class="resource-icon" style="font-size: 18px; font-weight: 600;">V</div>
-                                <div class="resource-info">
-                                    <div class="resource-name">실전 프로젝트 강의</div>
-                                    <a href="#" class="resource-link">강의 링크 보기 →</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- 댓글창 -->
-                    <div class="study-section">
-                        <div class="section-title">
-                            <span class="section-icon"></span>
-                            댓글
-                        </div>
-                        <div class="comment-section">
-                            <div class="comment-list">
-                                <div class="comment-item">
-                                    <img class="comment-avatar" th:src="'https://i.pravatar.cc/40?img=1'" alt="프로필">
-                                    <div class="comment-body">
-                                        <div class="comment-top">
-                                            <span class="comment-user">김철수</span>
-                                            <span class="comment-time">2시간 전</span>
-                                        </div>
-                                        <div class="comment-content">오늘 진도 어디까지 나가나요?</div>
+                        <!-- 공유 달력 -->
+                        <div class="sidebar-section">
+                            <div class="section-header">
+                                <div class="sidebar-title">📅 공유 달력</div>
+                                <button class="btn btn-primary btn-sm" onclick="openCalendarEventModal()">+ 일정</button>
+                            </div>
+                            <div class="calendar-container">
+                                <div class="calendar-header">
+                                    <div class="calendar-nav">
+                                        <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
+                                        <div class="calendar-month" id="calendarMonth">2024년 1월</div>
+                                        <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
                                     </div>
                                 </div>
-                                <div class="comment-item">
-                                    <img class="comment-avatar" th:src="'https://i.pravatar.cc/40?img=2'" alt="프로필">
-                                    <div class="comment-body">
-                                        <div class="comment-top">
-                                            <span class="comment-user">이영희</span>
-                                            <span class="comment-time">1시간 전</span>
-                                        </div>
-                                        <div class="comment-content">3주차 함수 부분까지 예정입니다!</div>
-                                    </div>
+                                <div id="calendarGrid" class="calendar-grid">
+                                    <!-- 달력이 여기에 동적으로 생성됨 -->
                                 </div>
                             </div>
-                            <div class="comment-write" th:if="${loginUser != null}">
-                                <textarea id="commentInput" placeholder="댓글을 입력하세요..."></textarea>
-                                <button class="btn btn-primary" onclick="addComment()">등록</button>
+                        </div>
+
+                        <div class="sidebar-section">
+                            <div class="sidebar-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                팀원 정보
+                            </div>
+                            <div id="membersList" class="online-members">
+                                <!-- 팀원 정보가 여기에 동적으로 추가됨 -->
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- 사이드바 -->
-                <div class="study-sidebar">
-                    <!-- 학습 시작 버튼 -->
-                    <div class="sidebar-section">
-                        <button class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 16px; font-weight: 600;" 
-                                th:onclick="'location.href=\'/study-groups/' + ${firstGroup.id} + '/session\''">
-                            학습 시작하기
-                        </button>
-                    </div>
-
-                    <!-- 온라인 멤버 -->
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">팀원 정보</div>
-                        <div id="membersList" class="online-members">
-                            <!-- 팀원 정보가 여기에 동적으로 추가됨 -->
-                        </div>
-                    </div>
-
-                    <!-- 공부 시간 통계 -->
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">팀 공부 시간</div>
-                        <div class="study-time">
-                            <div class="study-time-item">
-                                <span class="study-time-label">오늘</span>
-                                <span class="study-time-value" id="teamTodayTime">0h 0m</span>
+                        <div class="sidebar-section">
+                            <div class="sidebar-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                팀 공부 시간
                             </div>
-                            <div class="study-time-item">
-                                <span class="study-time-label">이번 주</span>
-                                <span class="study-time-value" id="teamWeekTime">0h 0m</span>
-                            </div>
-                            <div class="study-time-item">
-                                <span class="study-time-label">전체</span>
-                                <span class="study-time-value" id="teamTotalTime">0h 0m</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 공용 달력 -->
-                    <div class="sidebar-section" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-                        <div class="sidebar-title" style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>공용 달력</span>
-                            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="openAddEventModal()">일정 추가</button>
-                        </div>
-                        <div id="calendarContainer" style="flex: 1; overflow-y: auto; padding: 8px;">
-                            <!-- 달력이 여기에 동적으로 생성됨 -->
-                        </div>
-                    </div>
-
-                    <!-- 채팅창 -->
-                    <div class="sidebar-section" style="flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0;">
-                        <div style="padding: 16px; border-bottom: 1px solid var(--border);">
-                            <div class="sidebar-title">그룹 채팅</div>
-                        </div>
-                        <div class="chat-section">
-                            <div class="chat-messages" id="chatMessages">
-                                <div class="chat-message">
-                                    <img class="chat-avatar" th:src="'https://i.pravatar.cc/32?img=1'" alt="프로필">
-                                    <div>
-                                        <div class="chat-name">김철수</div>
-                                        <div class="chat-bubble">
-                                            <div class="chat-text">안녕하세요! 오늘도 화이팅입니다</div>
-                                            <div class="chat-time">오전 9:00</div>
-                                        </div>
-                                    </div>
+                            <div class="study-time">
+                                <div class="study-time-item">
+                                    <span class="study-time-label">오늘</span>
+                                    <span class="study-time-value" id="teamTodayTime">0h 0m</span>
                                 </div>
-                                <div class="chat-message own">
-                                    <img class="chat-avatar" th:src="'https://i.pravatar.cc/32?img=10'" alt="프로필">
-                                    <div>
-                                        <div class="chat-name">나</div>
-                                        <div class="chat-bubble">
-                                            <div class="chat-text">네! 같이 열심히 해요</div>
-                                            <div class="chat-time">오전 9:05</div>
-                                        </div>
-                                    </div>
+                                <div class="study-time-item">
+                                    <span class="study-time-label">이번 주</span>
+                                    <span class="study-time-value" id="teamWeekTime">0h 0m</span>
+                                </div>
+                                <div class="study-time-item">
+                                    <span class="study-time-label">전체</span>
+                                    <span class="study-time-value" id="teamTotalTime">0h 0m</span>
                                 </div>
                             </div>
-                            <div class="chat-input">
-                                <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.key==='Enter') sendChatMessage()">
-                                <button onclick="sendChatMessage()">전송</button>
-                            </div>
                         </div>
                     </div>
-                </div>
                 </div>
             </div>
         </div>
 
-        <!-- 빈 상태 (스터디가 없을 때) -->
+        <!-- 빈 상태 -->
         <div class="study-detail-panel" th:if="${groups == null || groups.isEmpty()}">
             <div class="empty-state">
-                <div class="empty-state-icon"></div>
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                </div>
                 <div class="empty-state-text">스터디를 선택해주세요</div>
-                <div class="empty-state-desc">왼쪽에서 진행중인 스터디를 선택하면<br>상세 정보를 확인할 수 있습니다</div>
+                <div class="empty-state-desc">왼쪽에서 참여중인 스터디를 선택하면<br>상세 정보를 확인할 수 있습니다</div>
             </div>
         </div>
     </div>
 </main>
 
-<!-- 일정 모달 -->
-<div id="eventModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 500px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3>일정 관리</h3>
-            <button onclick="closeEventModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+<!-- 커리큘럼 모달 -->
+<div id="curriculumModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">커리큘럼 추가</h3>
+            <button class="modal-close" onclick="closeCurriculumModal()">×</button>
         </div>
-        
-        <div id="modalDate" style="font-weight: 600; margin-bottom: 16px;"></div>
-        
-        <div id="modalEvents" style="max-height: 300px; overflow-y: auto; margin-bottom: 16px;">
-            <!-- 일정 목록이 여기에 표시됨 -->
+        <div class="form-group">
+            <label class="form-label">주차 번호 *</label>
+            <input type="number" id="curriculumWeek" class="form-input" placeholder="예: 1" min="1" required>
         </div>
-        
-        <div style="border-top: 1px solid var(--border); padding-top: 16px;">
-            <h4 style="margin-bottom: 12px;">새 일정 추가</h4>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <div>
-                    <label style="display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600;">날짜</label>
-                    <input type="date" id="newEventDate" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
-                </div>
-                <div>
-                    <label style="display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600;">시간 (선택사항)</label>
-                    <input type="time" id="newEventTime" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
-                </div>
-                <div>
-                    <label style="display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600;">제목 *</label>
-                    <input type="text" id="newEventTitle" placeholder="일정 제목" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
-                </div>
-                <div>
-                    <label style="display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600;">내용 (선택사항)</label>
-                    <textarea id="newEventContent" placeholder="일정 내용" style="width: 100%; min-height: 80px; padding: 8px; border-radius: 6px; border: 1px solid var(--border); resize: vertical;"></textarea>
-                </div>
-                <button class="btn btn-primary" onclick="saveEvent()" style="width: 100%;">일정 저장</button>
-            </div>
+        <div class="form-group">
+            <label class="form-label">제목 *</label>
+            <input type="text" id="curriculumTitle" class="form-input" placeholder="예: 기초 문법" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">설명</label>
+            <textarea id="curriculumDesc" class="form-textarea" placeholder="커리큘럼 상세 내용을 입력하세요..."></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">시작 날짜</label>
+            <input type="date" id="curriculumStartDate" class="form-input">
+        </div>
+        <div class="form-group">
+            <label class="form-label">종료 날짜</label>
+            <input type="date" id="curriculumEndDate" class="form-input">
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-outline" onclick="closeCurriculumModal()">취소</button>
+            <button class="btn btn-primary" onclick="saveCurriculum()">저장</button>
         </div>
     </div>
 </div>
 
-<!-- 일정 상세 모달 -->
-<div id="eventDetailModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 400px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3>일정 상세</h3>
-            <button onclick="closeEventDetailModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+<!-- 리소스 모달 -->
+<div id="resourceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">리소스 추가</h3>
+            <button class="modal-close" onclick="closeResourceModal()">×</button>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div>
-                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">제목</div>
-                <div id="detailEventTitle" style="font-weight: 600; font-size: 18px;"></div>
-            </div>
-            <div>
-                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">날짜</div>
-                <div id="detailEventDate"></div>
-            </div>
-            <div>
-                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">시간</div>
-                <div id="detailEventTime"></div>
-            </div>
-            <div>
-                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">내용</div>
-                <div id="detailEventContent" style="white-space: pre-wrap;"></div>
-            </div>
-            <div>
-                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">작성자</div>
-                <div id="detailEventAuthor"></div>
-            </div>
+        <div class="form-group">
+            <label class="form-label">이름 *</label>
+            <input type="text" id="resourceName" class="form-input" placeholder="리소스 이름" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">URL</label>
+            <input type="url" id="resourceUrl" class="form-input" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label class="form-label">설명</label>
+            <textarea id="resourceDesc" class="form-textarea" placeholder="리소스 설명"></textarea>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-outline" onclick="closeResourceModal()">취소</button>
+            <button class="btn btn-primary" onclick="saveResource()">저장</button>
         </div>
     </div>
 </div>
 
-<style>
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
+<!-- 달력 일정 모달 -->
+<div id="calendarEventModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">일정 추가</h3>
+            <button class="modal-close" onclick="closeCalendarEventModal()">×</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">날짜 *</label>
+            <input type="date" id="eventDate" class="form-input" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">시간</label>
+            <input type="time" id="eventTime" class="form-input">
+        </div>
+        <div class="form-group">
+            <label class="form-label">제목 *</label>
+            <input type="text" id="eventTitle" class="form-input" placeholder="일정 제목" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">내용</label>
+            <textarea id="eventContent" class="form-textarea" placeholder="일정 내용"></textarea>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-outline" onclick="closeCalendarEventModal()">취소</button>
+            <button class="btn btn-primary" onclick="saveCalendarEvent()">저장</button>
+        </div>
+    </div>
+</div>
 
-.modal-content {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-}
+<!-- 수정 모달 -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">스터디 그룹 수정</h3>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">제목 *</label>
+            <input type="text" id="editTitle" class="form-input" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">설명</label>
+            <textarea id="editDesc" class="form-textarea"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">최대 인원</label>
+            <input type="number" id="editMaxMembers" class="form-input" min="1">
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-outline" onclick="closeEditModal()">취소</button>
+            <button class="btn btn-primary" onclick="saveEdit()">저장</button>
+        </div>
+    </div>
+</div>
 
-.calendar-day:hover {
-    background: var(--primary-soft) !important;
-}
-
-.event-item:hover {
-    transform: translateX(4px);
-    transition: transform 0.2s;
-}
-</style>
-
-<script>
+<script th:inline="javascript">
 let currentGroupId = null;
+let currentResourceType = null;
+let currentCalendarYear = new Date().getFullYear();
+let currentCalendarMonth = new Date().getMonth() + 1;
+let isLeader = false;
+let currentGroupCreatorId = null;
 
-// 스터디 선택 함수
+// 로그인 유저 ID (Thymeleaf에서 주입)
+const currentUserId = /*[[${loginUser != null ? loginUser.id : null}]]*/ null;
+
+// 스터디 선택
 function selectStudy(groupId) {
     currentGroupId = groupId;
-    
-    // 모든 카드에서 active 클래스 제거
-    document.querySelectorAll('.study-card').forEach(card => {
-        card.classList.remove('active');
-    });
-    
-    // 선택한 카드에 active 클래스 추가
-    const selectedCard = document.querySelector(`[data-group-id="${groupId}"]`);
-    if (selectedCard) {
-        selectedCard.classList.add('active');
-    }
-    
-    // 스터디 상세 정보 로드
+    document.querySelectorAll('.study-card').forEach(card => card.classList.remove('active'));
+    document.querySelector(`[data-group-id="${groupId}"]`)?.classList.add('active');
     loadStudyDetails(groupId);
+    // 현재 선택한 스터디 기준으로 온라인 상태 하트비트
+    sendOnlineHeartbeat();
 }
 
 // 스터디 상세 정보 로드
 function loadStudyDetails(groupId) {
-    if (!groupId) {
-        console.error('그룹 ID가 없습니다.');
-        return;
-    }
+    if (!groupId) return;
     
-    // 팀원 정보 로드
-    fetch(`/api/study-groups/${groupId}/members`)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.json();
-        })
+    // 스터디 그룹 정보 로드 (리더 확인용)
+    fetch(`/api/study-groups/${groupId}`)
+        .then(res => res.json())
         .then(data => {
             if (data.success) {
-                if (data.members && data.members.length > 0) {
-                    renderMembers(data.members);
-                    updateOnlineCount(groupId, data.members);
-                    updateTeamStats(data.members);
-                } else {
-                    console.warn('멤버 데이터가 없습니다.');
-                    const container = document.getElementById('membersList');
-                    if (container) {
-                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">멤버 정보를 불러올 수 없습니다.</div>';
-                    }
-                }
-            } else {
-                console.error('멤버 정보 로드 실패:', data.error);
+                currentGroupCreatorId = data.group.creatorId;
+                // 리더 여부는 서버에서 확인하므로 여기서는 저장만
             }
         })
-        .catch(error => {
-            console.error('멤버 정보 로드 중 오류:', error);
-        });
+        .catch(err => console.error('스터디 그룹 정보 로드 실패:', err));
+    
+    // 커리큘럼 로드
+    fetch(`/api/study-groups/${groupId}/curriculum`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderCurriculum(data.curriculums, currentGroupCreatorId);
+            }
+        })
+        .catch(err => console.error('커리큘럼 로드 실패:', err));
+    
+    // 교재 로드
+    fetch(`/api/study-groups/${groupId}/resources?resourceType=BOOK`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderResources(data.resources, 'bookList');
+            }
+        })
+        .catch(err => console.error('교재 로드 실패:', err));
+    
+    // 인강 로드
+    fetch(`/api/study-groups/${groupId}/resources?resourceType=VIDEO`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderResources(data.resources, 'videoList');
+            }
+        })
+        .catch(err => console.error('인강 로드 실패:', err));
+    
+    // 댓글 로드
+    fetch(`/api/study-groups/${groupId}/comments`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderComments(data.comments);
+            }
+        })
+        .catch(err => console.error('댓글 로드 실패:', err));
+    
+    // 멤버 로드
+    fetch(`/api/study-groups/${groupId}/members`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderMembers(data.members);
+                updateProgress(data.members);
+            }
+        })
+        .catch(err => console.error('멤버 로드 실패:', err));
     
     // 달력 초기화
-    initCalendar();
+    renderCalendar();
+    loadCalendarEvents();
 }
 
-// HTML 이스케이프 함수
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// 팀원 정보 렌더링
-function renderMembers(members) {
-    const container = document.getElementById('membersList');
-    if (!container) {
-        console.error('멤버 리스트 컨테이너를 찾을 수 없습니다.');
-        return;
-    }
+// 현재 페이지에서 단순 접속만 해도 ONLINE 상태로 표시되도록 하트비트 전송
+function sendOnlineHeartbeat() {
+    if (!currentGroupId) return;
     
-    container.innerHTML = '';
-    
-    if (!members || members.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">멤버 정보를 불러올 수 없습니다.</div>';
-        return;
-    }
-    
-    members.forEach(member => {
-        const statusColor = member.isOnline ? '#10b981' : '#9ca3af';
-        const statusText = getStatusText(member.status);
-        const lastActive = formatLastActive(member.lastActiveTime);
-        const studyStyle = member.studyStyle || '미정';
-        
-        const div = document.createElement('div');
-        div.className = 'online-member';
-        div.style.marginBottom = '12px';
-        div.innerHTML = `
-            <div style="position: relative;">
-                <img class="online-member-avatar" src="https://i.pravatar.cc/36?img=${member.id}" alt="프로필">
-                <span class="online-badge" style="background: ${statusColor};"></span>
-            </div>
-            <div style="flex: 1;">
-                <div class="online-member-name">
-                    ${escapeHtml(member.name)} ${member.role === 'CREATOR' ? '<span style="font-size: 11px; color: #f59e0b;">(팀장)</span>' : ''}
-                </div>
-                <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">
-                    ${statusText} · ${lastActive}
-                </div>
-                ${member.statusMessage ? `<div style="font-size: 11px; color: var(--primary); margin-top: 2px; font-style: italic;">"${escapeHtml(member.statusMessage)}"</div>` : ''}
-                <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
-                    오늘: ${formatTime(member.todayStudyTime)} · 스타일: ${studyStyle}
-                </div>
-                <div style="font-size: 11px; color: #ef4444; margin-top: 2px; font-weight: 600;">
-                    연속 ${member.consecutiveDays || 0}일
-                </div>
-            </div>
-        `;
-        container.appendChild(div);
+    fetch(`/api/study-groups/${currentGroupId}/status?status=ONLINE`, {
+        method: 'POST'
+    }).catch(err => {
+        // 조용히 실패 처리 (콘솔만)
+        console.error('온라인 상태 업데이트 실패:', err);
     });
 }
 
-// 온라인 멤버 수 업데이트
-function updateOnlineCount(groupId, members) {
-    const onlineCount = members.filter(m => m.isOnline).length;
-    const countElement = document.querySelector(`[data-group-id="${groupId}"] #onlineCount`);
-    if (countElement) {
-        countElement.textContent = `${onlineCount}명 온라인`;
-    }
-}
-
-// 팀 통계 업데이트
-function updateTeamStats(members) {
-    const todayTotal = members.reduce((sum, m) => sum + (m.todayStudyTime || 0), 0);
-    const weekTotal = members.reduce((sum, m) => sum + (m.weekStudyTime || 0), 0);
-    const totalTotal = members.reduce((sum, m) => sum + (m.totalStudyTime || 0), 0);
-    
-    const todayEl = document.getElementById('teamTodayTime');
-    const weekEl = document.getElementById('teamWeekTime');
-    const totalEl = document.getElementById('teamTotalTime');
-    
-    if (todayEl) todayEl.textContent = formatTime(todayTotal);
-    if (weekEl) weekEl.textContent = formatTime(weekTotal);
-    if (totalEl) totalEl.textContent = formatTime(totalTotal);
-}
-
-// 유틸리티 함수
-function formatTime(minutes) {
-    if (typeof minutes === 'number') {
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        return h > 0 ? `${h}h ${m}m` : `${m}m`;
-    }
-    return minutes || '0m';
-}
-
-function formatLastActive(time) {
-    if (!time) return '오프라인';
-    const now = new Date();
-    const active = new Date(time);
-    const diff = Math.floor((now - active) / 1000 / 60);
-    
-    if (diff < 1) return '방금 전';
-    if (diff < 60) return `${diff}분 전`;
-    const hours = Math.floor(diff / 60);
-    if (hours < 24) return `${hours}시간 전`;
-    return '오프라인';
-}
-
-function getStatusText(status) {
-    const statusMap = {
-        'ONLINE': '온라인',
-        'AWAY': '자리비움',
-        'STUDYING': '학습 중',
-        'BREAK': '쉬는 시간',
-        'OFFLINE': '오프라인'
-    };
-    return statusMap[status] || '오프라인';
-}
-
-// 댓글 추가
-function addComment() {
-    const input = document.getElementById('commentInput');
-    const text = input.value.trim();
-    if (!text) return;
-    
-    // TODO: 서버에 댓글 전송
-    console.log('Adding comment:', text);
-    input.value = '';
-}
-
-// 채팅 메시지 전송
-function sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    if (!text) return;
-    
-    // TODO: 서버에 채팅 메시지 전송
-    console.log('Sending message:', text);
-    input.value = '';
-}
-
-// 달력 초기화
-let currentCalendarYear = new Date().getFullYear();
-let currentCalendarMonth = new Date().getMonth() + 1;
-
-function initCalendar() {
-    if (!currentGroupId) return;
-    renderCalendar(currentCalendarYear, currentCalendarMonth);
-    loadCalendarEvents(currentCalendarYear, currentCalendarMonth);
-}
-
-function renderCalendar(year, month) {
-    const container = document.getElementById('calendarContainer');
+// 커리큘럼 렌더링
+function renderCurriculum(curriculums, creatorId) {
+    const container = document.getElementById('curriculumList');
     if (!container) return;
     
-    const firstDay = new Date(year, month - 1, 1).getDay();
-    const daysInMonth = new Date(year, month, 0).getDate();
+    if (!curriculums || curriculums.length === 0) {
+        const emptyMsg = creatorId ? 
+            '<div style="text-align: center; padding: 40px; color: var(--text-light);">커리큘럼이 없습니다.<br>그룹장이 커리큘럼을 추가할 수 있습니다.</div>' :
+            '<div style="text-align: center; padding: 40px; color: var(--text-light);">커리큘럼이 없습니다.</div>';
+        container.innerHTML = emptyMsg;
+        return;
+    }
+    
+    // 리더 여부는 서버에서 확인하므로, 여기서는 버튼을 표시
+    // 실제 권한은 서버에서 검증됨
+    container.innerHTML = curriculums.map(c => {
+        const statusClass = c.status === 'COMPLETED' ? 'completed' : 
+                           c.status === 'IN_PROGRESS' ? 'current' : '';
+        const dateInfo = (c.startDate || c.endDate) ? 
+            `<div style="font-size: 11px; color: var(--text-light); margin-top: 4px;">
+                ${c.startDate ? '시작: ' + c.startDate : ''} ${c.endDate ? '종료: ' + c.endDate : ''}
+            </div>` : '';
+        const actions = creatorId ? `
+            <div class="curriculum-item-actions">
+                <button class="btn btn-outline btn-sm" onclick="editCurriculumModal(${c.id}, ${c.weekNumber}, '${escapeHtml(c.title)}', '${escapeHtml(c.description || '')}', '${c.startDate || ''}', '${c.endDate || ''}')">수정</button>
+                <button class="btn btn-outline btn-sm" onclick="deleteCurriculum(${c.id})">삭제</button>
+            </div>
+        ` : '';
+        return `
+            <li class="curriculum-item ${statusClass}" data-week="${c.weekNumber}">
+                <div class="curriculum-item-title">${c.weekNumber}주차: ${escapeHtml(c.title)}</div>
+                <div class="curriculum-item-desc">${escapeHtml(c.description || '')}</div>
+                ${dateInfo}
+                ${actions}
+            </li>
+        `;
+    }).join('');
+}
+
+// 커리큘럼 수정 모달
+let editingCurriculumId = null;
+
+function editCurriculumModal(id, week, title, desc, startDate, endDate) {
+    editingCurriculumId = id;
+    document.getElementById('curriculumModal').classList.add('active');
+    document.getElementById('curriculumWeek').value = week;
+    document.getElementById('curriculumTitle').value = title;
+    document.getElementById('curriculumDesc').value = desc;
+    document.getElementById('curriculumStartDate').value = startDate;
+    document.getElementById('curriculumEndDate').value = endDate;
+    document.querySelector('#curriculumModal .modal-title').textContent = '커리큘럼 수정';
+}
+
+function closeCurriculumModal() {
+    document.getElementById('curriculumModal').classList.remove('active');
+    editingCurriculumId = null;
+    document.querySelector('#curriculumModal .modal-title').textContent = '커리큘럼 추가';
+    document.getElementById('curriculumWeek').value = '';
+    document.getElementById('curriculumTitle').value = '';
+    document.getElementById('curriculumDesc').value = '';
+    document.getElementById('curriculumStartDate').value = '';
+    document.getElementById('curriculumEndDate').value = '';
+}
+
+// 리소스 렌더링
+function renderResources(resources, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    if (!resources || resources.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light); font-size: 13px;">리소스가 없습니다.</div>';
+        return;
+    }
+    
+    container.innerHTML = resources.map(r => {
+        const icon = r.resourceType === 'BOOK' 
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>';
+        return `
+            <div class="resource-item">
+                <div class="resource-icon">${icon}</div>
+                <div class="resource-info">
+                    <div class="resource-name">${escapeHtml(r.name)}</div>
+                    ${r.url ? `<a href="${r.url}" target="_blank" class="resource-link">링크 보기 →</a>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 댓글 렌더링
+function renderComments(comments) {
+    const container = document.getElementById('commentList');
+    if (!container) return;
+    
+    if (!comments || comments.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light); font-size: 13px;">댓글이 없습니다.</div>';
+        return;
+    }
+    
+    container.innerHTML = comments.map(c => {
+        const time = formatTime(c.createdAt);
+        return `
+            <div class="comment-item">
+                <img class="comment-avatar" src="https://i.pravatar.cc/36?img=${c.userId}" alt="프로필">
+                <div class="comment-body">
+                    <div class="comment-top">
+                        <span class="comment-user">${escapeHtml(c.userName)}</span>
+                        <span class="comment-time">${time}</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(c.content)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 멤버 렌더링
+function renderMembers(members) {
+    const container = document.getElementById('membersList');
+    if (!container) return;
+    
+    if (!members || members.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light); font-size: 13px;">멤버 정보를 불러올 수 없습니다.</div>';
+        return;
+    }
+    // 현재 사용자가 리더인지 확인 (서버에서 받아온 creatorId와 비교)
+    const isCurrentUserLeader = currentGroupCreatorId === currentUserId;
+    
+    container.innerHTML = members.map(m => {
+        const statusColor = m.isOnline ? '#10b981' : '#9ca3af';
+        const isCreator = m.role === 'CREATOR';
+        const isCurrentUser = m.id === currentUserId;
+        const canRemove = isCurrentUserLeader && !isCreator && !isCurrentUser;
+        
+        return `
+            <div class="online-member" style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <div style="position: relative;">
+                        <img class="online-member-avatar" src="https://i.pravatar.cc/32?img=${m.id}" alt="프로필">
+                        <span class="online-badge" style="background: ${statusColor};"></span>
+                    </div>
+                    <div class="online-member-info">
+                        <div class="online-member-name">${escapeHtml(m.name)} ${isCreator ? '<span style="font-size: 11px; color: var(--warning);">(팀장)</span>' : ''}</div>
+                        <div class="online-member-status">${m.statusMessage || '학습 중'}</div>
+                    </div>
+                </div>
+                ${canRemove ? `<button class="btn btn-outline btn-sm" style="color: var(--danger); padding: 4px 8px; font-size: 11px;" onclick="removeMember(${m.id}, '${escapeHtml(m.name)}')">추방</button>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// 달력 렌더링
+function renderCalendar() {
+    const container = document.getElementById('calendarGrid');
+    const monthEl = document.getElementById('calendarMonth');
+    if (!container || !monthEl) return;
+    
+    const firstDay = new Date(currentCalendarYear, currentCalendarMonth - 1, 1).getDay();
+    const daysInMonth = new Date(currentCalendarYear, currentCalendarMonth, 0).getDate();
+    const daysInPrevMonth = new Date(currentCalendarYear, currentCalendarMonth - 1, 0).getDate();
     const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
     const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
     
-    let html = `
-        <div style="margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <button onclick="changeMonth(-1)" style="background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text);">&lt;</button>
-                <div style="font-weight: 600; font-size: 16px;">${year}년 ${monthNames[month - 1]}</div>
-                <button onclick="changeMonth(1)" style="background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text);">&gt;</button>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 8px;">
-    `;
+    monthEl.textContent = `${currentCalendarYear}년 ${monthNames[currentCalendarMonth - 1]}`;
+    
+    let html = '';
     
     // 요일 헤더
     dayNames.forEach(day => {
-        html += `<div style="text-align: center; font-size: 11px; font-weight: 600; color: #6b7280; padding: 4px;">${day}</div>`;
+        html += `<div class="calendar-day-header">${day}</div>`;
     });
     
-    // 빈 칸 (첫 날 전)
-    for (let i = 0; i < firstDay; i++) {
-        html += `<div style="aspect-ratio: 1; border: 1px solid var(--border); border-radius: 4px;"></div>`;
+    // 이전 달 마지막 날들
+    for (let i = firstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        html += `<div class="calendar-day other-month"><div class="calendar-day-number">${day}</div></div>`;
     }
     
-    // 날짜 칸
+    // 현재 달 날들
+    const today = new Date();
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isToday = new Date().toISOString().split('T')[0] === dateStr;
+        const dateStr = `${currentCalendarYear}-${String(currentCalendarMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = today.getFullYear() === currentCalendarYear && 
+                       today.getMonth() + 1 === currentCalendarMonth && 
+                       today.getDate() === day;
         html += `
-            <div class="calendar-day" 
+            <div class="calendar-day ${isToday ? 'today' : ''}" 
                  data-date="${dateStr}"
-                 onclick="showDayEvents('${dateStr}')"
-                 style="aspect-ratio: 1; border: 1px solid var(--border); border-radius: 4px; padding: 4px; cursor: pointer; position: relative; ${isToday ? 'background: var(--primary-soft); border-color: var(--primary);' : ''}">
-                <div style="font-size: 12px; font-weight: ${isToday ? '700' : '400'}; color: ${isToday ? 'var(--primary)' : 'var(--text)'};">${day}</div>
-                <div class="calendar-events" data-date="${dateStr}" style="margin-top: 2px;"></div>
+                 onclick="showDayEvents('${dateStr}')">
+                <div class="calendar-day-number">${day}</div>
+                <div class="calendar-events" data-date="${dateStr}"></div>
             </div>
         `;
     }
     
-    html += `</div></div>`;
+    // 다음 달 첫 날들
+    const totalCells = 42; // 6주 * 7일
+    const usedCells = firstDay + daysInMonth;
+    for (let day = 1; day <= totalCells - usedCells; day++) {
+        html += `<div class="calendar-day other-month"><div class="calendar-day-number">${day}</div></div>`;
+    }
+    
     container.innerHTML = html;
 }
 
+// 달력 이벤트 로드
+function loadCalendarEvents() {
+    if (!currentGroupId) return;
+    
+    fetch(`/api/study-groups/${currentGroupId}/calendar/events/month/${currentCalendarYear}/${currentCalendarMonth}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.events) {
+                data.events.forEach(event => {
+                    const dateStr = event.eventDate;
+                    const dayCell = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
+                    if (dayCell) {
+                        const eventsDiv = dayCell.querySelector('.calendar-events');
+                        if (eventsDiv) {
+                            const eventDot = document.createElement('div');
+                            eventDot.className = 'calendar-event-dot';
+                            eventDot.style.background = event.color || '#3b82f6';
+                            eventDot.title = event.title;
+                            eventsDiv.appendChild(eventDot);
+                        }
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('달력 이벤트 로드 실패:', err));
+}
+
+// 달력 월 변경
 function changeMonth(delta) {
     currentCalendarMonth += delta;
     if (currentCalendarMonth < 1) {
@@ -698,154 +1636,204 @@ function changeMonth(delta) {
         currentCalendarMonth = 1;
         currentCalendarYear++;
     }
-    renderCalendar(currentCalendarYear, currentCalendarMonth);
-    loadCalendarEvents(currentCalendarYear, currentCalendarMonth);
+    renderCalendar();
+    loadCalendarEvents();
 }
 
-function loadCalendarEvents(year, month) {
-    if (!currentGroupId) return;
+// 댓글 추가
+function addComment() {
+    const input = document.getElementById('commentInput');
+    const content = input.value.trim();
+    if (!content || !currentGroupId) return;
     
-    fetch(`/api/study-groups/${currentGroupId}/calendar/events/month/${year}/${month}`)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.success && data.events) {
-                // 기존 이벤트 점 제거
-                document.querySelectorAll('.calendar-events').forEach(el => {
-                    el.innerHTML = '';
-                });
-                
-                // 새 이벤트 점 추가
-                data.events.forEach(event => {
-                    const dateStr = event.eventDate;
-                    const dayCell = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
-                    if (dayCell) {
-                        const eventsDiv = dayCell.querySelector('.calendar-events');
-                        if (eventsDiv) {
-                            const eventDot = document.createElement('div');
-                            eventDot.style.cssText = `width: 6px; height: 6px; border-radius: 50%; background: ${event.color || '#3b82f6'}; margin: 1px auto;`;
-                            eventDot.title = event.title;
-                            eventsDiv.appendChild(eventDot);
-                        }
-                    }
-                });
-            }
-        })
-        .catch(error => {
-            console.error('달력 이벤트 로드 중 오류:', error);
-        });
+    fetch(`/api/study-groups/${currentGroupId}/comments`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `content=${encodeURIComponent(content)}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            input.value = '';
+            loadStudyDetails(currentGroupId);
+        } else {
+            alert('댓글 작성 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(err => {
+        console.error('댓글 작성 실패:', err);
+        alert('댓글 작성 중 오류가 발생했습니다.');
+    });
 }
 
-function showDayEvents(dateStr) {
-    if (!currentGroupId) return;
-    
-    fetch(`/api/study-groups/${currentGroupId}/calendar/events/date/${dateStr}`)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.success) {
-                openEventModal(dateStr, data.events);
-            } else {
-                console.error('일정 조회 실패:', data.error);
-            }
-        })
-        .catch(error => {
-            console.error('일정 조회 중 오류:', error);
-        });
+// 커리큘럼 모달
+function openCurriculumModal() {
+    editingCurriculumId = null;
+    document.getElementById('curriculumModal').classList.add('active');
+    document.querySelector('#curriculumModal .modal-title').textContent = '커리큘럼 추가';
+    document.getElementById('curriculumWeek').value = '';
+    document.getElementById('curriculumTitle').value = '';
+    document.getElementById('curriculumDesc').value = '';
+    document.getElementById('curriculumStartDate').value = '';
+    document.getElementById('curriculumEndDate').value = '';
 }
 
-function openEventModal(dateStr, events) {
-    const modal = document.getElementById('eventModal');
-    const modalDate = document.getElementById('modalDate');
-    const modalEvents = document.getElementById('modalEvents');
-    
-    if (!modal || !modalDate || !modalEvents) return;
-    
-    const date = new Date(dateStr + 'T00:00:00');
-    modalDate.textContent = `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-    
-    modalEvents.innerHTML = '';
-    
-    if (events && events.length > 0) {
-        events.forEach(event => {
-            const eventDiv = document.createElement('div');
-            eventDiv.className = 'event-item';
-            eventDiv.style.cssText = 'padding: 12px; margin-bottom: 8px; border-left: 4px solid ' + (event.color || '#3b82f6') + '; background: var(--bg); border-radius: 4px; cursor: pointer;';
-            eventDiv.onclick = () => showEventDetail(event);
-            eventDiv.innerHTML = `
-                <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(event.title)}</div>
-                ${event.eventTime ? `<div style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">시간: ${event.eventTime}</div>` : ''}
-                <div style="font-size: 12px; color: #6b7280;">작성자: ${escapeHtml(event.userName)}</div>
-            `;
-            modalEvents.appendChild(eventDiv);
-        });
-    } else {
-        modalEvents.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">일정이 없습니다.</div>';
-    }
-    
-    document.getElementById('newEventDate').value = dateStr;
-    modal.style.display = 'flex';
+function closeCurriculumModal() {
+    document.getElementById('curriculumModal').classList.remove('active');
 }
 
-function openAddEventModal() {
-    const modal = document.getElementById('eventModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        document.getElementById('modalEvents').innerHTML = '';
-        document.getElementById('newEventDate').value = '';
-        document.getElementById('newEventTitle').value = '';
-        document.getElementById('newEventTime').value = '';
-        document.getElementById('newEventContent').value = '';
-    }
-}
-
-function closeEventModal() {
-    const modal = document.getElementById('eventModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-function showEventDetail(event) {
-    const detailModal = document.getElementById('eventDetailModal');
-    if (!detailModal) return;
+function saveCurriculum() {
+    const week = document.getElementById('curriculumWeek').value;
+    const title = document.getElementById('curriculumTitle').value;
+    const desc = document.getElementById('curriculumDesc').value;
+    const startDate = document.getElementById('curriculumStartDate').value;
+    const endDate = document.getElementById('curriculumEndDate').value;
     
-    document.getElementById('detailEventTitle').textContent = event.title;
-    document.getElementById('detailEventDate').textContent = event.eventDate;
-    document.getElementById('detailEventTime').textContent = event.eventTime || '시간 미정';
-    document.getElementById('detailEventContent').textContent = event.content || '내용 없음';
-    document.getElementById('detailEventAuthor').textContent = event.userName;
-    
-    detailModal.style.display = 'flex';
-}
-
-function closeEventDetailModal() {
-    const modal = document.getElementById('eventDetailModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-function saveEvent() {
-    if (!currentGroupId) {
-        alert('스터디 그룹을 선택해주세요.');
+    if (!week || !title || !currentGroupId) {
+        alert('주차 번호와 제목을 입력해주세요.');
         return;
     }
     
-    const date = document.getElementById('newEventDate').value;
-    const time = document.getElementById('newEventTime').value;
-    const title = document.getElementById('newEventTitle').value.trim();
-    const content = document.getElementById('newEventContent').value.trim();
+    // 수정 모드
+    if (editingCurriculumId) {
+        const params = new URLSearchParams();
+        params.append('title', title);
+        if (desc) params.append('description', desc);
+        
+        fetch(`/api/study-groups/curriculum/${editingCurriculumId}?${params.toString()}`, {
+            method: 'PUT'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeCurriculumModal();
+                loadStudyDetails(currentGroupId);
+            } else {
+                alert('커리큘럼 수정 실패: ' + (data.error || '알 수 없는 오류'));
+            }
+        })
+        .catch(err => {
+            console.error('커리큘럼 수정 실패:', err);
+            alert('커리큘럼 수정 중 오류가 발생했습니다.');
+        });
+        return;
+    }
     
-    if (!date || !title) {
+    // 추가 모드
+    const params = new URLSearchParams();
+    params.append('weekNumber', week);
+    params.append('title', title);
+    if (desc) params.append('description', desc);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    
+    fetch(`/api/study-groups/${currentGroupId}/curriculum?${params.toString()}`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeCurriculumModal();
+            loadStudyDetails(currentGroupId);
+        } else {
+            alert('커리큘럼 추가 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(err => {
+        console.error('커리큘럼 추가 실패:', err);
+        alert('커리큘럼 추가 중 오류가 발생했습니다.');
+    });
+}
+
+// 커리큘럼 삭제
+function deleteCurriculum(id) {
+    if (!confirm('정말로 이 커리큘럼을 삭제하시겠습니까?')) return;
+    
+    fetch(`/api/study-groups/curriculum/${id}`, {
+        method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            loadStudyDetails(currentGroupId);
+        } else {
+            alert('커리큘럼 삭제 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(err => {
+        console.error('커리큘럼 삭제 실패:', err);
+        alert('커리큘럼 삭제 중 오류가 발생했습니다.');
+    });
+}
+
+// 리소스 모달
+function openResourceModal(type) {
+    currentResourceType = type;
+    document.getElementById('resourceModal').classList.add('active');
+    document.getElementById('resourceName').value = '';
+    document.getElementById('resourceUrl').value = '';
+    document.getElementById('resourceDesc').value = '';
+}
+
+function closeResourceModal() {
+    document.getElementById('resourceModal').classList.remove('active');
+}
+
+function saveResource() {
+    const name = document.getElementById('resourceName').value;
+    const url = document.getElementById('resourceUrl').value;
+    const desc = document.getElementById('resourceDesc').value;
+    
+    if (!name || !currentGroupId) {
+        alert('이름을 입력해주세요.');
+        return;
+    }
+    
+    const params = new URLSearchParams();
+    params.append('resourceType', currentResourceType);
+    params.append('name', name);
+    if (url) params.append('url', url);
+    if (desc) params.append('description', desc);
+    
+    fetch(`/api/study-groups/${currentGroupId}/resources?${params.toString()}`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeResourceModal();
+            loadStudyDetails(currentGroupId);
+        } else {
+            alert('리소스 추가 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(err => {
+        console.error('리소스 추가 실패:', err);
+        alert('리소스 추가 중 오류가 발생했습니다.');
+    });
+}
+
+// 달력 일정 모달
+function openCalendarEventModal() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('calendarEventModal').classList.add('active');
+    document.getElementById('eventDate').value = today;
+    document.getElementById('eventTime').value = '';
+    document.getElementById('eventTitle').value = '';
+    document.getElementById('eventContent').value = '';
+}
+
+function closeCalendarEventModal() {
+    document.getElementById('calendarEventModal').classList.remove('active');
+}
+
+function saveCalendarEvent() {
+    const date = document.getElementById('eventDate').value;
+    const time = document.getElementById('eventTime').value;
+    const title = document.getElementById('eventTitle').value;
+    const content = document.getElementById('eventContent').value;
+    
+    if (!date || !title || !currentGroupId) {
         alert('날짜와 제목을 입력해주세요.');
         return;
     }
@@ -861,31 +1849,180 @@ function saveEvent() {
     fetch(`/api/study-groups/${currentGroupId}/calendar/events?${params.toString()}`, {
         method: 'POST'
     })
-    .then(res => {
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-    })
+    .then(res => res.json())
     .then(data => {
         if (data.success) {
-            closeEventModal();
-            loadCalendarEvents(currentCalendarYear, currentCalendarMonth);
-            alert('일정이 저장되었습니다.');
-            if (data.event && data.event.eventDate === date) {
-                showDayEvents(date);
-            }
+            closeCalendarEventModal();
+            renderCalendar();
+            loadCalendarEvents();
         } else {
-            alert('일정 저장에 실패했습니다: ' + (data.error || '알 수 없는 오류'));
+            alert('일정 추가 실패: ' + (data.error || '알 수 없는 오류'));
         }
     })
-    .catch(error => {
-        console.error('일정 저장 중 오류:', error);
-        alert('일정 저장 중 오류가 발생했습니다.');
+    .catch(err => {
+        console.error('일정 추가 실패:', err);
+        alert('일정 추가 중 오류가 발생했습니다.');
     });
 }
 
-// 페이지 로드 시 첫 번째 스터디 선택 및 주기적 업데이트
+function showDayEvents(dateStr) {
+    if (!currentGroupId) return;
+    
+    fetch(`/api/study-groups/${currentGroupId}/calendar/events/date/${dateStr}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.events && data.events.length > 0) {
+                const events = data.events.map(e => `• ${e.title}${e.eventTime ? ' (' + e.eventTime + ')' : ''}`).join('\n');
+                alert(`${dateStr}\n\n${events}`);
+            }
+        })
+        .catch(err => console.error('일정 조회 실패:', err));
+}
+
+// 수정 모달
+function openEditModal() {
+    fetch(`/api/study-groups/${currentGroupId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('editTitle').value = data.group.title || '';
+                document.getElementById('editDesc').value = data.group.description || '';
+                document.getElementById('editMaxMembers').value = data.group.maxMembers || '';
+                document.getElementById('editModal').classList.add('active');
+            }
+        })
+        .catch(err => console.error('스터디 그룹 정보 로드 실패:', err));
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+}
+
+function saveEdit() {
+    const title = document.getElementById('editTitle').value;
+    const desc = document.getElementById('editDesc').value;
+    const maxMembers = document.getElementById('editMaxMembers').value;
+    
+    const params = new URLSearchParams();
+    if (title) params.append('title', title);
+    if (desc) params.append('description', desc);
+    if (maxMembers) params.append('maxMembers', maxMembers);
+    
+    fetch(`/api/study-groups/${currentGroupId}?${params.toString()}`, {
+        method: 'PUT'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeEditModal();
+            location.reload();
+        } else {
+            alert('수정 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(err => {
+        console.error('수정 실패:', err);
+        alert('수정 중 오류가 발생했습니다.');
+    });
+}
+
+// 스터디 그룹 삭제
+function deleteStudyGroup() {
+    if (!confirm('정말로 스터디 그룹을 삭제하시겠습니까?')) return;
+    
+    fetch(`/api/study-groups/${currentGroupId}`, {
+        method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('스터디 그룹이 삭제되었습니다.');
+            location.href = '/study-groups';
+        } else {
+            alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(err => {
+        console.error('삭제 실패:', err);
+        alert('삭제 중 오류가 발생했습니다.');
+    });
+}
+
+// 스터디 그룹 탈퇴
+function leaveStudyGroup() {
+    if (!confirm('정말로 스터디 그룹을 나가시겠습니까?\n나가면 다시 참여하려면 재지원이 필요합니다.')) return;
+    
+    fetch(`/api/study-groups/${currentGroupId}/leave`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('스터디 그룹에서 나갔습니다.');
+            location.href = '/study-groups';
+        } else {
+            alert('탈퇴 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(err => {
+        console.error('탈퇴 실패:', err);
+        alert('탈퇴 중 오류가 발생했습니다.');
+    });
+}
+
+// 멤버 추방
+function removeMember(userId, userName) {
+    if (!confirm(`정말로 ${userName}님을 스터디 그룹에서 추방하시겠습니까?`)) return;
+    
+    fetch(`/api/study-groups/${currentGroupId}/members/${userId}/remove`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(`${userName}님이 그룹에서 제거되었습니다.`);
+            loadStudyDetails(currentGroupId);
+        } else {
+            alert('추방 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+    })
+    .catch(err => {
+        console.error('추방 실패:', err);
+        alert('추방 중 오류가 발생했습니다.');
+    });
+}
+
+// 유틸리티
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatTime(timeStr) {
+    if (!timeStr) return '방금 전';
+    const time = new Date(timeStr);
+    const now = new Date();
+    const diff = Math.floor((now - time) / 1000 / 60);
+    if (diff < 1) return '방금 전';
+    if (diff < 60) return `${diff}분 전`;
+    const hours = Math.floor(diff / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    return `${Math.floor(hours / 24)}일 전`;
+}
+
+function updateProgress(members) {
+    const progress = 45; // 실제로는 커리큘럼 완료율 계산
+    document.querySelectorAll('.progress-fill').forEach(el => {
+        el.style.width = progress + '%';
+    });
+    document.querySelectorAll('.progress-text').forEach(el => {
+        el.textContent = progress + '%';
+    });
+}
+
+// 페이지 로드 시
 document.addEventListener('DOMContentLoaded', function() {
     const firstCard = document.querySelector('.study-card');
     if (firstCard) {
@@ -893,10 +2030,11 @@ document.addEventListener('DOMContentLoaded', function() {
         selectStudy(groupId);
     }
     
-    // 5초마다 팀원 정보 업데이트
+    // 5초마다 스터디 정보 및 온라인 상태 업데이트
     setInterval(() => {
         if (currentGroupId) {
             loadStudyDetails(currentGroupId);
+            sendOnlineHeartbeat();
         }
     }, 5000);
 });
@@ -904,4 +2042,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-

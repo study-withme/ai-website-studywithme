@@ -13,8 +13,8 @@ const toggleDark = document.getElementById("toggleDark");
 toggleDark.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   toggleDark.textContent = document.body.classList.contains("dark")
-    ? "☀️ 라이트모드"
-    : "🌙 다크모드";
+    ? ""
+    : "";
 });
 
 /* ===== 메시지 박스 ===== */
@@ -39,7 +39,7 @@ form.addEventListener("submit", (e) => {
 
   if (pw !== confirm) {
     e.preventDefault();
-    showMessage("❌ 비밀번호가 일치하지 않습니다.", "error");
+    showMessage("비밀번호가 일치하지 않습니다.", "error");
     return;
   }
 });

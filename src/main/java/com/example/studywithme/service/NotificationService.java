@@ -44,6 +44,9 @@ public class NotificationService {
 
     @Transactional
     public void markAsRead(Long id, Integer userId) {
+        if (id == null) {
+            throw new RuntimeException("알림 ID가 필요합니다.");
+        }
         Notification n = notificationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다."));
         if (!n.getUser().getId().equals(userId)) {
