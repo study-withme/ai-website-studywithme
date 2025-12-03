@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -165,22 +167,40 @@ public class ChatbotService {
      * 검색 키워드 추출
      */
     private String extractSearchKeyword(String message) {
-        // 간단한 키워드 추출 (실제로는 더 정교한 NLP 필요)
-        String[] searchPatterns = {"검색", "찾아", "보여줘", "추천"};
-        for (String pattern : searchPatterns) {
-            int idx = message.toLowerCase().indexOf(pattern);
-            if (idx > 0) {
-                String keyword = message.substring(0, idx).trim();
-                if (keyword.length() > 0 && keyword.length() < 50) {
-                    return keyword;
-                }
+        String lowerMsg = message.toLowerCase().trim();
+        
+        // 검색 패턴 제거
+        String[] removePatterns = {
+            "검색", "찾아", "찾아줘", "찾아주세요", "찾아봐", "찾아봐줘",
+            "보여줘", "보여주세요", "보여줄래", "보여줄 수 있어",
+            "추천", "추천해", "추천해줘", "추천해주세요",
+            "스터디", "게시글", "게시물", "글"
+        };
+        
+        String keyword = message.trim();
+        
+        // 패턴 제거
+        for (String pattern : removePatterns) {
+            keyword = keyword.replaceAll("(?i)" + pattern, "").trim();
+        }
+        
+        // 앞뒤 불필요한 단어 제거
+        keyword = keyword.replaceAll("^(을|를|이|가|은|는|에|의|로|으로|하고|와|과|도|만|까지|부터|부터|까지)\\s+", "").trim();
+        keyword = keyword.replaceAll("\\s+(을|를|이|가|은|는|에|의|로|으로|하고|와|과|도|만|까지|부터)$", "").trim();
+        
+        // 키워드가 너무 짧거나 길면 null 반환
+        if (keyword.length() < 1 || keyword.length() > 50) {
+            // 전체 메시지에서 직접 키워드 추출 시도
+            String[] words = message.trim().split("\\s+");
+            if (words.length > 0 && words[0].length() > 0 && words[0].length() < 50) {
+                // 첫 번째 단어를 키워드로 사용
+                keyword = words[0];
+            } else {
+                return null;
             }
         }
-        // 패턴이 없으면 전체 메시지를 키워드로
-        if (message.length() < 50) {
-            return message.trim();
-        }
-        return null;
+        
+        return keyword;
     }
 
     /**
@@ -215,18 +235,17 @@ public class ChatbotService {
                 }
             }
 
-            // 요청 구성 (Gemini API 형식)
+            // 요청 구성 (Gemini API v1 형식)
+            // v1 API에서는 systemInstruction을 직접 지원하지 않으므로 프롬프트에 포함
             Map<String, Object> requestBody = new HashMap<>();
             
-            // 시스템 인스트럭션
-            Map<String, Object> systemInstruction = new HashMap<>();
-            systemInstruction.put("parts", List.of(Map.of("text", contextBuilder.toString())));
-            requestBody.put("systemInstruction", systemInstruction);
+            // 시스템 인스트럭션과 사용자 메시지를 결합한 프롬프트 생성
+            String fullPrompt = contextBuilder.toString() + "\n\n사용자: " + userMessage + "\nAI:";
             
             // 사용자 메시지
             List<Map<String, Object>> contents = new ArrayList<>();
             Map<String, Object> content = new HashMap<>();
-            content.put("parts", List.of(Map.of("text", userMessage)));
+            content.put("parts", List.of(Map.of("text", fullPrompt)));
             contents.add(content);
             requestBody.put("contents", contents);
 
@@ -241,9 +260,12 @@ public class ChatbotService {
             if (geminiApiUrl != null && !geminiApiUrl.isEmpty()) {
                 baseUrl = geminiApiUrl;
             } else {
-                // 기본 URL 구성 - 모델명을 URL 인코딩
-                String model = geminiModel != null && !geminiModel.isEmpty() ? geminiModel : "gemini-1.5-pro";
-                // 모델명에 하이픈이 있어도 그대로 사용 (Gemini API는 하이픈을 지원함)
+                // 기본 URL 구성 - 모델명 사용
+                String model = geminiModel != null && !geminiModel.isEmpty() ? geminiModel : "gemini-1.5-flash";
+                // Gemini API v1beta 엔드포인트 사용
+                // v1 API에서는 gemini-pro가 지원되지 않을 수 있으므로 v1beta 사용
+                // 사용 가능한 모델: gemini-1.5-flash (권장, 빠름), gemini-1.5-pro (강력함)
+                // v1beta API는 최신 모델을 지원함
                 baseUrl = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", model);
             }
             
@@ -263,7 +285,7 @@ public class ChatbotService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
             
             // 타입 안전한 응답 처리 (RestTemplate은 런타임에 타입을 확인)
-            @SuppressWarnings({"unchecked", "rawtypes"})
+            @SuppressWarnings("rawtypes")
             ResponseEntity<Map> rawResponse = getRestTemplate().postForEntity(url, request, Map.class);
             
             log.debug("Gemini API 응답 상태: {}", rawResponse.getStatusCode());
@@ -278,21 +300,21 @@ public class ChatbotService {
                 }
                 
                 // 타입 안전하게 변환 (rawBody는 null이 아님을 확인함)
-                @SuppressWarnings("unchecked")
                 Map<String, Object> body = (Map<String, Object>) rawBody;
                 
                 // 오류 확인
                 if (body.containsKey("error")) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> error = (Map<String, Object>) body.get("error");
-                    String errorMessage = error != null ? (String) error.get("message") : "알 수 없는 오류";
-                    log.error("Gemini API 오류: {}", errorMessage);
-                    return "AI 서비스 오류: " + errorMessage;
+                    Object errorObj = body.get("error");
+                    if (errorObj instanceof Map) {
+                        Map<String, Object> error = (Map<String, Object>) errorObj;
+                        String errorMessage = error != null ? (String) error.get("message") : "알 수 없는 오류";
+                        log.error("Gemini API 오류: {}", errorMessage);
+                        return "AI 서비스 오류: " + errorMessage;
+                    }
                 }
                 
                 Object candidatesObj = body.get("candidates");
                 if (candidatesObj instanceof List) {
-                    @SuppressWarnings("unchecked")
                     List<Map<String, Object>> candidates = (List<Map<String, Object>>) candidatesObj;
                     if (!candidates.isEmpty()) {
                         Map<String, Object> candidate = candidates.get(0);
@@ -308,11 +330,9 @@ public class ChatbotService {
                         
                         Object contentObj = candidate.get("content");
                         if (contentObj instanceof Map) {
-                            @SuppressWarnings("unchecked")
                             Map<String, Object> candidateContent = (Map<String, Object>) contentObj;
                             Object partsObj = candidateContent.get("parts");
                             if (partsObj instanceof List) {
-                                @SuppressWarnings("unchecked")
                                 List<Map<String, Object>> parts = (List<Map<String, Object>>) partsObj;
                                 if (!parts.isEmpty()) {
                                     Object textObj = parts.get(0).get("text");
@@ -347,14 +367,40 @@ public class ChatbotService {
 
         } catch (org.springframework.web.client.HttpClientErrorException e) {
             log.error("Gemini API HTTP 오류: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            if (e.getStatusCode().value() == 400) {
-                return "API 요청 형식이 잘못되었습니다. 관리자에게 문의해주세요.";
-            } else if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
-                return "API 키가 유효하지 않습니다. 관리자에게 문의해주세요.";
-            } else if (e.getStatusCode().value() == 429) {
+            String responseBody = e.getResponseBodyAsString();
+            String detailedError = "";
+            
+            // 응답 본문에서 상세 오류 메시지 추출 시도
+            try {
+                if (responseBody != null && !responseBody.isEmpty()) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    Map<String, Object> errorBody = mapper.readValue(responseBody, Map.class);
+                    if (errorBody.containsKey("error")) {
+                        Object errorObj = errorBody.get("error");
+                        if (errorObj instanceof Map) {
+                            Map<String, Object> error = (Map<String, Object>) errorObj;
+                            String message = (String) error.get("message");
+                            if (message != null && !message.isEmpty()) {
+                                detailedError = ": " + message;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception parseEx) {
+                log.debug("오류 응답 파싱 실패", parseEx);
+            }
+            
+            int statusCode = e.getStatusCode().value();
+            if (statusCode == 400) {
+                return "API 요청 형식이 잘못되었습니다." + detailedError + " 관리자에게 문의해주세요.";
+            } else if (statusCode == 401 || statusCode == 403) {
+                return "API 키가 유효하지 않거나 권한이 없습니다." + detailedError + " application.properties에서 gemini.api.key를 확인해주세요.";
+            } else if (statusCode == 404) {
+                return "Gemini API 엔드포인트를 찾을 수 없습니다." + detailedError + " 모델명(gemini.api.model)이 올바른지 확인해주세요. (예: gemini-1.5-flash, gemini-1.5-pro) v1 API에서는 gemini-pro가 지원되지 않을 수 있습니다.";
+            } else if (statusCode == 429) {
                 return "API 사용량이 초과되었습니다. 잠시 후 다시 시도해주세요.";
             }
-            return "AI 서비스에 일시적인 문제가 발생했습니다. (HTTP " + e.getStatusCode().value() + ")";
+            return "AI 서비스에 일시적인 문제가 발생했습니다. (HTTP " + statusCode + ")" + detailedError;
         } catch (org.springframework.web.client.ResourceAccessException e) {
             log.error("Gemini API 네트워크 오류", e);
             return "네트워크 연결에 문제가 있습니다. 인터넷 연결을 확인해주세요.";
@@ -468,13 +514,17 @@ public class ChatbotService {
             if (userId != null) {
                 // 사용자별 메시지 삭제
                 List<ChatMessage> messages = chatMessageRepository.findByUserIdOrderByCreatedAtDesc(userId);
-                chatMessageRepository.deleteAll(messages);
-                log.info("사용자 ID {}의 대화 내역 {}개 삭제 완료", userId, messages.size());
+                if (messages != null && !messages.isEmpty()) {
+                    chatMessageRepository.deleteAll(messages);
+                    log.info("사용자 ID {}의 대화 내역 {}개 삭제 완료", userId, messages.size());
+                }
             } else {
                 // 비로그인 사용자 메시지 삭제 (user_id가 NULL인 메시지)
                 List<ChatMessage> messages = chatMessageRepository.findByUserIdOrderByCreatedAtDesc(null);
-                chatMessageRepository.deleteAll(messages);
-                log.info("비로그인 사용자의 대화 내역 {}개 삭제 완료", messages.size());
+                if (messages != null && !messages.isEmpty()) {
+                    chatMessageRepository.deleteAll(messages);
+                    log.info("비로그인 사용자의 대화 내역 {}개 삭제 완료", messages.size());
+                }
             }
         } catch (Exception e) {
             log.error("대화 내역 삭제 오류", e);

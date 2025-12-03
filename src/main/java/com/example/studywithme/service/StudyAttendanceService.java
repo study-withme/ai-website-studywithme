@@ -25,6 +25,9 @@ public class StudyAttendanceService {
      */
     @Transactional
     public StudyAttendance checkAttendance(Long sessionId, Integer userId, String message) {
+        if (sessionId == null) {
+            throw new RuntimeException("세션 ID가 필요합니다.");
+        }
         StudySession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("세션을 찾을 수 없습니다."));
 
@@ -39,7 +42,8 @@ public class StudyAttendanceService {
         }
 
         // 쉬는시간인지 확인 (간단 버전 - 실제로는 타이머 상태 확인 필요)
-        StudyGroupSettings settings = settingsRepository.findByStudyGroup_Id(session.getStudyGroup().getId())
+        // settings는 현재 사용되지 않지만 향후 타이머 상태 확인에 사용 예정
+        settingsRepository.findByStudyGroup_Id(session.getStudyGroup().getId())
                 .orElseThrow(() -> new RuntimeException("스터디 설정을 찾을 수 없습니다."));
 
         LocalDateTime now = LocalDateTime.now();

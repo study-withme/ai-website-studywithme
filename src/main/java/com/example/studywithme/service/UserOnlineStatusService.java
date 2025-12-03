@@ -23,6 +23,9 @@ public class UserOnlineStatusService {
     @Transactional
     public UserOnlineStatus updateStatus(Integer userId, UserOnlineStatus.OnlineStatus status,
                                          Long studyGroupId, String statusMessage) {
+        if (userId == null) {
+            throw new RuntimeException("사용자 ID가 필요합니다.");
+        }
         UserOnlineStatus onlineStatus = onlineStatusRepository.findByUser_Id(userId)
                 .orElseGet(() -> {
                     UserOnlineStatus newStatus = new UserOnlineStatus();
@@ -35,7 +38,10 @@ public class UserOnlineStatusService {
         onlineStatus.setCurrentStatus(status);
         onlineStatus.setLastActiveTime(LocalDateTime.now());
         onlineStatus.setCurrentStudyGroupId(studyGroupId);
-        onlineStatus.setStatusMessage(statusMessage);
+        // statusMessage가 null이 아니면 업데이트 (하트비트 등으로 null 전달 시 기존 메시지 보존)
+        if (statusMessage != null) {
+            onlineStatus.setStatusMessage(statusMessage);
+        }
 
         return onlineStatusRepository.save(onlineStatus);
     }

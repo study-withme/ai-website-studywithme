@@ -17,6 +17,7 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final com.example.studywithme.service.PostService postService;
 
     // 관리자 권한 체크 헬퍼 메서드
     private boolean isAdmin(HttpSession session) {
@@ -311,6 +312,55 @@ public class AdminController {
         try {
             adminService.restoreComment(id, loginUser.getId());
             return Map.of("success", true, "message", "댓글이 복구되었습니다.");
+        } catch (Exception e) {
+            return Map.of("success", false, "message", e.getMessage());
+        }
+    }
+
+    /**
+     * 전체 게시글을 AI 기반으로 다시 분석하여 카테고리/태그를 재정렬하는 관리자용 API
+     * - POST /admin/reclassify-posts
+     * - 기본 신뢰도 기준: 0.6
+     */
+    @PostMapping("/reclassify-posts")
+    @ResponseBody
+    public Map<String, Object> reclassifyPosts(
+            @RequestParam(value = "minConfidence", defaultValue = "0.6") double minConfidence,
+            HttpSession session) {
+        if (!isAdmin(session)) {
+            return Map.of("success", false, "message", "관리자 권한이 필요합니다.");
+        }
+
+        try {
+            int updated = adminService.reclassifyAllPostsByAI(minConfidence);
+            return Map.of(
+                    "success", true,
+                    "updatedCount", updated,
+                    "message", "AI 기반 재분류 완료: " + updated + "개 게시글이 업데이트되었습니다."
+            );
+        } catch (Exception e) {
+            return Map.of("success", false, "message", e.getMessage());
+        }
+    }
+
+    /**
+     * 태그 내용을 기준으로 기존 게시글들의 카테고리를 일괄 보정하는 API
+     * - POST /admin/fix-post-categories-by-tags
+     */
+    @PostMapping("/fix-post-categories-by-tags")
+    @ResponseBody
+    public Map<String, Object> fixPostCategoriesByTags(HttpSession session) {
+        if (!isAdmin(session)) {
+            return Map.of("success", false, "message", "관리자 권한이 필요합니다.");
+        }
+
+        try {
+            int updated = postService.adjustAllPostCategoriesByTagsForAllPosts();
+            return Map.of(
+                    "success", true,
+                    "updatedCount", updated,
+                    "message", "태그 기반 카테고리 보정 완료: " + updated + "개 게시글이 업데이트되었습니다."
+            );
         } catch (Exception e) {
             return Map.of("success", false, "message", e.getMessage());
         }

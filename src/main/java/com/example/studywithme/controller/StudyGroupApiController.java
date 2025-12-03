@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +26,10 @@ public class StudyGroupApiController {
     private final StudyGroupGoalService goalService;
     private final UserOnlineStatusService onlineStatusService;
     private final StudyGroupService studyGroupService;
+    private final StudyGroupManagementService managementService;
     private final com.example.studywithme.repository.StudyGroupSettingsRepository settingsRepository;
     private final com.example.studywithme.repository.UserStudyStatsRepository statsRepository;
+    private final com.example.studywithme.repository.UserRepository userRepository;
 
     /**
      * 학습 세션 시작
@@ -134,6 +135,7 @@ public class StudyGroupApiController {
     /**
      * 채팅 메시지 전송
      */
+    @org.springframework.transaction.annotation.Transactional
     @PostMapping("/{groupId}/chat")
     public ResponseEntity<Map<String, Object>> sendMessage(
             @PathVariable Long groupId,
@@ -165,6 +167,7 @@ public class StudyGroupApiController {
     /**
      * 최근 채팅 메시지 조회
      */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @GetMapping("/{groupId}/chat")
     public ResponseEntity<Map<String, Object>> getMessages(
             @PathVariable Long groupId,
@@ -197,6 +200,7 @@ public class StudyGroupApiController {
     /**
      * 팀원 정보 조회 (공부 시간, 스타일, 온라인 상태)
      */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @GetMapping("/{groupId}/members")
     public ResponseEntity<Map<String, Object>> getMembers(
             @PathVariable Long groupId) {
@@ -294,7 +298,7 @@ public class StudyGroupApiController {
     }
 
     /**
-     * 학습 일지 조회
+     * 학습 일지 조회 (본인)
      */
     @GetMapping("/{groupId}/journal")
     public ResponseEntity<Map<String, Object>> getJournal(
@@ -307,6 +311,53 @@ public class StudyGroupApiController {
 
         try {
             StudyJournal journal = journalService.getTodayJournal(loginUser.getId(), groupId)
+                    .orElse(null);
+
+            if (journal == null) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "journal", null
+                ));
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "journal", Map.of(
+                            "id", journal.getId(),
+                            "studyContent", journal.getStudyContent(),
+                            "feeling", journal.getFeeling(),
+                            "nextGoal", journal.getNextGoal(),
+                            "moodRating", journal.getMoodRating(),
+                            "date", journal.getJournalDate()
+                    )
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
+     * 특정 사용자의 학습 일지 조회 (스터디 그룹 멤버만 가능)
+     */
+    @GetMapping("/{groupId}/journal/{userId}")
+    public ResponseEntity<Map<String, Object>> getUserJournal(
+            @PathVariable Long groupId,
+            @PathVariable int userId,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+
+        try {
+            // 스터디 그룹 멤버인지 확인
+            List<StudyGroupMember> members = studyGroupService.getGroupMembers(groupId);
+            boolean isMember = members.stream().anyMatch(m -> m.getUser().getId().equals(loginUser.getId()));
+            if (!isMember) {
+                return ResponseEntity.status(403).body(Map.of("error", "스터디 그룹 멤버만 조회할 수 있습니다."));
+            }
+            
+            StudyJournal journal = journalService.getTodayJournal(userId, groupId)
                     .orElse(null);
 
             if (journal == null) {
@@ -368,7 +419,7 @@ public class StudyGroupApiController {
     @PostMapping("/{groupId}/status")
     public ResponseEntity<Map<String, Object>> updateStatus(
             @PathVariable Long groupId,
-            @RequestParam String status,
+            @RequestParam(required = false, defaultValue = "STUDYING") String status,
             @RequestParam(required = false) String statusMessage,
             HttpSession session) {
         User loginUser = (User) session.getAttribute("loginUser");
@@ -505,6 +556,400 @@ public class StudyGroupApiController {
                         )
                 ));
             }
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ========== 커리큘럼 관리 ==========
+    
+    @GetMapping("/{groupId}/curriculum")
+    public ResponseEntity<Map<String, Object>> getCurriculum(@PathVariable Long groupId) {
+        try {
+            List<StudyGroupCurriculum> curriculums = managementService.getCurriculums(groupId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "curriculums", curriculums.stream().map(c -> Map.of(
+                            "id", c.getId(),
+                            "weekNumber", c.getWeekNumber(),
+                            "title", c.getTitle(),
+                            "description", c.getDescription() != null ? c.getDescription() : "",
+                            "status", c.getStatus().name(),
+                            "startDate", c.getStartDate() != null ? c.getStartDate().toString() : null,
+                            "endDate", c.getEndDate() != null ? c.getEndDate().toString() : null
+                    )).collect(Collectors.toList())
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/{groupId}/curriculum")
+    public ResponseEntity<Map<String, Object>> createCurriculum(
+            @PathVariable Long groupId,
+            @RequestParam Integer weekNumber,
+            @RequestParam String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            java.time.LocalDate start = startDate != null && !startDate.isEmpty() ? 
+                    java.time.LocalDate.parse(startDate) : null;
+            java.time.LocalDate end = endDate != null && !endDate.isEmpty() ? 
+                    java.time.LocalDate.parse(endDate) : null;
+            
+            StudyGroupCurriculum curriculum = managementService.createCurriculum(
+                    groupId, loginUser.getId(), weekNumber, title, description, start, end);
+            return ResponseEntity.ok(Map.of("success", true, "curriculum", Map.of("id", curriculum.getId())));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @PutMapping("/curriculum/{curriculumId}")
+    public ResponseEntity<Map<String, Object>> updateCurriculum(
+            @PathVariable Long curriculumId,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String status,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            StudyGroupCurriculum.CurriculumStatus statusEnum = null;
+            if (status != null) {
+                statusEnum = StudyGroupCurriculum.CurriculumStatus.valueOf(status);
+            }
+            StudyGroupCurriculum curriculum = managementService.updateCurriculum(
+                    curriculumId, loginUser.getId(), title, description, statusEnum);
+            return ResponseEntity.ok(Map.of("success", true, "curriculum", Map.of("id", curriculum.getId())));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @DeleteMapping("/curriculum/{curriculumId}")
+    public ResponseEntity<Map<String, Object>> deleteCurriculum(
+            @PathVariable Long curriculumId,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            managementService.deleteCurriculum(curriculumId, loginUser.getId());
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ========== 리소스 관리 ==========
+    
+    @GetMapping("/{groupId}/resources")
+    public ResponseEntity<Map<String, Object>> getResources(
+            @PathVariable Long groupId,
+            @RequestParam(required = false) String resourceType) {
+        try {
+            List<StudyGroupResource> resources;
+            if (resourceType != null) {
+                resources = managementService.getResourcesByType(
+                        groupId, StudyGroupResource.ResourceType.valueOf(resourceType));
+            } else {
+                resources = managementService.getResources(groupId);
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "resources", resources.stream().map(r -> Map.of(
+                            "id", r.getId(),
+                            "resourceType", r.getResourceType().name(),
+                            "name", r.getName(),
+                            "url", r.getUrl() != null ? r.getUrl() : "",
+                            "description", r.getDescription() != null ? r.getDescription() : "",
+                            "createdBy", r.getCreatedBy() != null ? r.getCreatedBy().getRealName() : "알 수 없음"
+                    )).collect(Collectors.toList())
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/{groupId}/resources")
+    public ResponseEntity<Map<String, Object>> createResource(
+            @PathVariable Long groupId,
+            @RequestParam String resourceType,
+            @RequestParam String name,
+            @RequestParam(required = false) String url,
+            @RequestParam(required = false) String description,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            StudyGroupResource resource = managementService.createResource(
+                    groupId, loginUser.getId(),
+                    StudyGroupResource.ResourceType.valueOf(resourceType),
+                    name, url, description);
+            return ResponseEntity.ok(Map.of("success", true, "resource", Map.of("id", resource.getId())));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @PutMapping("/resources/{resourceId}")
+    public ResponseEntity<Map<String, Object>> updateResource(
+            @PathVariable Long resourceId,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String url,
+            @RequestParam(required = false) String description,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            StudyGroupResource resource = managementService.updateResource(
+                    resourceId, loginUser.getId(), name, url, description);
+            return ResponseEntity.ok(Map.of("success", true, "resource", Map.of("id", resource.getId())));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @DeleteMapping("/resources/{resourceId}")
+    public ResponseEntity<Map<String, Object>> deleteResource(
+            @PathVariable Long resourceId,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            managementService.deleteResource(resourceId, loginUser.getId());
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ========== 댓글 관리 ==========
+    
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @GetMapping("/{groupId}/comments")
+    public ResponseEntity<Map<String, Object>> getComments(@PathVariable Long groupId) {
+        try {
+            List<StudyGroupComment> comments = managementService.getComments(groupId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "comments", comments.stream().map(c -> {
+                        try {
+                            return Map.of(
+                                    "id", c.getId(),
+                                    "userId", c.getUser().getId(),
+                                    "userName", c.getUser().getRealName() != null ? c.getUser().getRealName() : "알 수 없음",
+                                    "content", c.getContent(),
+                                    "createdAt", c.getCreatedAt() != null ? c.getCreatedAt().toString() : null
+                            );
+                        } catch (Exception e) {
+                            return Map.of(
+                                    "id", c.getId(),
+                                    "userId", 0,
+                                    "userName", "알 수 없음",
+                                    "content", c.getContent() != null ? c.getContent() : "",
+                                    "createdAt", c.getCreatedAt() != null ? c.getCreatedAt().toString() : null
+                            );
+                        }
+                    }).collect(Collectors.toList())
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/{groupId}/comments")
+    public ResponseEntity<Map<String, Object>> createComment(
+            @PathVariable Long groupId,
+            @RequestParam String content,
+            @RequestParam(required = false) Long parentCommentId,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            StudyGroupComment comment = managementService.createComment(
+                    groupId, loginUser.getId(), content, parentCommentId);
+            return ResponseEntity.ok(Map.of("success", true, "comment", Map.of("id", comment.getId())));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<Map<String, Object>> updateComment(
+            @PathVariable Long commentId,
+            @RequestParam String content,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            StudyGroupComment comment = managementService.updateComment(
+                    commentId, loginUser.getId(), content);
+            return ResponseEntity.ok(Map.of("success", true, "comment", Map.of("id", comment.getId())));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<Map<String, Object>> deleteComment(
+            @PathVariable Long commentId,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            managementService.deleteComment(commentId, loginUser.getId());
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ========== 스터디 그룹 조회 ==========
+    
+    @GetMapping("/{groupId}")
+    public ResponseEntity<Map<String, Object>> getStudyGroup(@PathVariable Long groupId) {
+        try {
+            StudyGroup group = studyGroupService.getGroupById(groupId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "group", Map.of(
+                            "id", group.getId(),
+                            "title", group.getTitle(),
+                            "description", group.getDescription() != null ? group.getDescription() : "",
+                            "category", group.getCategory() != null ? group.getCategory() : "기타",
+                            "maxMembers", group.getMaxMembers() != null ? group.getMaxMembers() : 0,
+                            "currentMembers", group.getCurrentMembers() != null ? group.getCurrentMembers() : 0,
+                            "creatorId", group.getCreator().getId()
+                    )
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ========== 스터디 그룹 수정/삭제 ==========
+    
+    @PutMapping("/{groupId}")
+    public ResponseEntity<Map<String, Object>> updateStudyGroup(
+            @PathVariable Long groupId,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Integer maxMembers,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            StudyGroup group = managementService.updateStudyGroup(
+                    groupId, loginUser.getId(), title, description, maxMembers);
+            return ResponseEntity.ok(Map.of("success", true, "group", Map.of("id", group.getId())));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<Map<String, Object>> deleteStudyGroup(
+            @PathVariable Long groupId,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            managementService.deleteStudyGroup(groupId, loginUser.getId());
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ========== 멤버 탈퇴 / 추방 ==========
+    
+    /**
+     * 스터디 그룹 탈퇴 (본인이 직접)
+     */
+    @PostMapping("/{groupId}/leave")
+    public ResponseEntity<Map<String, Object>> leaveStudyGroup(
+            @PathVariable Long groupId,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            managementService.leaveStudyGroup(groupId, loginUser.getId());
+            
+            // 시스템 메시지 전송
+            chatService.sendSystemMessage(groupId, 
+                    loginUser.getRealName() + "님이 스터디 그룹을 떠났습니다.");
+            
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
+     * 멤버 추방 (리더만 가능)
+     */
+    @PostMapping("/{groupId}/members/{userId}/remove")
+    public ResponseEntity<Map<String, Object>> removeMember(
+            @PathVariable Long groupId,
+            @PathVariable int userId,
+            HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        
+        try {
+            managementService.removeMember(groupId, loginUser.getId(), userId);
+            
+            // 시스템 메시지 전송
+            User removedUser = userRepository.findById(userId).orElse(null);
+            String userName = removedUser != null ? removedUser.getRealName() : "한 멤버";
+            chatService.sendSystemMessage(groupId, 
+                    userName + "님이 그룹에서 제거되었습니다.");
+            
+            return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
         }

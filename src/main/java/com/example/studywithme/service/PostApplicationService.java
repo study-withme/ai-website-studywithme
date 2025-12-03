@@ -28,6 +28,12 @@ public class PostApplicationService {
 
     @Transactional
     public PostApplication applyToPost(Integer userId, Long postId, String message) {
+        if (userId == null) {
+            throw new RuntimeException("사용자 ID가 필요합니다.");
+        }
+        if (postId == null) {
+            throw new RuntimeException("게시글 ID가 필요합니다.");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Post post = postRepository.findById(postId)
@@ -152,6 +158,9 @@ public class PostApplicationService {
     // 지원 승인
     @Transactional
     public void acceptApplication(Long applicationId, Integer postOwnerId) {
+        if (applicationId == null) {
+            throw new RuntimeException("지원 내역 ID가 필요합니다.");
+        }
         PostApplication application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("지원 내역을 찾을 수 없습니다."));
 
@@ -209,6 +218,9 @@ public class PostApplicationService {
     // 지원 거절
     @Transactional
     public void rejectApplication(Long applicationId, Integer postOwnerId) {
+        if (applicationId == null) {
+            throw new RuntimeException("지원 내역 ID가 필요합니다.");
+        }
         PostApplication application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("지원 내역을 찾을 수 없습니다."));
 

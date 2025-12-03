@@ -1,86 +1,58 @@
 package com.example.studywithme.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AITagService {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final PythonScriptExecutor pythonScriptExecutor;
 
     @Value("${python.script.tag.path:python/ai_tag_recommendation.py}")
     private String pythonScriptPath;
 
-    @Value("${python.executable:python3}")
-    private String pythonExecutable;
-
     /**
      * 게시글 제목과 본문을 분석하여 태그와 카테고리를 추천합니다.
+     * 
+     * 주의: 큰 텍스트를 명령줄 인자로 전달하는 것은 보안 및 시스템 제한상 위험할 수 있습니다.
+     * 향후 개선: 임시 파일 사용 또는 Python HTTP 서버로 전환 권장.
      */
     public Map<String, Object> recommendTags(String title, String content) {
         try {
-            Path scriptPath = Paths.get(pythonScriptPath);
-            if (!scriptPath.toFile().exists()) {
-                log.warn("Python 태그 추천 스크립트를 찾을 수 없습니다: {}", scriptPath);
-                return getFallbackRecommendation();
-            }
-
             // HTML 태그 제거 (간단한 버전)
             String cleanTitle = title != null ? title.replaceAll("<[^>]*>", "").trim() : "";
             String cleanContent = content != null ? content.replaceAll("<[^>]*>", "").trim() : "";
 
-            // Python 스크립트 실행
-            ProcessBuilder processBuilder = new ProcessBuilder(
-                    pythonExecutable,
-                    scriptPath.toAbsolutePath().toString(),
+            // 입력 검증
+            if (cleanTitle.isEmpty() && cleanContent.isEmpty()) {
+                log.warn("태그 추천할 내용이 비어있습니다.");
+                return getFallbackRecommendation();
+            }
+
+            // 내용이 너무 길면 잘라서 전달
+            // 참고: 향후 임시 파일 사용 또는 Python HTTP 서버로 전환 고려
+            if (cleanContent.length() > 50000) {
+                log.warn("본문이 너무 깁니다 ({}자). 앞부분만 사용합니다.", cleanContent.length());
+                cleanContent = cleanContent.substring(0, 50000);
+            }
+
+            // 공통 Python 스크립트 실행 서비스 사용
+            JsonNode rootNode = pythonScriptExecutor.executeScript(
+                    pythonScriptPath,
                     cleanTitle,
                     cleanContent
             );
-
-            processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
-
-            // 결과 읽기
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream(), "UTF-8"))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
-            }
-
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                log.error("Python 태그 추천 스크립트 실행 실패 (exit code: {}): {}", exitCode, output.toString());
-                return getFallbackRecommendation();
-            }
-
-            // JSON 파싱
-            String jsonOutput = output.toString().trim();
-            JsonNode rootNode = objectMapper.readTree(jsonOutput);
-
-            // 에러 체크
-            if (rootNode.has("error")) {
-                log.error("Python 태그 추천 오류: {}", rootNode.get("error").asText());
-                return getFallbackRecommendation();
-            }
 
             // 결과 반환
             Map<String, Object> result = new HashMap<>();
@@ -99,6 +71,9 @@ public class AITagService {
             log.info("AI 태그 추천 완료: 카테고리={}, 태그 수={}", result.get("category"), tags.size());
             return result;
 
+        } catch (TimeoutException e) {
+            log.error("Python 태그 추천 스크립트 실행 타임아웃", e);
+            return getFallbackRecommendation();
         } catch (Exception e) {
             log.error("AI 태그 추천 중 오류 발생", e);
             return getFallbackRecommendation();

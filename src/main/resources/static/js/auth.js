@@ -12,8 +12,8 @@ const toggleDark = document.getElementById("toggleDark");
 toggleDark.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   toggleDark.textContent = document.body.classList.contains("dark")
-    ? "☀️ 라이트모드"
-    : "🌙 다크모드";
+    ? ""
+    : "";
 });
 
 /* ===== 메시지 박스 ===== */

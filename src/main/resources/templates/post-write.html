@@ -20,22 +20,59 @@
                 <a href="/mypage" class="btn btn-outline">마이페이지</a>
                 <a href="/logout" class="btn btn-outline">로그아웃</a>
             </div>
-            <button id="darkModeBtn" class="btn btn-outline">🌙 다크모드</button>
+            <button id="darkModeBtn" class="btn btn-icon" title="다크모드">
+                <svg id="darkModeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
         </div>
     </div>
 </header>
 
+<!-- 작성 진행률 표시 -->
+<div id="writeProgress" class="write-progress">
+    <div class="write-progress-bar"></div>
+    <div class="write-progress-text">작성 진행률: <span id="progressPercent">0</span>%</div>
+</div>
+
+<!-- 자동저장 상태 표시 -->
+<div id="autoSaveStatus" class="auto-save-status">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+    </svg>
+    <span id="autoSaveText">자동저장됨</span>
+</div>
+
 <main class="page create-layout">
 
     <!---------------- 작성 폼 ---------------->
-    <section class="post-form">
+    <section class="post-form modern-form">
 
-        <h2 class="create-title">게시글 작성</h2>
-        <p class="create-sub">게시글 내용을 자세하게 입력해 주세요.</p>
+        <div class="form-header">
+            <div>
+                <h2 class="create-title">게시글 작성</h2>
+                <p class="create-sub">게시글 내용을 자세하게 입력해 주세요.</p>
+            </div>
+            <div class="form-header-actions">
+                <button type="button" id="clearDraftBtn" class="btn btn-outline sm" title="임시저장 삭제">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    임시저장 삭제
+                </button>
+            </div>
+        </div>
 
         <!-- 오류 메시지 박스 -->
         <div th:if="${param.error != null}" class="alert-box error" id="errorBox">
-            <span class="alert-icon">⚠️</span>
+            <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
             <span th:if="${param.error[0] == 'create_failed'}">
                 게시글 작성에 실패했습니다. 
                 <span th:if="${param.msg != null}" th:text="'(' + ${param.msg[0]} + ')'"></span>
@@ -57,14 +94,17 @@
         <form method="post" action="/posts/write">
             <!-- 제목 -->
             <div class="form-section">
-                <label class="form-label">제목 *</label>
-                <input id="postTitle" name="title" placeholder="게시글 제목을 입력하세요" required maxlength="200" />
+                <label class="form-label">
+                    제목 *
+                    <span class="char-counter"><span id="titleLength">0</span> / 200</span>
+                </label>
+                <input id="postTitle" name="title" placeholder="게시글 제목을 입력하세요" required maxlength="200" class="modern-input" />
             </div>
 
             <!-- 카테고리 -->
             <div class="form-section">
                 <label class="form-label">카테고리</label>
-                <select id="categorySelect" name="category" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);">
+                <select id="categorySelect" name="category" class="modern-select">
                     <option value="">선택 안함</option>
                     <option value="개발">개발</option>
                     <option value="자격증">자격증</option>
@@ -76,39 +116,98 @@
             </div>
 
             <!-- 진행 방식/지역/정원 -->
-            <div class="form-section">
-                <label class="form-label">진행 방식</label>
-                <select id="modeSelect" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);">
-                    <option value="온라인">온라인</option>
-                    <option value="오프라인">오프라인</option>
-                    <option value="혼합">혼합</option>
-                </select>
+            <div class="form-row-2">
+                <div class="form-section">
+                    <label class="form-label">진행 방식</label>
+                    <select id="modeSelect" class="modern-select">
+                        <option value="온라인">온라인</option>
+                        <option value="오프라인">오프라인</option>
+                        <option value="혼합">혼합</option>
+                    </select>
+                </div>
+
+                <div class="form-section">
+                    <label class="form-label">모집 정원</label>
+                    <input id="capacityInput" type="number" value="0" min="0" class="modern-input" />
+                </div>
             </div>
 
             <div class="form-section">
                 <label class="form-label">지역 (오프라인일 경우)</label>
-                <input id="locationInput" placeholder="예: 강남, 신촌, 무관" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);" />
-            </div>
-
-            <div class="form-section">
-                <label class="form-label">모집 정원</label>
-                <input id="capacityInput" type="number" value="0" style="width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); font-size: 13px; color: var(--text);" />
+                <input id="locationInput" placeholder="예: 강남, 신촌, 무관" class="modern-input" />
             </div>
 
             <!-- 본문 (WYSIWYG) -->
             <div class="form-section">
-                <label class="form-label">본문 *</label>
+                <label class="form-label">
+                    본문 *
+                    <span class="char-counter"><span id="editorLength">0</span>자</span>
+                </label>
 
-                <div class="editor-toolbar">
-                    <button type="button" data-cmd="bold">굵게</button>
-                    <button type="button" data-cmd="italic">기울임</button>
-                    <button type="button" data-cmd="ul">• 리스트</button>
-                    <button type="button" data-cmd="ol">1. 리스트</button>
-                    <button type="button" data-cmd="quote">인용문</button>
-                    <button type="button" data-cmd="code">코드블럭</button>
-                </div>
+                <div class="editor-wrapper">
+                    <div class="editor-toolbar modern-toolbar">
+                        <div class="toolbar-group">
+                            <button type="button" data-cmd="bold" title="굵게 (Ctrl+B)" class="toolbar-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                                </svg>
+                            </button>
+                            <button type="button" data-cmd="italic" title="기울임 (Ctrl+I)" class="toolbar-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="19" y1="4" x2="10" y2="4"></line>
+                                    <line x1="14" y1="20" x2="5" y2="20"></line>
+                                    <line x1="15" y1="4" x2="9" y2="20"></line>
+                                </svg>
+                            </button>
+                            <button type="button" data-cmd="underline" title="밑줄 (Ctrl+U)" class="toolbar-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path>
+                                    <line x1="4" y1="21" x2="20" y2="21"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-divider"></div>
+                        <div class="toolbar-group">
+                            <button type="button" data-cmd="ul" title="순서 없는 리스트" class="toolbar-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>
+                            </button>
+                            <button type="button" data-cmd="ol" title="순서 있는 리스트" class="toolbar-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="10" y1="6" x2="21" y2="6"></line>
+                                    <line x1="10" y1="12" x2="21" y2="12"></line>
+                                    <line x1="10" y1="18" x2="21" y2="18"></line>
+                                    <line x1="4" y1="6" x2="4.01" y2="6"></line>
+                                    <line x1="4" y1="12" x2="4.01" y2="12"></line>
+                                    <line x1="4" y1="18" x2="4.01" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-divider"></div>
+                        <div class="toolbar-group">
+                            <button type="button" data-cmd="quote" title="인용문" class="toolbar-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+                                    <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
+                                </svg>
+                            </button>
+                            <button type="button" data-cmd="code" title="코드블럭" class="toolbar-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 18 22 12 16 6"></polyline>
+                                    <polyline points="8 6 2 12 8 18"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
-                <div id="editor" class="editor-area" contenteditable="true"><h2>로드맵 제안</h2>
+                    <div id="editor" class="editor-area modern-editor" contenteditable="true" placeholder="스터디 내용을 작성해주세요..."><h2>로드맵 제안</h2>
 <p>스터디 진행 로드맵을 작성해주세요.</p>
 
 <h2>스터디 소개</h2>
@@ -130,35 +229,100 @@
   <li>참여 조건을 작성해주세요.</li>
 </ul>
 
-                <p>열정적이고 함께 성장하실 분 환영합니다! 😊</p></div>
+                <p>열정적이고 함께 성장하실 분 환영합니다!</p></div>
+                </div>
                 <!-- hidden textarea 는 required 를 빼지 않으면 브라우저가 submit 자체를 막아서 글이 등록되지 않음 -->
                 <textarea id="content" name="content" style="display: none;"></textarea>
-                <div class="textarea-meta">글자 수: <span id="editorLength">0</span></div>
             </div>
 
             <!-- 태그 -->
             <div class="form-section">
-                <label class="form-label">태그 (쉼표로 구분하여 입력)</label>
-                <input id="tagsInput" name="tags" placeholder="예: 스터디, Java, Spring Boot" />
-                <div class="input-meta">쉼표로 태그를 구분하세요</div>
-                <button type="button" id="aiTagBtn" class="btn btn-outline sm" style="margin-top:6px;">
-                    ✨ AI 태그 추천
-                </button>
+                <label class="form-label">태그</label>
+                <div class="tag-input-wrapper">
+                    <input id="tagsInput" name="tags" placeholder="태그를 입력하고 Enter를 누르세요 (예: Java, Spring Boot)" class="modern-input tag-input" />
+                    <div id="tagSuggestions" class="tag-suggestions hidden"></div>
+                </div>
+                <div class="tag-list-container">
+                    <div id="tagList" class="tag-list"></div>
+                </div>
+                <div class="input-actions">
+                    <button type="button" id="aiTagBtn" class="btn btn-outline sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        AI 태그 추천
+                    </button>
+                    <div class="input-meta">쉼표 또는 Enter로 태그를 추가하세요</div>
+                </div>
             </div>
 
             <!-- 대표 이미지 (슬라이드쇼) -->
             <div class="form-section">
-                <label class="form-label">대표 이미지 URL (최대 3개)</label>
-                <input id="imageUrl1" placeholder="이미지 URL 1" />
-                <input id="imageUrl2" placeholder="이미지 URL 2 (선택)" style="margin-top:6px;" />
-                <input id="imageUrl3" placeholder="이미지 URL 3 (선택)" style="margin-top:6px;" />
-                <div class="input-meta">이미지는 상세 페이지 상단 슬라이드쇼에 표시됩니다.</div>
+                <label class="form-label">대표 이미지 (최대 3개)</label>
+                <div class="image-upload-area" id="imageUploadArea">
+                    <div class="image-upload-dropzone" id="imageDropzone">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p class="dropzone-text">이미지를 드래그하거나 클릭하여 업로드</p>
+                        <p class="dropzone-sub">URL 입력 또는 파일 업로드 (최대 3개)</p>
+                    </div>
+                    <div class="image-input-row">
+                        <input id="imageUrl1" placeholder="이미지 URL 1" class="modern-input image-url-input" />
+                        <button type="button" class="btn-icon sm" onclick="document.getElementById('imageFile1').click()" title="파일 선택">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </button>
+                        <input type="file" id="imageFile1" accept="image/*" style="display: none;" />
+                    </div>
+                    <div class="image-input-row">
+                        <input id="imageUrl2" placeholder="이미지 URL 2 (선택)" class="modern-input image-url-input" />
+                        <button type="button" class="btn-icon sm" onclick="document.getElementById('imageFile2').click()" title="파일 선택">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </button>
+                        <input type="file" id="imageFile2" accept="image/*" style="display: none;" />
+                    </div>
+                    <div class="image-input-row">
+                        <input id="imageUrl3" placeholder="이미지 URL 3 (선택)" class="modern-input image-url-input" />
+                        <button type="button" class="btn-icon sm" onclick="document.getElementById('imageFile3').click()" title="파일 선택">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </button>
+                        <input type="file" id="imageFile3" accept="image/*" style="display: none;" />
+                    </div>
+                    <div id="imagePreview" class="image-preview-grid"></div>
+                </div>
             </div>
 
             <!-- 제출 -->
-            <div class="form-footer">
-                <span class="form-caption">등록 후 수정 가능합니다.</span>
-                <button type="submit" class="btn btn-primary">등록하기</button>
+            <div class="form-footer modern-footer">
+                <div class="form-footer-left">
+                    <span class="form-caption">등록 후 수정 가능합니다</span>
+                    <span class="form-shortcuts">단축키: Ctrl+S (저장), Ctrl+Enter (등록)</span>
+                </div>
+                <div class="form-footer-right">
+                    <button type="button" id="saveDraftBtn" class="btn btn-outline">임시저장</button>
+                    <button type="submit" class="btn btn-primary modern-submit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        등록하기
+                    </button>
+                </div>
             </div>
         </form>
 
@@ -166,15 +330,40 @@
 
     <!---------------- 우측 실시간 미리보기 ---------------->
     <section class="post-side">
-        <div class="side-card preview-card">
-            <div class="preview-category" id="previewCategory">카테고리</div>
-            <div class="preview-title" id="previewTitle">제목 미리보기</div>
-            <div class="preview-meta">
-                <span id="previewMode">온라인</span> ·
-                <span id="previewLocation">지역</span> ·
-                <span id="previewCapacity">0 / 0명</span>
+        <div class="side-card preview-card modern-preview">
+            <div class="preview-header">
+                <h3>실시간 미리보기</h3>
+                <button type="button" id="togglePreview" class="btn-icon sm" title="미리보기 토글">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
             </div>
-            <div id="previewTags" class="preview-tags"></div>
+            <div class="preview-content" id="previewContent">
+                <div class="preview-category" id="previewCategory">카테고리</div>
+                <div class="preview-title" id="previewTitle">제목 미리보기</div>
+                <div class="preview-meta">
+                    <span id="previewMode">온라인</span> ·
+                    <span id="previewLocation">지역</span> ·
+                    <span id="previewCapacity">0 / 0명</span>
+                </div>
+                <div id="previewTags" class="preview-tags"></div>
+                <div class="preview-body" id="previewBody">
+                    <p class="preview-placeholder">본문을 입력하면 여기에 미리보기가 표시됩니다.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 작성 팁 카드 -->
+        <div class="side-card tips-card">
+            <h3>작성 팁</h3>
+            <ul class="tips-list">
+                <li>명확하고 구체적인 제목을 사용하세요</li>
+                <li>스터디 목표와 진행 방식을 자세히 설명하세요</li>
+                <li>참여 조건을 명확히 제시하세요</li>
+                <li>관련 태그를 적절히 추가하세요</li>
+            </ul>
         </div>
     </section>
 
@@ -182,6 +371,411 @@
 
 <script src="/js/board.js"></script>
 <script>
+// ==================== 자동저장 기능 ====================
+const DRAFT_KEY = 'swm_post_draft';
+let autoSaveTimer = null;
+let isAutoSaving = false;
+
+function saveDraft() {
+    if (isAutoSaving) return;
+    isAutoSaving = true;
+    
+    const draft = {
+        title: document.getElementById('postTitle')?.value || '',
+        category: document.getElementById('categorySelect')?.value || '',
+        mode: document.getElementById('modeSelect')?.value || '',
+        location: document.getElementById('locationInput')?.value || '',
+        capacity: document.getElementById('capacityInput')?.value || '0',
+        content: document.getElementById('editor')?.innerHTML || '',
+        tags: Array.from(document.querySelectorAll('#tagList .tag-pill')).map(t => t.dataset.tag).join(', '),
+        imageUrl1: document.getElementById('imageUrl1')?.value || '',
+        imageUrl2: document.getElementById('imageUrl2')?.value || '',
+        imageUrl3: document.getElementById('imageUrl3')?.value || '',
+        timestamp: Date.now()
+    };
+    
+    try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        updateAutoSaveStatus('saved');
+    } catch (e) {
+        console.error('자동저장 실패:', e);
+        updateAutoSaveStatus('error');
+    }
+    isAutoSaving = false;
+}
+
+function loadDraft() {
+    try {
+        const draftStr = localStorage.getItem(DRAFT_KEY);
+        if (!draftStr) return false;
+        
+        const draft = JSON.parse(draftStr);
+        if (!draft || !draft.timestamp) return false;
+        
+        // 7일 이상 된 임시저장은 무시
+        if (Date.now() - draft.timestamp > 7 * 24 * 60 * 60 * 1000) {
+            localStorage.removeItem(DRAFT_KEY);
+            return false;
+        }
+        
+        if (confirm('임시저장된 내용이 있습니다. 불러오시겠습니까?')) {
+            if (draft.title) document.getElementById('postTitle').value = draft.title;
+            if (draft.category) document.getElementById('categorySelect').value = draft.category;
+            if (draft.mode) document.getElementById('modeSelect').value = draft.mode;
+            if (draft.location) document.getElementById('locationInput').value = draft.location;
+            if (draft.capacity) document.getElementById('capacityInput').value = draft.capacity;
+            if (draft.content) document.getElementById('editor').innerHTML = draft.content;
+            if (draft.tags) {
+                const tags = draft.tags.split(',').filter(t => t.trim());
+                tags.forEach(tag => addTag(tag.trim()));
+            }
+            if (draft.imageUrl1) document.getElementById('imageUrl1').value = draft.imageUrl1;
+            if (draft.imageUrl2) document.getElementById('imageUrl2').value = draft.imageUrl2;
+            if (draft.imageUrl3) document.getElementById('imageUrl3').value = draft.imageUrl3;
+            
+            updatePreview();
+            updateProgress();
+            showSuccess('임시저장된 내용을 불러왔습니다.');
+            return true;
+        }
+    } catch (e) {
+        console.error('임시저장 불러오기 실패:', e);
+    }
+    return false;
+}
+
+function clearDraft() {
+    if (confirm('임시저장된 내용을 삭제하시겠습니까?')) {
+        localStorage.removeItem(DRAFT_KEY);
+        showSuccess('임시저장이 삭제되었습니다.');
+    }
+}
+
+function updateAutoSaveStatus(status) {
+    const statusEl = document.getElementById('autoSaveStatus');
+    const textEl = document.getElementById('autoSaveText');
+    if (!statusEl || !textEl) return;
+    
+    statusEl.className = 'auto-save-status';
+    if (status === 'saving') {
+        statusEl.classList.add('saving');
+        textEl.textContent = '저장 중...';
+    } else if (status === 'saved') {
+        statusEl.classList.add('saved');
+        textEl.textContent = '자동저장됨';
+        setTimeout(() => {
+            statusEl.classList.remove('saved');
+            statusEl.classList.add('idle');
+            textEl.textContent = '';
+        }, 2000);
+    } else if (status === 'error') {
+        statusEl.classList.add('error');
+        textEl.textContent = '저장 실패';
+    }
+}
+
+// ==================== 작성 진행률 ====================
+function updateProgress() {
+    const title = document.getElementById('postTitle')?.value.trim() || '';
+    const editor = document.getElementById('editor');
+    const content = editor?.innerText.trim() || '';
+    const category = document.getElementById('categorySelect')?.value || '';
+    const tags = Array.from(document.querySelectorAll('#tagList .tag-pill')).length;
+    
+    let progress = 0;
+    if (title.length > 0) progress += 20;
+    if (content.length > 50) progress += 30;
+    if (category) progress += 15;
+    if (tags > 0) progress += 15;
+    if (content.length > 200) progress += 20;
+    
+    const progressBar = document.querySelector('.write-progress-bar');
+    const progressPercent = document.getElementById('progressPercent');
+    
+    if (progressBar) {
+        progressBar.style.width = progress + '%';
+    }
+    if (progressPercent) {
+        progressPercent.textContent = progress;
+    }
+}
+
+// ==================== 태그 관리 ====================
+let tags = [];
+
+function addTag(tagText) {
+    const tag = tagText.trim();
+    if (!tag || tags.includes(tag)) return;
+    
+    tags.push(tag);
+    renderTags();
+    updateTagInput();
+    updatePreview();
+    saveDraft();
+}
+
+function removeTag(tag) {
+    tags = tags.filter(t => t !== tag);
+    renderTags();
+    updateTagInput();
+    updatePreview();
+    saveDraft();
+}
+
+function renderTags() {
+    const tagList = document.getElementById('tagList');
+    if (!tagList) return;
+    
+    tagList.innerHTML = '';
+    tags.forEach(tag => {
+        const pill = document.createElement('span');
+        pill.className = 'tag-pill';
+        pill.dataset.tag = tag;
+        pill.innerHTML = `
+            <span>${tag}</span>
+            <button type="button" class="tag-remove" onclick="removeTag('${tag}')" aria-label="태그 삭제">×</button>
+        `;
+        tagList.appendChild(pill);
+    });
+}
+
+function updateTagInput() {
+    const tagsInput = document.getElementById('tagsInput');
+    if (tagsInput) {
+        tagsInput.value = tags.join(', ');
+    }
+}
+
+// ==================== 미리보기 업데이트 ====================
+function updatePreview() {
+    const title = document.getElementById('postTitle')?.value || '제목 미리보기';
+    const category = document.getElementById('categorySelect')?.value || '카테고리';
+    const mode = document.getElementById('modeSelect')?.value || '온라인';
+    const location = document.getElementById('locationInput')?.value || '지역';
+    const capacity = document.getElementById('capacityInput')?.value || '0';
+    const editor = document.getElementById('editor');
+    const content = editor?.innerHTML || '';
+    
+    const previewTitle = document.getElementById('previewTitle');
+    const previewCategory = document.getElementById('previewCategory');
+    const previewMode = document.getElementById('previewMode');
+    const previewLocation = document.getElementById('previewLocation');
+    const previewCapacity = document.getElementById('previewCapacity');
+    const previewTags = document.getElementById('previewTags');
+    const previewBody = document.getElementById('previewBody');
+    
+    if (previewTitle) previewTitle.textContent = title;
+    if (previewCategory) previewCategory.textContent = category;
+    if (previewMode) previewMode.textContent = mode;
+    if (previewLocation) previewLocation.textContent = location;
+    if (previewCapacity) previewCapacity.textContent = `0 / ${capacity}명`;
+    
+    if (previewTags) {
+        previewTags.innerHTML = tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+    }
+    
+    if (previewBody) {
+        if (content.trim()) {
+            previewBody.innerHTML = content;
+            previewBody.querySelector('.preview-placeholder')?.remove();
+        } else {
+            previewBody.innerHTML = '<p class="preview-placeholder">본문을 입력하면 여기에 미리보기가 표시됩니다.</p>';
+        }
+    }
+}
+
+// ==================== 이미지 업로드 ====================
+function handleImageUpload(file, index) {
+    if (!file || !file.type.startsWith('image/')) {
+        showError('이미지 파일만 업로드 가능합니다.');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const urlInput = document.getElementById(`imageUrl${index}`);
+        if (urlInput) {
+            urlInput.value = e.target.result;
+            updateImagePreview();
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateImagePreview() {
+    const preview = document.getElementById('imagePreview');
+    if (!preview) return;
+    
+    preview.innerHTML = '';
+    for (let i = 1; i <= 3; i++) {
+        const url = document.getElementById(`imageUrl${i}`)?.value.trim();
+        if (url) {
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'image-preview-item';
+            imgDiv.innerHTML = `
+                <img src="${url}" alt="미리보기 ${i}" onerror="this.parentElement.remove()" />
+                <button type="button" class="image-preview-remove" onclick="removeImage(${i})">×</button>
+            `;
+            preview.appendChild(imgDiv);
+        }
+    }
+}
+
+function removeImage(index) {
+    const urlInput = document.getElementById(`imageUrl${index}`);
+    const fileInput = document.getElementById(`imageFile${index}`);
+    if (urlInput) urlInput.value = '';
+    if (fileInput) fileInput.value = '';
+    updateImagePreview();
+}
+
+// ==================== 초기화 ====================
+document.addEventListener('DOMContentLoaded', function() {
+    // 임시저장 불러오기
+    loadDraft();
+    
+    // 자동저장 설정
+    const formInputs = document.querySelectorAll('#postTitle, #categorySelect, #modeSelect, #locationInput, #capacityInput, #editor');
+    formInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            clearTimeout(autoSaveTimer);
+            updateAutoSaveStatus('saving');
+            autoSaveTimer = setTimeout(() => {
+                saveDraft();
+                updateProgress();
+            }, 2000);
+            updatePreview();
+            updateProgress();
+        });
+    });
+    
+    // 제목 글자 수
+    const titleInput = document.getElementById('postTitle');
+    if (titleInput) {
+        titleInput.addEventListener('input', () => {
+            const length = titleInput.value.length;
+            const lengthEl = document.getElementById('titleLength');
+            if (lengthEl) lengthEl.textContent = length;
+            updatePreview();
+            updateProgress();
+        });
+    }
+    
+    // 본문 글자 수
+    const editor = document.getElementById('editor');
+    if (editor) {
+        editor.addEventListener('input', () => {
+            const length = editor.innerText.length;
+            const lengthEl = document.getElementById('editorLength');
+            if (lengthEl) lengthEl.textContent = length;
+            updatePreview();
+            updateProgress();
+        });
+    }
+    
+    // 태그 입력
+    const tagsInput = document.getElementById('tagsInput');
+    if (tagsInput) {
+        tagsInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                const value = tagsInput.value.trim();
+                if (value) {
+                    const newTags = value.split(',').map(t => t.trim()).filter(t => t);
+                    newTags.forEach(tag => addTag(tag));
+                    tagsInput.value = '';
+                }
+            }
+        });
+        
+        tagsInput.addEventListener('input', () => {
+            const value = tagsInput.value.trim();
+            // 태그 자동완성은 간단하게 구현 (실제로는 서버에서 가져와야 함)
+        });
+    }
+    
+    // 이미지 드래그 앤 드롭
+    const dropzone = document.getElementById('imageDropzone');
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            document.getElementById('imageFile1')?.click();
+        });
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            files.slice(0, 3).forEach((file, index) => {
+                handleImageUpload(file, index + 1);
+            });
+        });
+    }
+    
+    // 이미지 파일 선택
+    for (let i = 1; i <= 3; i++) {
+        const fileInput = document.getElementById(`imageFile${i}`);
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    handleImageUpload(e.target.files[0], i);
+                }
+            });
+        }
+    }
+    
+    // 이미지 URL 변경 감지
+    for (let i = 1; i <= 3; i++) {
+        const urlInput = document.getElementById(`imageUrl${i}`);
+        if (urlInput) {
+            urlInput.addEventListener('input', () => {
+                updateImagePreview();
+            });
+        }
+    }
+    
+    // 임시저장 버튼
+    document.getElementById('saveDraftBtn')?.addEventListener('click', () => {
+        saveDraft();
+        showSuccess('임시저장되었습니다.');
+    });
+    
+    // 임시저장 삭제 버튼
+    document.getElementById('clearDraftBtn')?.addEventListener('click', clearDraft);
+    
+    // 미리보기 토글
+    document.getElementById('togglePreview')?.addEventListener('click', () => {
+        const previewContent = document.getElementById('previewContent');
+        if (previewContent) {
+            previewContent.classList.toggle('hidden');
+        }
+    });
+    
+    // 키보드 단축키
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key === 's') {
+                e.preventDefault();
+                document.getElementById('saveDraftBtn')?.click();
+            } else if (e.key === 'Enter') {
+                // Ctrl+Enter는 폼 제출 (기본 동작 유지)
+            }
+        }
+    });
+    
+    // 초기 진행률 계산
+    updateProgress();
+    updatePreview();
+});
+
 function showError(message) {
     const errorBox = document.getElementById('errorBox');
     if (errorBox) {
@@ -192,7 +786,11 @@ function showError(message) {
     alertDiv.className = 'alert-box error';
     alertDiv.id = 'errorBox';
     alertDiv.innerHTML = `
-        <span class="alert-icon">⚠️</span>
+        <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
         <span>${message}</span>
         <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
     `;
@@ -247,7 +845,7 @@ document.getElementById('aiTagBtn')?.addEventListener('click', async function() 
     
     // 버튼 비활성화 및 로딩 표시
     btn.disabled = true;
-    btn.textContent = '⏳ AI 분석 중...';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>AI 분석 중...';
     
     try {
         const formData = new FormData();
@@ -278,20 +876,14 @@ document.getElementById('aiTagBtn')?.addEventListener('click', async function() 
         
         // 태그 적용
         if (result.tags && result.tags.length > 0) {
-            const recommendedTags = result.tags.join(', ');
-            if (tagsInput.value.trim()) {
-                tagsInput.value = tagsInput.value + ', ' + recommendedTags;
-            } else {
-                tagsInput.value = recommendedTags;
-            }
+            result.tags.forEach(tag => {
+                if (tag && tag.trim()) {
+                    addTag(tag.trim());
+                }
+            });
             
             // 미리보기 업데이트
-            const previewTags = document.getElementById('previewTags');
-            if (previewTags) {
-                previewTags.innerHTML = result.tags.map(tag => 
-                    `<span class="tag">${tag}</span>`
-                ).join('');
-            }
+            updatePreview();
             
             const confidence = result.category_confidence || 0;
             showSuccess(`AI 태그 추천 완료! (정확도: ${Math.round(confidence * 100)}%)`);
@@ -304,7 +896,7 @@ document.getElementById('aiTagBtn')?.addEventListener('click', async function() 
         showError('AI 태그 추천 중 오류가 발생했습니다.');
     } finally {
         btn.disabled = false;
-        btn.textContent = '✨ AI 태그 추천';
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>AI 태그 추천';
     }
 });
 
@@ -313,6 +905,12 @@ document.querySelector('form')?.addEventListener('submit', function(e) {
     const editor = document.getElementById('editor');
     const contentHidden = document.getElementById('content');
     const titleInput = document.getElementById('postTitle');
+    const tagsInput = document.getElementById('tagsInput');
+    
+    // 태그를 tagsInput에 저장 (폼 제출용)
+    if (tagsInput && typeof tags !== 'undefined' && tags.length > 0) {
+        tagsInput.value = tags.join(', ');
+    }
     
     if (!titleInput || !titleInput.value.trim()) {
         e.preventDefault();

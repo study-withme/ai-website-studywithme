@@ -11,12 +11,22 @@ const isCreate = path.includes("/posts/write");
 ========================================================= */
 (function initDarkMode() {
   const btn = $("#darkModeBtn");
+  const icon = $("#darkModeIcon");
   if (!btn) return;
+  
   btn.addEventListener("click", () => {
+    const isDark = document.body.classList.contains("dark");
     document.body.classList.toggle("dark");
-    btn.textContent = document.body.classList.contains("dark")
-      ? "☀️ 라이트모드"
-      : "🌙 다크모드";
+    
+    if (icon) {
+      if (isDark) {
+        // 라이트모드로 전환 - 태양 아이콘
+        icon.innerHTML = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
+      } else {
+        // 다크모드로 전환 - 달 아이콘
+        icon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+      }
+    }
   });
 })();
 
@@ -73,15 +83,15 @@ const isCreate = path.includes("/posts/write");
         item.className = "notif-item" + (n.isRead ? "" : " unread");
         
         // 알림 타입별 아이콘
-        let icon = "🔔";
+        let icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
         if (n.type === "NEW_APPLICATION") icon = "📝";
-        else if (n.type === "APPLICATION_ACCEPTED") icon = "✅";
-        else if (n.type === "APPLICATION_REJECTED") icon = "❌";
-        else if (n.type === "APPLICATION_CANCELLED") icon = "🚫";
-        else if (n.type === "STUDY_GROUP_JOINED") icon = "👥";
-        else if (n.type === "NEW_COMMENT") icon = "💬";
-        else if (n.type === "NEW_REPLY") icon = "↩️";
-        else if (n.type === "COMMENT_LIKE") icon = "❤️";
+        else if (n.type === "APPLICATION_ACCEPTED") icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        else if (n.type === "APPLICATION_REJECTED") icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+        else if (n.type === "APPLICATION_CANCELLED") icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        else if (n.type === "STUDY_GROUP_JOINED") icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>';
+        else if (n.type === "NEW_COMMENT") icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+        else if (n.type === "NEW_REPLY") icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>';
+        else if (n.type === "COMMENT_LIKE") icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>';
         
         item.innerHTML = `
           <div class="notif-item-header">
@@ -172,7 +182,23 @@ if (isList) {
   async function fetchPosts() {
     try {
       const sort = $("#sortFilter")?.value || "latest";
-      const response = await fetch(`/api/posts?sort=${sort}&size=100`);
+      // 카테고리 필터 값 가져오기
+      let category = "";
+      const activeChip = document.querySelector(".category-chip.active");
+      if (activeChip) {
+        category = activeChip.dataset.category || "";
+      } else {
+        // URL 파라미터에서도 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        category = urlParams.get('category') || "";
+      }
+      
+      let url = `/api/posts?sort=${sort}&size=100`;
+      if (category) {
+        url += `&category=${encodeURIComponent(category)}`;
+      }
+      
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       return data.content || data || [];
@@ -193,9 +219,77 @@ if (isList) {
     return Array.from(tagSet);
   }
 
+  // 카테고리와 게시글의 연관성 체크 (너무 동떨어진 글은 숨김)
+  function isRelevantToCategory(post, category) {
+    if (!category) return true;
+    const cat = category.trim();
+    const title = (post.title || "").toLowerCase();
+    const content = (post.content || "").toLowerCase();
+    const tagsArr = typeof post.tags === 'string'
+      ? post.tags.split(',').map(t => t.trim().toLowerCase())
+      : (post.tags || []).map(t => (t || '').toLowerCase());
+    const text = [title, content, tagsArr.join(' ')].join(' ');
+
+    const hasAny = (keywords) => keywords.some(k => text.includes(k));
+
+    const devKeywords = [
+      '개발','코딩','프로그래밍','java','자바','python','파이썬',
+      'javascript','자바스크립트','스프링','spring','react','리액트',
+      '백엔드','프론트엔드','웹','앱','소프트웨어','api'
+    ];
+    const englishKeywords = [
+      '영어','토익','toeic','토플','toefl','회화','스피킹','리스닝','리딩','문법'
+    ];
+    const jobKeywords = [
+      '취업','면접','이력서','자소서','자기소개서','포트폴리오','채용','공채'
+    ];
+    const certKeywords = [
+      '자격증','시험','필기','실기','합격','공인','인증'
+    ];
+    const bookKeywords = [
+      '독서','책','서평','에세이','소설','논픽션'
+    ];
+
+    // 카테고리별로 "완전 반대 성격"이면 제외
+    if (cat === '개발') {
+      const hasDev = hasAny(devKeywords);
+      const hasEnglish = hasAny(englishKeywords);
+      // 개발 키워드는 하나도 없고, 영어/토익만 강하게 보이면 제외
+      if (!hasDev && hasEnglish) return false;
+    } else if (cat === '영어') {
+      const hasDev = hasAny(devKeywords);
+      const hasEnglish = hasAny(englishKeywords);
+      // 영어 카테고리에서는 영어/토익 관련 키워드가 하나도 없으면 아예 제외
+      if (!hasEnglish) return false;
+      // (추가 안전장치) 영어 키워드가 있더라도, 순수 개발 설명만 있는 글은 제외 가능 여지
+      if (hasDev && !hasEnglish) return false;
+    } else if (cat === '취업') {
+      const hasJob = hasAny(jobKeywords);
+      const hasDev = hasAny(devKeywords);
+      const hasEnglish = hasAny(englishKeywords);
+      // 취업 키워드도 없고, 개발/영어 공부 자체에만 초점이면 제외
+      if (!hasJob && (hasDev || hasEnglish)) return false;
+    } else if (cat === '자격증') {
+      const hasCert = hasAny(certKeywords);
+      if (!hasCert) return false;
+    } else if (cat === '독서') {
+      const hasBook = hasAny(bookKeywords);
+      if (!hasBook) return false;
+    }
+
+    return true;
+  }
+
   function getFiltered() {
     const q = ($("#searchInput")?.value || "").trim();
-    const cat = $("#categoryFilter")?.value || "";
+    // 카테고리 필터 값 가져오기 (버튼 또는 select)
+    let cat = "";
+    const activeChip = document.querySelector(".category-chip.active");
+    if (activeChip) {
+      cat = activeChip.dataset.category || "";
+    } else {
+      cat = $("#categoryFilter")?.value || "";
+    }
     const sort = $("#sortFilter")?.value || "";
     let data = [...postsData];
 
@@ -208,7 +302,15 @@ if (isList) {
           (p.tags && (typeof p.tags === 'string' ? p.tags : p.tags.join(',')).toLowerCase().includes(lower))
       );
     }
-    if (cat) data = data.filter((p) => p.category === cat);
+    // 카테고리 필터링: 정확한 일치만 허용 (null/undefined 체크 포함)
+    if (cat) {
+      data = data.filter((p) => {
+        const postCategory = p.category ? p.category.trim() : "";
+        return postCategory === cat.trim();
+      });
+      // 추가로, 선택한 카테고리와 너무 동떨어진 글은 제거
+      data = data.filter((p) => isRelevantToCategory(p, cat));
+    }
     if (activeTag) {
       data = data.filter((p) => {
         const tags = typeof p.tags === 'string' ? p.tags.split(',').map(t => t.trim()) : (p.tags || []);
@@ -341,6 +443,19 @@ if (isList) {
   }
 
   (async function initList() {
+    // URL 파라미터에서 카테고리 읽기
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCategory = urlParams.get('category');
+    if (urlCategory) {
+      // 해당 카테고리 버튼 활성화
+      document.querySelectorAll(".category-chip").forEach((c) => {
+        c.classList.remove("active");
+        if (c.dataset.category === urlCategory) {
+          c.classList.add("active");
+        }
+      });
+    }
+    
     postsData = await fetchPosts();
     renderList(1);
 
@@ -355,7 +470,52 @@ if (isList) {
         renderList(1);
       });
     });
+    // 카테고리 버튼 이벤트
+    document.querySelectorAll(".category-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const category = chip.dataset.category || "";
+        // 모든 버튼에서 active 제거
+        document.querySelectorAll(".category-chip").forEach((c) => {
+          c.classList.remove("active");
+        });
+        // 클릭한 버튼에 active 추가
+        chip.classList.add("active");
+        
+        // URL 업데이트
+        const url = new URL(window.location);
+        if (category) {
+          url.searchParams.set('category', category);
+        } else {
+          url.searchParams.delete('category');
+        }
+        // 카테고리 바꿀 때는 기존 keyword 파라미터 제거
+        url.searchParams.delete('keyword');
+        window.history.pushState({}, '', url);
+        
+        // 검색어 입력창도 초기화 (토익 등 이전 검색어 제거)
+        const searchInput = document.getElementById("searchInput");
+        if (searchInput) {
+          searchInput.value = "";
+        }
+        
+        postsData = [];
+        fetchPosts().then(data => {
+          postsData = data;
+          renderList(1);
+        });
+      });
+    });
+    
+    // 기존 select 필터도 지원 (하위 호환성)
     $("#categoryFilter")?.addEventListener("change", () => {
+      const category = $("#categoryFilter").value;
+      // 버튼 상태 업데이트
+      document.querySelectorAll(".category-chip").forEach((c) => {
+        c.classList.remove("active");
+        if (c.dataset.category === category) {
+          c.classList.add("active");
+        }
+      });
       postsData = [];
       fetchPosts().then(data => {
         postsData = data;
@@ -621,7 +781,12 @@ if (isDetail) {
           </div>
           <div class="comment-content">${c.content}</div>
           <div class="comment-actions">
-            <span class="comment-like" data-id="${c.id}">❤️ 좋아요 (${c.likes || 0})</span>
+            <span class="comment-like" data-id="${c.id}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                좋아요 (${c.likes || 0})
+            </span>
             <span class="comment-reply" data-id="${c.id}">↪ 답글</span>
             <span class="comment-report" data-id="${c.id}">🚩 신고</span>
           </div>
@@ -854,15 +1019,38 @@ if (isCreate) {
   });
 
   // WYSIWYG 툴바
-  $(".editor-toolbar")?.addEventListener("click", (e) => {
-    const cmd = e.target.dataset.cmd;
+  $(".editor-toolbar, .modern-toolbar")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-cmd]");
+    if (!btn) return;
+    const cmd = btn.dataset.cmd;
     if (!cmd || !editor) return;
+    e.preventDefault();
     editor.focus();
     if (cmd === "ul") document.execCommand("insertUnorderedList");
     else if (cmd === "ol") document.execCommand("insertOrderedList");
     else if (cmd === "quote") document.execCommand("formatBlock", false, "blockquote");
     else if (cmd === "code") document.execCommand("formatBlock", false, "pre");
-    else document.execCommand(cmd);
+    else document.execCommand(cmd, false, null);
+    
+    // 버튼 활성화 표시
+    btn.classList.add("active");
+    setTimeout(() => btn.classList.remove("active"), 200);
+  });
+  
+  // 키보드 단축키
+  editor?.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === "b") {
+        e.preventDefault();
+        document.execCommand("bold");
+      } else if (e.key === "i") {
+        e.preventDefault();
+        document.execCommand("italic");
+      } else if (e.key === "u") {
+        e.preventDefault();
+        document.execCommand("underline");
+      }
+    }
   });
 
   // 카테고리 변경
@@ -902,14 +1090,14 @@ if (isCreate) {
     editorLen.textContent = editor.innerText.length;
   }
 
-  // 태그 미리보기
+  // 태그 미리보기 (기존 태그 시스템과 호환)
   tagsInput?.addEventListener("input", () => {
     const tags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
     if (previewTags) {
       previewTags.innerHTML = "";
       tags.forEach(tag => {
         const span = document.createElement("span");
-        span.className = "tag-pill";
+        span.className = "tag";
         span.textContent = tag;
         previewTags.appendChild(span);
       });

@@ -68,6 +68,9 @@ public class UserService {
      */
     @Transactional
     public void updateProfileImage(Integer userId, String imageUrl) {
+        if (userId == null) {
+            throw new RuntimeException("사용자 ID가 필요합니다.");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 

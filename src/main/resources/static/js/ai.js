@@ -29,8 +29,8 @@ const toggleDark = document.getElementById('toggleDark');
 toggleDark.addEventListener('click', () => {
   document.body.classList.toggle('dark');
   toggleDark.textContent = document.body.classList.contains('dark')
-    ? "☀️ 라이트모드"
-    : "🌙 다크모드";
+    ? ""
+    : "";
 });
 
 // 선택 완료
@@ -38,7 +38,7 @@ const btn = document.getElementById('submitBtn');
 btn.addEventListener('click', () => {
   const selected = [...document.querySelectorAll('.selected')].map(c => c.textContent.trim());
   if (selected.length === 0) {
-    alert("관심 분야를 하나 이상 선택해주세요 😊");
+    alert("관심 분야를 하나 이상 선택해주세요");
     return;
   }
   

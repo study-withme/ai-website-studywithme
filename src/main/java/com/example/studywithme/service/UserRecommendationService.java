@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +25,8 @@ public class UserRecommendationService {
 
     /**
      * AI 기반 추천 게시글 조회
-     * - 1순위: 사용자 선호 카테고리 기반 간단 추천 (안정적, 계정마다 다름)
-     * - 2순위: Python 추천 엔진 (성공 시 사용)
+     * - 1순위: Python 추천 엔진 (사용자 활동 로그 기반, 동적 추천)
+     * - 2순위: 사용자 선호 카테고리 기반 간단 추천 (고정 프로필 기반)
      * - 3순위: 키워드 기반 폴백
      */
     public List<Post> recommendPosts(Integer userId, int limit) {
@@ -32,24 +34,44 @@ public class UserRecommendationService {
         if (userId == null) {
             return postRepository.findAllByOrderByPopularityDesc(PageRequest.of(0, limit)).getContent();
         }
+        
+        // 1. Python 기반 추천 시도
+        //    - Python 쪽에서 활동 로그 / 고정 프로필 / 콘텐츠 분석까지 모두 처리하므로
+        //      여기서는 추가로 카테고리를 강하게 필터링하지 않고 그대로 신뢰한다.
+        //    - 이렇게 해서 **추천 로직의 대부분이 Python 알고리즘(80% 이상)** 이 되도록 조정.
+        try {
+            System.out.println("🚀 Python 추천 엔진 실행 중...");
+            List<Post> pythonRecommended = pythonRecommendationService.getRecommendedPosts(userId, limit);
+            if (!pythonRecommended.isEmpty()) {
+                System.out.println("✅ Python 추천 엔진 성공: " + pythonRecommended.size() + "개 게시글 추천");
+                Map<String, Long> categoryCount = pythonRecommended.stream()
+                    .filter(p -> p.getCategory() != null)
+                    .collect(Collectors.groupingBy(
+                        Post::getCategory,
+                        Collectors.counting()
+                    ));
+                System.out.println("📊 추천된 게시글 카테고리 분포: " + categoryCount);
+                return pythonRecommended;
+            }
+            
+            System.out.println("⚠️ Python 추천 엔진: 추천 결과가 비어있습니다.");
+        } catch (Exception e) {
+            System.err.println("❌ Python 추천 엔진 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-        // 1. 사용자 선호 카테고리 기반 간단 추천 (넷플릭스 기본 버전 느낌)
+        // 2. Python 결과가 비었을 때만 고정 프로필/키워드 기반 폴백 사용
+        //    (기존 로직을 유지하지만, 우선순위는 항상 Python 추천이 가장 높음)
+        System.out.println("📌 고정 프로필 기반 추천 또는 키워드 기반 폴백 사용");
+        
+        // 사용자 선호 카테고리 기반 간단 추천
         List<Post> byPreference = recommendByUserPreference(userId, limit);
         if (!byPreference.isEmpty()) {
             return byPreference;
         }
 
-        // 2. Python 기반 추천 시도 (성공하면 사용)
-        try {
-            List<Post> pythonRecommended = pythonRecommendationService.getRecommendedPosts(userId, limit);
-            if (!pythonRecommended.isEmpty()) {
-                return pythonRecommended;
-            }
-        } catch (Exception e) {
-            // Python 추천 실패 시 무시하고 폴백으로 이동
-        }
-
-        // 3. 기존 키워드 기반 추천 (마지막 폴백)
+        // 마지막 폴백: 기존 키워드 기반 추천
+        System.out.println("📌 키워드 기반 폴백 추천 사용");
         return recommendPostsByKeyword(userId, limit);
     }
 

@@ -28,6 +28,12 @@ public class StudyGroupCalendarService {
     public StudyGroupCalendar createEvent(Long groupId, Integer userId, LocalDate eventDate,
                                           LocalTime eventTime, String title, String content,
                                           String eventType, String color) {
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
+        if (userId == null) {
+            throw new RuntimeException("사용자 ID가 필요합니다.");
+        }
         StudyGroup group = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("스터디 그룹을 찾을 수 없습니다."));
 
@@ -59,6 +65,9 @@ public class StudyGroupCalendarService {
     public StudyGroupCalendar updateEvent(Long eventId, Integer userId, LocalDate eventDate,
                                           LocalTime eventTime, String title, String content,
                                           String eventType, String color) {
+        if (eventId == null) {
+            throw new RuntimeException("일정 ID가 필요합니다.");
+        }
         StudyGroupCalendar event = calendarRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("일정을 찾을 수 없습니다."));
 
@@ -85,6 +94,9 @@ public class StudyGroupCalendarService {
      */
     @Transactional
     public void deleteEvent(Long eventId, Integer userId) {
+        if (eventId == null) {
+            throw new RuntimeException("일정 ID가 필요합니다.");
+        }
         StudyGroupCalendar event = calendarRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("일정을 찾을 수 없습니다."));
 

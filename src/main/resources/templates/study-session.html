@@ -2,227 +2,628 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>학습 시작 | Study With Me</title>
+    <title>함께 공부하기 | Study With Me</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/css/board.css" />
-    <link rel="stylesheet" href="/css/study-group.css" />
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-        }
-        
-        .session-container {
-            max-width: 100%;
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: calc(100vh - 60px);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
             box-sizing: border-box;
         }
-        
-        .session-content {
+
+        :root {
+            --cafe-primary: #8B6F47;
+            --cafe-primary-light: #A0826D;
+            --cafe-primary-dark: #6B5237;
+            --cafe-bg: #F5F1EB;
+            --cafe-bg-light: #FAF8F5;
+            --cafe-accent: #D4A574;
+            --cafe-text: #3E2723;
+            --cafe-text-light: #6D4C41;
+            --cafe-border: #D7CCC8;
+            --cafe-shadow: rgba(107, 82, 55, 0.1);
+            --success: #8B9A46;
+            --warning: #D4A574;
+            --primary: #3b82f6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #F5F1EB 0%, #E8DDD4 100%);
+            min-height: 100vh;
+            color: var(--cafe-text);
+        }
+
+        .session-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        .session-header {
+            background: var(--cafe-bg-light);
+            border-bottom: 2px solid var(--cafe-border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px var(--cafe-shadow);
+        }
+
+        .session-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--cafe-text);
+        }
+
+        .session-subtitle {
+            font-size: 13px;
+            color: var(--cafe-text-light);
+            margin-top: 4px;
+        }
+
+        .together-studying {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--cafe-accent) 0%, var(--cafe-primary-light) 100%);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(139, 111, 71, 0.3);
+        }
+
+        .together-studying-icon {
+            font-size: 18px;
+        }
+
+        .session-main {
             flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        .study-area {
+            background: var(--cafe-bg-light);
+            padding: 32px;
             overflow-y: auto;
-            padding: 20px;
+            border-right: 1px solid var(--cafe-border);
+        }
+
+        .sidebar-area {
+            background: var(--cafe-bg);
+            padding: 24px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-        
-        .timer-section {
-            background: linear-gradient(135deg, var(--primary), #3b82f6);
-            border-radius: 16px;
+
+        /* 타이머 섹션 - 카페 느낌 */
+        .timer-card {
+            background: linear-gradient(135deg, #FFF8F0 0%, #F5F1EB 100%);
+            border: 2px solid var(--cafe-border);
+            border-radius: 20px;
             padding: 32px;
             text-align: center;
-            color: white;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 4px 16px var(--cafe-shadow);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        .timer-card::before {
+            content: '☕';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 60px;
+            opacity: 0.1;
+        }
+
+        .timer-label {
+            font-size: 14px;
+            color: var(--cafe-text-light);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         .timer-display {
-            font-size: 64px;
+            font-size: 72px;
             font-weight: 700;
+            color: var(--cafe-primary-dark);
             margin: 16px 0;
             font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 4px var(--cafe-shadow);
         }
-        
-        .timer-info {
-            font-size: 18px;
-            opacity: 0.9;
-            margin-bottom: 16px;
+
+        .timer-status {
+            font-size: 16px;
+            color: var(--cafe-text-light);
+            margin-bottom: 24px;
         }
-        
+
         .timer-controls {
             display: flex;
             gap: 12px;
             justify-content: center;
             margin-top: 24px;
         }
-        
-        .timer-btn {
+
+        .btn {
             padding: 12px 24px;
-            border-radius: 12px;
             border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cafe-primary) 0%, var(--cafe-primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 111, 71, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(139, 111, 71, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--cafe-primary);
+            color: var(--cafe-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--cafe-primary);
+            color: white;
+        }
+
+        .status-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--cafe-border);
+            border-radius: 12px;
+            background: white;
+            font-size: 14px;
+            margin-top: 20px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .status-input:focus {
+            outline: none;
+            border-color: var(--cafe-primary);
+            box-shadow: 0 0 0 3px rgba(139, 111, 71, 0.1);
+        }
+
+        /* 함께 공부중 섹션 */
+        .studying-together-card {
+            background: white;
+            border: 2px solid var(--cafe-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px var(--cafe-shadow);
+        }
+
+        .studying-together-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
             font-size: 16px;
+            font-weight: 700;
+            color: var(--cafe-text);
+        }
+
+        .studying-members {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .studying-member {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--cafe-bg);
+            border: 1px solid var(--cafe-border);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .studying-member:hover {
+            background: var(--cafe-bg-light);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px var(--cafe-shadow);
+        }
+
+        .studying-member-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--cafe-accent);
+        }
+
+        .studying-member-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .studying-member-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--cafe-text);
+        }
+
+        .studying-member-status {
+            font-size: 11px;
+            color: var(--cafe-text-light);
+        }
+
+        .online-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            display: inline-block;
+            margin-right: 4px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 채팅 섹션 */
+        .chat-card {
+            background: white;
+            border: 2px solid var(--cafe-border);
+            border-radius: 16px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--cafe-shadow);
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--cafe-primary) 0%, var(--cafe-primary-dark) 100%);
+            padding: 16px 20px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: var(--cafe-bg-light);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-message.own {
+            flex-direction: row-reverse;
+        }
+
+        .chat-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--cafe-border);
+            flex-shrink: 0;
+        }
+
+        .chat-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            background: white;
+            border: 1px solid var(--cafe-border);
+            position: relative;
+        }
+
+        .chat-message.own .chat-bubble {
+            background: linear-gradient(135deg, var(--cafe-accent) 0%, var(--cafe-primary-light) 100%);
+            color: white;
+            border: none;
+        }
+        
+        .chat-message.system {
+            justify-content: center;
+            margin: 8px 0;
+        }
+        
+        .system-bubble {
+            background: var(--cafe-bg) !important;
+            border: 1px dashed var(--cafe-border) !important;
+            color: var(--cafe-text-light) !important;
+            font-size: 12px !important;
+            font-style: italic;
+            text-align: center;
+            padding: 8px 12px !important;
+        }
+
+        .chat-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--cafe-text-light);
+            margin-bottom: 4px;
+        }
+
+        .chat-message.own .chat-name {
+            text-align: right;
+        }
+
+        .chat-text {
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .chat-time {
+            font-size: 10px;
+            color: var(--cafe-text-light);
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+
+        .chat-input-area {
+            padding: 16px;
+            background: white;
+            border-top: 1px solid var(--cafe-border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--cafe-border);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--cafe-primary);
+        }
+
+        .chat-send-btn {
+            padding: 12px 20px;
+            background: var(--cafe-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
-        
-        .timer-btn-primary {
+
+        .chat-send-btn:hover {
+            background: var(--cafe-primary-dark);
+        }
+
+        /* 사이드바 */
+        .sidebar-card {
             background: white;
-            color: var(--primary);
-        }
-        
-        .timer-btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .timer-btn-secondary {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid white;
-        }
-        
-        .cycle-info {
-            background: rgba(255,255,255,0.15);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 20px;
-        }
-        
-        .attendance-section {
-            background: var(--card-bg);
-            border-radius: 12px;
+            border: 2px solid var(--cafe-border);
+            border-radius: 16px;
             padding: 20px;
-            margin-bottom: 20px;
-            border: 2px solid #10b981;
+            box-shadow: 0 2px 8px var(--cafe-shadow);
         }
-        
-        .study-section {
-            background: var(--card-bg);
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--cafe-text);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .members-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--cafe-bg);
             border-radius: 12px;
-            border: 1px solid var(--border);
-            padding: 20px;
-            margin-bottom: 20px;
+            transition: all 0.2s;
         }
-        
-        .mood-btn {
+
+        .member-item:hover {
+            background: var(--cafe-bg-light);
+        }
+
+        .member-avatar {
             width: 40px;
             height: 40px;
-            border-radius: 8px;
-            border: 2px solid var(--border);
-            background: var(--bg);
-            cursor: pointer;
-            font-size: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--cafe-accent);
+            position: relative;
+        }
+
+        .member-status-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .member-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .member-name {
+            font-size: 14px;
             font-weight: 600;
-            transition: all 0.2s;
+            color: var(--cafe-text);
+            margin-bottom: 4px;
         }
-        
-        .mood-btn:hover {
-            border-color: var(--primary);
-            background: var(--primary-soft);
+
+        .member-detail {
+            font-size: 12px;
+            color: var(--cafe-text-light);
         }
-        
-        .mood-btn.selected {
-            border-color: var(--primary);
-            background: var(--primary);
-            color: white;
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
-        
-        .attendance-btn {
-            width: 100%;
+
+        .stat-item {
+            background: var(--cafe-bg);
             padding: 16px;
-            background: #10b981;
-            color: white;
-            border: none;
             border-radius: 12px;
-            font-size: 18px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--cafe-primary-dark);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--cafe-text-light);
+        }
+
+        .motivation-message {
+            background: linear-gradient(135deg, var(--cafe-accent) 0%, var(--cafe-primary-light) 100%);
+            padding: 16px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            font-size: 14px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+            margin-top: 16px;
+            box-shadow: 0 2px 8px rgba(139, 111, 71, 0.3);
         }
-        
-        .attendance-btn:hover {
-            background: #059669;
-            transform: translateY(-2px);
+
+        .cycle-info {
+            background: var(--cafe-bg);
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            text-align: center;
         }
-        
-        .attendance-btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
-        
-        .attendance-status {
+
+        .cycle-progress {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 16px;
-            padding: 12px;
-            background: var(--bg);
-            border-radius: 8px;
+            margin-top: 12px;
         }
-        
-        .celebration {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+
+        .cycle-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--cafe-border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 12px;
         }
-        
-        .celebration.active {
-            display: flex;
+
+        .cycle-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cafe-primary) 0%, var(--cafe-accent) 100%);
+            border-radius: 4px;
+            transition: width 0.3s;
         }
-        
-        .celebration-content {
-            background: white;
-            border-radius: 24px;
-            padding: 48px;
-            text-align: center;
-            max-width: 500px;
-            animation: popIn 0.5s ease;
+
+        /* 반응형 */
+        @media (max-width: 1200px) {
+            .session-main {
+                grid-template-columns: 1fr 350px;
+            }
         }
-        
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+
+        @media (max-width: 768px) {
+            .session-main {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar-area {
+                border-top: 1px solid var(--cafe-border);
+            }
         }
-        
-        .celebration-emoji {
-            font-size: 80px;
-            margin-bottom: 16px;
-            animation: bounce 1s infinite;
+
+        /* 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+
+        ::-webkit-scrollbar-track {
+            background: var(--cafe-bg);
         }
-        
-        .status-message-input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            margin-bottom: 12px;
-            font-size: 14px;
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--cafe-border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--cafe-primary-light);
         }
     </style>
 </head>
-<body class="light">
+<body>
 
 <header class="swm-header">
     <div class="nav-inner">
@@ -230,7 +631,7 @@
         <nav class="nav-links">
             <a href="/">모집 게시판</a>
             <a href="/recommend">AI 추천</a>
-            <a href="/study-groups" class="active">진행중인 스터디</a>
+            <a href="/study-groups" class="active">참여중인 스터디</a>
         </nav>
         <div class="nav-actions">
             <div th:if="${loginUser != null}" style="display: flex; gap: 8px; align-items: center;">
@@ -241,179 +642,282 @@
     </div>
 </header>
 
-<main class="session-container">
-    <div th:if="${group != null}" style="display: flex; flex-direction: column; height: 100%;">
-        <div class="session-content">
-        <div style="margin-bottom: 16px;">
-            <h1 style="font-size: 28px; margin-bottom: 8px;" th:text="${group.title}">스터디 그룹</h1>
-            <p style="color: #6b7280; font-size: 14px;">함께 공부하며 목표를 달성해요!</p>
+<div class="session-wrapper">
+    <div class="session-header">
+        <div>
+            <div class="session-title" th:text="${group.title}">스터디 그룹</div>
+            <div class="session-subtitle">함께 공부하며 목표를 달성해요!</div>
         </div>
+        <div class="together-studying">
+            <svg class="together-studying-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span id="togetherCount">함께 공부중이에요! <span id="onlineCount">0</span>명</span>
+        </div>
+    </div>
 
-        <!-- 타이머 섹션 -->
-        <div class="timer-section" id="timerSection">
-            <div class="timer-info" id="timerInfo">학습 시간</div>
-            <div class="timer-display" id="timerDisplay">00:00</div>
-            <div class="timer-info" id="nextBreakInfo">다음 쉬는시간까지: --:--</div>
-            
-            <div class="cycle-info">
-                <div>현재 사이클: <span id="currentCycle">0</span> / <span id="targetCycles">4</span></div>
-                <div style="margin-top: 8px; font-size: 14px; opacity: 0.9;">
-                    학습시간: <span id="studyDuration">50</span>분 · 쉬는시간: <span id="breakDuration">10</span>분
+    <div class="session-main">
+        <div class="study-area">
+            <!-- 타이머 카드 -->
+            <div class="timer-card">
+                <div class="timer-label" id="timerLabel">학습 시간</div>
+                <div class="timer-display" id="timerDisplay">00:00</div>
+                <div class="timer-status" id="timerStatus">준비되셨나요? 학습을 시작해보세요!</div>
+                
+                <div class="cycle-info">
+                    <div style="font-size: 14px; color: var(--cafe-text-light); margin-bottom: 8px;">
+                        사이클 진행률
+                    </div>
+                    <div class="cycle-progress">
+                        <span style="font-weight: 600; color: var(--cafe-text);">0</span>
+                        <div class="cycle-bar">
+                            <div class="cycle-fill" id="cycleProgress" style="width: 0%;"></div>
+                        </div>
+                        <span style="font-weight: 600; color: var(--cafe-text);" id="targetCycles">4</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--cafe-text-light); margin-top: 8px;">
+                        학습: <span id="studyDuration">50</span>분 · 휴식: <span id="breakDuration">10</span>분
+                    </div>
                 </div>
-            </div>
-            
-            <div class="timer-controls">
-                <button class="timer-btn timer-btn-primary" id="startBtn" onclick="startTimer()">학습 시작</button>
-                <button class="timer-btn timer-btn-secondary" id="pauseBtn" onclick="pauseTimer()" style="display: none;">일시정지</button>
-                <button class="timer-btn timer-btn-secondary" id="endBtn" onclick="endSession()" style="display: none;">종료</button>
-            </div>
-            
-            <!-- 상태 메시지 입력 -->
-            <div style="margin-top: 24px;">
-                <input type="text" class="status-message-input" id="statusMessageInput" 
-                       placeholder="지금 무엇을 공부하고 있나요? (예: 자바스크립트 함수 파트)" 
+
+                <div class="timer-controls">
+                    <button class="btn btn-primary" id="startBtn" onclick="startTimer()">☕ 학습 시작</button>
+                    <button class="btn btn-outline" id="pauseBtn" onclick="pauseTimer()" style="display: none;">⏸ 일시정지</button>
+                    <button class="btn btn-outline" id="endBtn" onclick="endSession()" style="display: none;">🏁 종료</button>
+                </div>
+
+                <input type="text" class="status-input" id="statusMessageInput" 
+                       placeholder="지금 무엇을 공부하고 있나요? (예: 자바스크립트 함수 파트) - Enter로 저장" 
                        maxlength="50">
-            </div>
-        </div>
-
-        <!-- 출석체크 섹션 (쉬는시간에만 표시) -->
-        <div class="attendance-section" id="attendanceSection" style="display: none;">
-            <h3 style="margin-bottom: 16px; color: #10b981;">쉬는 시간 출석체크</h3>
-            <p style="color: #6b7280; margin-bottom: 16px;">
-                쉬는시간 동안 출석체크를 완료하면 오늘의 학습량으로 인정됩니다!
-            </p>
-            <textarea id="attendanceMessage" placeholder="오늘의 다짐이나 격려 메시지를 남겨보세요 (선택사항)" 
-                      style="width: 100%; min-height: 80px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; resize: vertical;"></textarea>
-            <button class="attendance-btn" id="attendanceBtn" onclick="checkAttendance()">출석체크 완료</button>
-            <div class="attendance-status" id="attendanceStatus" style="display: none;">
-                <span>출석 현황:</span>
-                <span id="attendanceCount">0/0명 출석 완료</span>
-            </div>
-        </div>
-
-        <!-- 채팅 및 팀원 정보 -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
-            <!-- 채팅 영역 -->
-            <div class="study-section">
-                <div class="section-title">
-                    <span class="section-icon"></span>
-                    그룹 채팅
+                <div style="font-size: 11px; color: var(--cafe-text-light); margin-top: 6px; text-align: center;">
+                    💡 상태 메시지를 설정하면 다른 팀원들이 볼 수 있어요!
                 </div>
-                <div class="chat-section">
-                    <div class="chat-messages" id="chatMessages">
-                        <!-- 채팅 메시지가 여기에 동적으로 추가됨 -->
+                
+                <!-- 집중 모드 제약 표시 -->
+                <div id="focusModeWarning" style="display: none; margin-top: 16px; padding: 12px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; text-align: center; font-size: 13px; color: #856404;">
+                    <strong>⚠️ 집중 모드 활성화</strong><br>
+                    <span id="focusWarningText">다른 탭으로 이동하면 학습이 중단될 수 있습니다!</span>
+                </div>
+                
+                <!-- 학습 제약 조건 표시 -->
+                <div id="studyRules" style="display: none; margin-top: 16px; padding: 16px; background: var(--cafe-bg); border: 2px solid var(--cafe-border); border-radius: 12px;">
+                    <div style="font-size: 14px; font-weight: 700; color: var(--cafe-text); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                        <span>🎯</span>
+                        <span>학습 규칙</span>
                     </div>
-                    <div class="chat-input">
-                        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." 
-                               onkeypress="if(event.key==='Enter') sendChatMessage()">
-                        <button onclick="sendChatMessage()">전송</button>
+                    <div style="font-size: 12px; color: var(--cafe-text-light); line-height: 1.8;">
+                        <div>✓ 최소 <span id="minStudyTime">10</span>분 이상 학습해야 사이클이 인정됩니다</div>
+                        <div>✓ 탭 전환 시 경고가 표시됩니다</div>
+                        <div>✓ 사이클 완료 시 보상이 지급됩니다</div>
+                        <div>✓ 연속 학습 일수가 기록됩니다</div>
                     </div>
                 </div>
             </div>
 
+            <!-- 함께 공부중인 멤버 -->
+            <div class="studying-together-card">
+                <div class="studying-together-header">
+                    <span>☕</span>
+                    <span>함께 공부중인 팀원들</span>
+                </div>
+                <div id="studyingMembers" class="studying-members">
+                    <!-- 함께 공부중인 멤버가 여기에 동적으로 추가됨 -->
+                </div>
+            </div>
+
+            <!-- 채팅 -->
+            <div class="chat-card">
+                <div class="chat-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>그룹 채팅</span>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <!-- 채팅 메시지가 여기에 동적으로 추가됨 -->
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chatInput" 
+                           placeholder="메시지를 입력하세요..." 
+                           onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    <button class="chat-send-btn" onclick="sendChatMessage()">전송</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-area">
             <!-- 팀원 정보 -->
-            <div class="study-section">
-                <div class="section-title">
-                    <span class="section-icon"></span>
-                    함께 공부하는 팀원
+            <div class="sidebar-card">
+                <div class="sidebar-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>팀원 정보</span>
                 </div>
-                <div id="membersList">
+                <div id="membersList" class="members-list">
                     <!-- 팀원 정보가 여기에 동적으로 추가됨 -->
                 </div>
             </div>
-        </div>
 
-        <!-- 학습 일지 -->
-        <div class="study-section">
-                <div class="section-title">
-                    <span class="section-icon"></span>
-                    오늘의 학습 일지
+            <!-- 오늘의 통계 -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>오늘의 통계</span>
                 </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div>
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">오늘 배운 것</label>
-                    <textarea id="studyContent" placeholder="오늘 무엇을 배웠나요?" 
-                              style="width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); resize: vertical;"></textarea>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="todayTime">0h</div>
+                        <div class="stat-label">학습 시간</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="todayCycles">0</div>
+                        <div class="stat-label">완료 사이클</div>
+                    </div>
                 </div>
-                <div>
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">느낀 점</label>
-                    <textarea id="feeling" placeholder="오늘 공부하며 느낀 점은?" 
-                              style="width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); resize: vertical;"></textarea>
+                <div style="margin-top: 12px; padding: 12px; background: var(--cafe-bg); border-radius: 8px;">
+                    <div style="font-size: 12px; color: var(--cafe-text-light); margin-bottom: 4px;">팀 전체 학습 시간</div>
+                    <div style="font-size: 18px; font-weight: 700; color: var(--cafe-primary-dark);" id="teamTotalTime">0h 0m</div>
                 </div>
-            </div>
-            <div style="margin-top: 16px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">다음 목표</label>
-                <textarea id="nextGoal" placeholder="다음에 무엇을 공부할 계획인가요?" 
-                          style="width: 100%; min-height: 60px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); resize: vertical;"></textarea>
-            </div>
-            <div style="margin-top: 16px; display: flex; align-items: center; gap: 16px;">
-                <label style="font-weight: 600;">오늘의 기분:</label>
-                <div style="display: flex; gap: 8px;">
-                    <button class="mood-btn" data-rating="1" onclick="setMood(1)" title="매우 나쁨">1</button>
-                    <button class="mood-btn" data-rating="2" onclick="setMood(2)" title="나쁨">2</button>
-                    <button class="mood-btn" data-rating="3" onclick="setMood(3)" title="보통">3</button>
-                    <button class="mood-btn" data-rating="4" onclick="setMood(4)" title="좋음">4</button>
-                    <button class="mood-btn" data-rating="5" onclick="setMood(5)" title="매우 좋음">5</button>
+                <div class="motivation-message" id="motivationMessage">
+                    오늘도 화이팅! 함께 공부해요!
                 </div>
             </div>
-            <button class="btn btn-primary" style="margin-top: 16px; width: 100%; padding: 14px; font-size: 16px; font-weight: 600;" onclick="saveJournal()">일지 저장</button>
-        </div>
-        </div>
-    </div>
-</main>
 
-<!-- 목표 달성 축하 애니메이션 -->
-<div class="celebration" id="celebration">
-    <div class="celebration-content">
-        <div class="celebration-emoji"></div>
-        <h2 style="font-size: 32px; margin-bottom: 16px;">축하합니다!</h2>
-        <p id="celebrationMessage" style="font-size: 18px; color: #6b7280; margin-bottom: 24px;">
-            목표를 달성했습니다!
-        </p>
-        <button class="btn btn-primary" onclick="closeCelebration()">확인</button>
+            <!-- 학습 팁 -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">
+                    <span>💡</span>
+                    <span>학습 팁</span>
+                </div>
+                <div style="font-size: 13px; color: var(--cafe-text-light); line-height: 1.8;">
+                    <div style="margin-bottom: 12px;">
+                        <strong style="color: var(--cafe-text); display: flex; align-items: center; gap: 6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                            집중하기:
+                        </strong><br>
+                        한 번에 하나의 과제에만 집중하세요!
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <strong style="color: var(--cafe-text); display: flex; align-items: center; gap: 6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            휴식:
+                        </strong><br>
+                        정기적인 휴식이 학습 효율을 높입니다!
+                    </div>
+                    <div>
+                        <strong style="color: var(--cafe-text); display: flex; align-items: center; gap: 6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            함께하기:
+                        </strong><br>
+                        팀원들과 소통하며 동기부여를 받아보세요!
+                    </div>
+                </div>
+            </div>
+
+            <!-- 학습 일지 -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">
+                    <span>📝</span>
+                    <span>오늘의 학습 일지</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--cafe-text-light); margin-bottom: 6px;">오늘 배운 것</label>
+                        <textarea id="studyContent" placeholder="오늘 무엇을 배웠나요?" 
+                                  style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid var(--cafe-border); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--cafe-text-light); margin-bottom: 6px;">느낀 점</label>
+                        <textarea id="feeling" placeholder="오늘 공부하며 느낀 점은?" 
+                                  style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid var(--cafe-border); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--cafe-text-light); margin-bottom: 6px;">다음 목표</label>
+                        <textarea id="nextGoal" placeholder="다음에 무엇을 공부할 계획인가요?" 
+                                  style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid var(--cafe-border); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="saveJournal()">일지 저장</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
 const groupId = /*[[${group.id}]]*/ null;
+const currentUserId = /*[[${loginUser != null ? loginUser.id : null}]]*/ null;
 let timerInterval = null;
 let remainingSeconds = 0;
-let isStudyTime = true; // true: 학습시간, false: 쉬는시간
+let isStudyTime = true;
 let currentCycle = 0;
-let studyDuration = 50; // 분
-let breakDuration = 10; // 분
+let studyDuration = 50;
+let breakDuration = 10;
 let targetCycles = 4;
 let sessionId = null;
-let selectedMood = null;
+let lastMessageId = null;
 
-// groupId 확인
 if (!groupId) {
-    console.error('그룹 ID가 없습니다. 페이지를 새로고침해주세요.');
+    console.error('그룹 ID가 없습니다.');
 }
+
+// 집중 모드 변수
+let focusModeActive = false;
+let tabSwitchCount = 0;
+let minStudyTime = 10; // 최소 학습 시간 (분)
+let studyStartTime = null;
 
 // 타이머 시작
 function startTimer() {
     if (sessionId === null) {
-        // 세션 시작
         const statusMessage = document.getElementById('statusMessageInput').value || '공부 중';
         fetch(`/api/study-groups/${groupId}/sessions/start?statusMessage=${encodeURIComponent(statusMessage)}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            method: 'POST'
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
                 sessionId = data.session.id;
+                studyStartTime = new Date();
+                focusModeActive = true;
+                tabSwitchCount = 0;
+                updateStatusMessage(statusMessage);
                 document.getElementById('startBtn').style.display = 'none';
                 document.getElementById('pauseBtn').style.display = 'inline-block';
                 document.getElementById('endBtn').style.display = 'inline-block';
+                document.getElementById('timerLabel').textContent = '학습 시간';
+                document.getElementById('focusModeWarning').style.display = 'block';
+                document.getElementById('studyRules').style.display = 'block';
                 loadSettings();
+                initFocusMode();
             }
         });
     } else {
-        // 재개
         document.getElementById('startBtn').style.display = 'none';
         document.getElementById('pauseBtn').style.display = 'inline-block';
+        focusModeActive = true;
+        initFocusMode();
     }
     
     remainingSeconds = isStudyTime ? studyDuration * 60 : breakDuration * 60;
@@ -425,41 +929,89 @@ function startTimer() {
         
         if (remainingSeconds <= 0) {
             if (isStudyTime) {
-                // 학습시간 종료 → 쉬는시간 시작
+                // 최소 학습 시간 체크
+                const elapsedMinutes = studyStartTime ? Math.floor((new Date() - studyStartTime) / 60000) : 0;
+                if (elapsedMinutes < minStudyTime) {
+                    document.getElementById('timerStatus').textContent = 
+                        `최소 ${minStudyTime}분 이상 학습해야 합니다! (현재: ${elapsedMinutes}분)`;
+                    remainingSeconds = (minStudyTime - elapsedMinutes) * 60;
+                    return;
+                }
+                
                 isStudyTime = false;
                 remainingSeconds = breakDuration * 60;
-                document.getElementById('timerInfo').textContent = '쉬는 시간';
-                document.getElementById('attendanceSection').style.display = 'block';
-                showNotification('쉬는시간입니다! 출석체크를 해주세요!');
+                document.getElementById('timerLabel').textContent = '쉬는 시간';
+                document.getElementById('timerStatus').textContent = '잠시 휴식을 취하세요! ☕';
             } else {
-                // 쉬는시간 종료 → 다음 사이클
                 currentCycle++;
                 isStudyTime = true;
                 remainingSeconds = studyDuration * 60;
-                document.getElementById('timerInfo').textContent = '학습 시간';
-                document.getElementById('attendanceSection').style.display = 'none';
-                document.getElementById('currentCycle').textContent = currentCycle;
+                studyStartTime = new Date(); // 새 사이클 시작 시간
+                document.getElementById('timerLabel').textContent = '학습 시간';
+                document.getElementById('timerStatus').textContent = `${currentCycle}사이클 완료! 다음 사이클을 시작합니다!`;
+                updateCycleProgress();
+                
+                // 사이클 완료 보상 표시
+                showRewardNotification(currentCycle);
                 
                 if (currentCycle >= targetCycles) {
-                    // 모든 사이클 완료
                     endSession();
-                    showNotification('모든 사이클을 완료했습니다! 수고하셨습니다!');
-                } else {
-                    showNotification(`${currentCycle}사이클 완료! 다음 사이클을 시작합니다!`);
                 }
             }
         }
     }, 1000);
 }
 
-// 타이머 일시정지
-function pauseTimer() {
-    clearInterval(timerInterval);
-    document.getElementById('startBtn').style.display = 'inline-block';
-    document.getElementById('pauseBtn').style.display = 'none';
+// 집중 모드 초기화
+function initFocusMode() {
+    // 탭 전환 감지
+    document.addEventListener('visibilitychange', function() {
+        if (focusModeActive && document.hidden) {
+            tabSwitchCount++;
+            document.getElementById('focusWarningText').textContent = 
+                `⚠️ 다른 탭으로 이동했습니다! (${tabSwitchCount}회) 집중하세요!`;
+            
+            // 3회 이상 탭 전환 시 경고
+            if (tabSwitchCount >= 3) {
+                alert('⚠️ 집중 모드: 너무 자주 다른 탭으로 이동하고 있습니다. 학습에 집중해주세요!');
+            }
+        } else if (!document.hidden && focusModeActive) {
+            document.getElementById('focusWarningText').textContent = 
+                '다른 탭으로 이동하면 학습이 중단될 수 있습니다!';
+        }
+    });
+    
+    // 페이지 나가기 경고
+    window.addEventListener('beforeunload', function(e) {
+        if (focusModeActive && sessionId) {
+            e.preventDefault();
+            e.returnValue = '학습 중입니다. 정말 나가시겠습니까?';
+            return e.returnValue;
+        }
+    });
 }
 
-// 타이머 표시 업데이트
+// 보상 알림 표시
+function showRewardNotification(cycle) {
+    const rewards = [
+        '🎉 1사이클 완료! 화이팅!',
+        '🔥 2사이클 완료! 잘하고 있어요!',
+        '⭐ 3사이클 완료! 대단해요!',
+        '🏆 4사이클 완료! 완벽합니다!'
+    ];
+    
+    const message = rewards[cycle - 1] || `🎊 ${cycle}사이클 완료!`;
+    showToast(message);
+}
+
+function pauseTimer() {
+    clearInterval(timerInterval);
+    focusModeActive = false;
+    document.getElementById('startBtn').style.display = 'inline-block';
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('focusModeWarning').style.display = 'none';
+}
+
 function updateTimerDisplay() {
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
@@ -467,16 +1019,20 @@ function updateTimerDisplay() {
         `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     
     if (isStudyTime) {
-        const nextBreak = Math.floor(remainingSeconds / 60);
-        document.getElementById('nextBreakInfo').textContent = 
-            `다음 쉬는시간까지: ${nextBreak}분 ${remainingSeconds % 60}초`;
+        document.getElementById('timerStatus').textContent = 
+            `다음 쉬는시간까지 ${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초`;
     } else {
-        document.getElementById('nextBreakInfo').textContent = 
-            `학습 재개까지: ${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초`;
+        document.getElementById('timerStatus').textContent = 
+            `학습 재개까지 ${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초`;
     }
 }
 
-// 세션 종료
+function updateCycleProgress() {
+    const progress = (currentCycle / targetCycles) * 100;
+    document.getElementById('cycleProgress').style.width = progress + '%';
+    document.getElementById('todayCycles').textContent = currentCycle;
+}
+
 function endSession() {
     clearInterval(timerInterval);
     if (sessionId) {
@@ -492,410 +1048,488 @@ function endSession() {
     }
 }
 
-// 출석체크
-function checkAttendance() {
-    const message = document.getElementById('attendanceMessage').value;
-    if (!sessionId) return;
+// 상태 메시지 업데이트
+function updateStatusMessage(message) {
+    if (!groupId || !message) return;
     
-    fetch(`/api/study-groups/sessions/${sessionId}/attendance?message=${encodeURIComponent(message || '')}`, {
+    fetch(`/api/study-groups/${groupId}/status?status=STUDYING&statusMessage=${encodeURIComponent(message)}`, {
         method: 'POST'
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            document.getElementById('attendanceBtn').disabled = true;
-            document.getElementById('attendanceBtn').textContent = '출석체크 완료';
-            showNotification('출석체크가 완료되었습니다!');
-            updateAttendanceStatus();
+            loadMembers();
+            loadStudyingMembers();
         }
-    });
+    })
+    .catch(err => console.error('상태 메시지 업데이트 실패:', err));
+}
+
+// 함께 공부중인 멤버 표시 (클릭 가능)
+function loadStudyingMembers() {
+    if (!groupId) return;
+    
+    fetch(`/api/study-groups/${groupId}/members`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const onlineMembers = data.members.filter(m => m.isOnline && (m.status === 'STUDYING' || m.status === 'ONLINE'));
+                const container = document.getElementById('studyingMembers');
+                const countEl = document.getElementById('onlineCount');
+                
+                if (countEl) {
+                    countEl.textContent = onlineMembers.length;
+                }
+                
+                if (!container) return;
+                
+                if (onlineMembers.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--cafe-text-light); font-size: 13px;">지금은 혼자 공부중이에요. 다른 팀원들도 곧 합류할 거예요!</div>';
+                    return;
+                }
+                
+                container.innerHTML = onlineMembers.map(m => {
+                    const isStudying = m.status === 'STUDYING';
+                    return `
+                        <div class="studying-member" onclick="showMemberDetail(${m.id}, '${escapeHtml(m.name)}')" 
+                             style="cursor: pointer; transition: all 0.2s;" 
+                             onmouseover="this.style.transform='scale(1.05)'" 
+                             onmouseout="this.style.transform='scale(1)'">
+                            <img class="studying-member-avatar" src="https://i.pravatar.cc/32?img=${m.id}" alt="프로필">
+                            <div class="studying-member-info">
+                                <div class="studying-member-name">${escapeHtml(m.name)} ${isStudying ? '🔥' : ''}</div>
+                                <div class="studying-member-status">${m.statusMessage || (isStudying ? '공부 중' : '온라인')}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        })
+        .catch(err => console.error('멤버 로드 실패:', err));
+}
+
+// 멤버 상세 정보 모달 표시
+function showMemberDetail(userId, userName) {
+    if (!groupId) return;
+    
+    // 멤버 정보 가져오기
+    fetch(`/api/study-groups/${groupId}/members`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const member = data.members.find(m => m.id === userId);
+                if (!member) return;
+                
+                // 해당 사용자의 학습 일지 가져오기
+                fetch(`/api/study-groups/${groupId}/journal/${userId}`)
+                    .then(res => res.json())
+                    .then(journalData => {
+                        const journal = journalData.success && journalData.journal ? journalData.journal : null;
+                        
+                        // 모달 생성
+                        const modal = document.createElement('div');
+                        modal.className = 'modal';
+                        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000;';
+                        modal.innerHTML = `
+                            <div style="background: white; border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                    <h3 style="font-size: 20px; font-weight: 700; color: var(--cafe-text);">${escapeHtml(userName)}님의 학습 현황</h3>
+                                    <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--cafe-text-light);">&times;</button>
+                                </div>
+                                
+                                <div style="margin-bottom: 24px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                        <img src="https://i.pravatar.cc/64?img=${userId}" style="width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--cafe-accent);">
+                                        <div>
+                                            <div style="font-size: 18px; font-weight: 700; color: var(--cafe-text);">${escapeHtml(userName)}</div>
+                                            <div style="font-size: 14px; color: var(--cafe-text-light);">
+                                                ${member.isOnline ? '🟢 온라인' : '⚫ 오프라인'} · 
+                                                ${member.status === 'STUDYING' ? '🔥 학습 중' : member.status || '온라인'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    ${member.statusMessage ? `
+                                        <div style="padding: 12px; background: var(--cafe-bg); border-radius: 8px; margin-bottom: 16px;">
+                                            <div style="font-size: 12px; color: var(--cafe-text-light); margin-bottom: 4px;">지금 공부 중인 내용</div>
+                                            <div style="font-size: 14px; color: var(--cafe-text); font-weight: 600;">"${escapeHtml(member.statusMessage)}"</div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                                    <div style="padding: 16px; background: var(--cafe-bg); border-radius: 12px; text-align: center;">
+                                        <div style="font-size: 24px; font-weight: 700; color: var(--cafe-primary-dark);">${formatTime(member.todayStudyTime || 0)}</div>
+                                        <div style="font-size: 12px; color: var(--cafe-text-light); margin-top: 4px;">오늘 학습 시간</div>
+                                    </div>
+                                    <div style="padding: 16px; background: var(--cafe-bg); border-radius: 12px; text-align: center;">
+                                        <div style="font-size: 24px; font-weight: 700; color: var(--cafe-primary-dark);">${member.consecutiveDays || 0}일</div>
+                                        <div style="font-size: 12px; color: var(--cafe-text-light); margin-top: 4px;">연속 학습</div>
+                                    </div>
+                                </div>
+                                
+                                ${journal ? `
+                                    <div style="margin-bottom: 24px;">
+                                        <div style="font-size: 16px; font-weight: 700; color: var(--cafe-text); margin-bottom: 12px;">📝 오늘의 학습 일지</div>
+                                        ${journal.studyContent ? `
+                                            <div style="margin-bottom: 12px;">
+                                                <div style="font-size: 12px; color: var(--cafe-text-light); margin-bottom: 4px;">오늘 배운 것</div>
+                                                <div style="padding: 12px; background: var(--cafe-bg); border-radius: 8px; font-size: 14px; color: var(--cafe-text);">
+                                                    ${escapeHtml(journal.studyContent)}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${journal.feeling ? `
+                                            <div style="margin-bottom: 12px;">
+                                                <div style="font-size: 12px; color: var(--cafe-text-light); margin-bottom: 4px;">느낀 점</div>
+                                                <div style="padding: 12px; background: var(--cafe-bg); border-radius: 8px; font-size: 14px; color: var(--cafe-text);">
+                                                    ${escapeHtml(journal.feeling)}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${journal.nextGoal ? `
+                                            <div>
+                                                <div style="font-size: 12px; color: var(--cafe-text-light); margin-bottom: 4px;">다음 목표</div>
+                                                <div style="padding: 12px; background: var(--cafe-bg); border-radius: 8px; font-size: 14px; color: var(--cafe-text);">
+                                                    ${escapeHtml(journal.nextGoal)}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                ` : '<div style="text-align: center; padding: 20px; color: var(--cafe-text-light); font-size: 13px;">아직 학습 일지가 없습니다.</div>'}
+                                
+                                <div style="text-align: center;">
+                                    <button onclick="this.closest('.modal').remove()" class="btn btn-primary" style="padding: 10px 24px;">닫기</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(modal);
+                        modal.addEventListener('click', function(e) {
+                            if (e.target === modal) {
+                                modal.remove();
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error('일지 로드 실패:', err);
+                        // 일지 로드 실패해도 모달은 표시
+                        const modal = document.createElement('div');
+                        modal.className = 'modal';
+                        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000;';
+                        modal.innerHTML = `
+                            <div style="background: white; border-radius: 16px; padding: 32px; max-width: 500px; width: 90%;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                    <h3 style="font-size: 20px; font-weight: 700; color: var(--cafe-text);">${escapeHtml(userName)}님의 학습 현황</h3>
+                                    <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--cafe-text-light);">&times;</button>
+                                </div>
+                                <div style="text-align: center; padding: 20px; color: var(--cafe-text-light);">
+                                    멤버 정보를 불러오는 중...
+                                </div>
+                                <div style="text-align: center;">
+                                    <button onclick="this.closest('.modal').remove()" class="btn btn-primary" style="padding: 10px 24px;">닫기</button>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                    });
+            }
+        })
+        .catch(err => console.error('멤버 정보 로드 실패:', err));
 }
 
 // 채팅 메시지 전송
 function sendChatMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
-    if (!message || !groupId) {
-        console.error('메시지 또는 그룹 ID가 없습니다.');
-        return;
-    }
+    if (!message || !groupId) return;
     
     fetch(`/api/study-groups/${groupId}/chat?message=${encodeURIComponent(message)}`, {
         method: 'POST'
     })
-    .then(res => {
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-    })
+    .then(res => res.json())
     .then(data => {
         if (data.success) {
             input.value = '';
             loadMessages();
         } else {
-            console.error('메시지 전송 실패:', data.error);
-            alert('메시지 전송에 실패했습니다: ' + (data.error || '알 수 없는 오류'));
+            alert('메시지 전송 실패: ' + (data.error || '알 수 없는 오류'));
         }
     })
-    .catch(error => {
-        console.error('메시지 전송 중 오류:', error);
+    .catch(err => {
+        console.error('메시지 전송 실패:', err);
         alert('메시지 전송 중 오류가 발생했습니다.');
     });
 }
 
-// 메시지 로드
+// 메시지 로드 (실시간)
+let lastChatMessageId = null;
 function loadMessages() {
-    if (!groupId) {
-        console.error('그룹 ID가 없습니다.');
-        return;
-    }
+    if (!groupId) return;
     
     fetch(`/api/study-groups/${groupId}/chat?limit=50`)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
             if (data.success) {
                 const container = document.getElementById('chatMessages');
-                if (!container) {
-                    console.error('채팅 메시지 컨테이너를 찾을 수 없습니다.');
+                if (!container) return;
+                
+                if (!data.messages || data.messages.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--cafe-text-light); font-size: 13px;">아직 메시지가 없습니다.<br>첫 메시지를 보내보세요!</div>';
+                    lastChatMessageId = null;
                     return;
                 }
-                container.innerHTML = '';
                 
-                if (data.messages && data.messages.length > 0) {
-                    data.messages.reverse().forEach(msg => {
-                        const isOwn = msg.userId === /*[[${loginUser != null ? loginUser.id : null}]]*/ null;
-                        const div = document.createElement('div');
-                        div.className = `chat-message ${isOwn ? 'own' : ''}`;
-                        div.innerHTML = `
-                            <img class="chat-avatar" src="https://i.pravatar.cc/32?img=${msg.userId}" alt="프로필">
-                            <div>
-                                <div class="chat-name">${msg.userName}</div>
-                                <div class="chat-bubble">
+                // 새 메시지가 있는지 확인
+                const latestMessage = data.messages[data.messages.length - 1];
+                const hasNewMessage = lastChatMessageId !== latestMessage.id;
+                const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+                
+                container.innerHTML = data.messages.reverse().map(msg => {
+                    const isOwn = msg.userId === currentUserId;
+                    const time = formatTime(msg.createdAt);
+                    const isSystem = msg.messageType === 'SYSTEM';
+                    return `
+                        <div class="chat-message ${isOwn ? 'own' : ''} ${isSystem ? 'system' : ''}" data-message-id="${msg.id}">
+                            ${!isSystem ? `<img class="chat-avatar" src="https://i.pravatar.cc/36?img=${msg.userId}" alt="프로필">` : ''}
+                            <div style="flex: 1;">
+                                ${!isSystem ? `<div class="chat-name">${escapeHtml(msg.userName)}</div>` : ''}
+                                <div class="chat-bubble ${isSystem ? 'system-bubble' : ''}">
                                     <div class="chat-text">${escapeHtml(msg.message)}</div>
-                                    <div class="chat-time">${formatTime(msg.createdAt)}</div>
+                                    ${!isSystem ? `<div class="chat-time">${time}</div>` : ''}
                                 </div>
                             </div>
-                        `;
-                        container.appendChild(div);
-                    });
-                } else {
-                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">아직 메시지가 없습니다.</div>';
+                        </div>
+                    `;
+                }).join('');
+                
+                // 새 메시지가 있고, 사용자가 하단에 있었으면 자동 스크롤
+                if (hasNewMessage && (wasAtBottom || lastChatMessageId === null)) {
+                    container.scrollTop = container.scrollHeight;
                 }
-                container.scrollTop = container.scrollHeight;
-            } else {
-                console.error('메시지 로드 실패:', data.error);
+                
+                lastChatMessageId = latestMessage.id;
             }
         })
-        .catch(error => {
-            console.error('메시지 로드 중 오류:', error);
-        });
-}
-
-// HTML 이스케이프 함수
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+        .catch(err => console.error('메시지 로드 실패:', err));
 }
 
 // 팀원 정보 로드
 function loadMembers() {
+    if (!groupId) return;
+    
     fetch(`/api/study-groups/${groupId}/members`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
                 const container = document.getElementById('membersList');
-                container.innerHTML = '';
-                data.members.forEach(member => {
-                    const div = document.createElement('div');
-                    div.className = 'online-member';
-                    div.style.marginBottom = '12px';
-                    
-                    const statusColor = member.isOnline ? '#10b981' : '#9ca3af';
-                    const statusText = getStatusText(member.status);
-                    const lastActive = formatLastActive(member.lastActiveTime);
-                    
-                    div.innerHTML = `
-                        <div style="position: relative;">
-                            <img class="online-member-avatar" src="https://i.pravatar.cc/36?img=${member.id}" alt="프로필">
-                            <span class="online-badge" style="background: ${statusColor};"></span>
-                        </div>
-                        <div style="flex: 1;">
-                            <div class="online-member-name">
-                                ${member.name} ${member.role === 'CREATOR' ? '<span style="font-size: 11px; color: #f59e0b;">(팀장)</span>' : ''}
+                if (!container) return;
+                
+                if (!data.members || data.members.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--cafe-text-light); font-size: 13px;">멤버 정보를 불러올 수 없습니다.</div>';
+                    return;
+                }
+                
+                container.innerHTML = data.members.map(m => {
+                    const statusColor = m.isOnline ? '#8B9A46' : '#9ca3af';
+                    const statusText = m.status === 'STUDYING' ? '공부 중' : 
+                                      m.status === 'ONLINE' ? '온라인' : 
+                                      m.status === 'AWAY' ? '자리비움' : '오프라인';
+                    return `
+                        <div class="member-item">
+                            <div style="position: relative;">
+                                <img class="member-avatar" src="https://i.pravatar.cc/40?img=${m.id}" alt="프로필">
+                                <span class="member-status-dot" style="background: ${statusColor};"></span>
                             </div>
-                            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
-                                ${statusText} · ${lastActive}
-                            </div>
-                            ${member.statusMessage ? `<div style="font-size: 11px; color: var(--primary); margin-top: 2px;">"${member.statusMessage}"</div>` : ''}
-                            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
-                                오늘: ${formatTime(member.todayStudyTime)} · 스트릭: ${member.consecutiveDays}일
+                            <div class="member-info">
+                                <div class="member-name">
+                                    ${escapeHtml(m.name)} ${m.role === 'CREATOR' ? '<span style="font-size: 11px; color: var(--warning);">(팀장)</span>' : ''}
+                                </div>
+                                <div class="member-detail">
+                                    ${statusText} · 오늘 ${formatTime(m.todayStudyTime)} · ${m.consecutiveDays || 0}일 연속
+                                </div>
+                                ${m.statusMessage ? `<div class="member-detail" style="color: var(--cafe-primary); margin-top: 2px; font-style: italic;">"${escapeHtml(m.statusMessage)}"</div>` : ''}
                             </div>
                         </div>
                     `;
-                    container.appendChild(div);
-                });
+                }).join('');
             }
-        });
+        })
+        .catch(err => console.error('멤버 로드 실패:', err));
 }
 
 // 설정 로드
 function loadSettings() {
+    if (!groupId) return;
+    
     fetch(`/api/study-groups/${groupId}/settings`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                studyDuration = data.settings.studyDuration;
-                breakDuration = data.settings.breakDuration;
-                targetCycles = data.settings.cyclesPerDay;
+                studyDuration = data.settings.studyDuration || 50;
+                breakDuration = data.settings.breakDuration || 10;
+                targetCycles = data.settings.cyclesPerDay || 4;
                 
                 document.getElementById('studyDuration').textContent = studyDuration;
                 document.getElementById('breakDuration').textContent = breakDuration;
                 document.getElementById('targetCycles').textContent = targetCycles;
             }
-        });
+        })
+        .catch(err => console.error('설정 로드 실패:', err));
 }
 
 // 학습 일지 저장
 function saveJournal() {
-    if (!groupId || groupId === null) {
-        console.error('그룹 ID가 없습니다. groupId:', groupId);
-        alert('일지를 저장할 수 없습니다. 페이지를 새로고침해주세요.');
-        return;
-    }
+    if (!groupId) return;
     
-    const studyContent = document.getElementById('studyContent')?.value || '';
-    const feeling = document.getElementById('feeling')?.value || '';
-    const nextGoal = document.getElementById('nextGoal')?.value || '';
-    const moodRating = selectedMood || null;
+    const studyContent = document.getElementById('studyContent').value || '';
+    const feeling = document.getElementById('feeling').value || '';
+    const nextGoal = document.getElementById('nextGoal').value || '';
     
     const params = new URLSearchParams();
     if (studyContent) params.append('studyContent', studyContent);
     if (feeling) params.append('feeling', feeling);
     if (nextGoal) params.append('nextGoal', nextGoal);
-    if (moodRating) params.append('moodRating', moodRating.toString());
     
     fetch(`/api/study-groups/${groupId}/journal?${params.toString()}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
+        method: 'POST'
     })
-    .then(res => {
-        if (!res.ok) {
-            return res.json().then(err => {
-                throw new Error(err.error || `HTTP error! status: ${res.status}`);
-            });
-        }
-        return res.json();
-    })
+    .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showNotification('학습 일지가 저장되었습니다!');
-            // 저장 후 일지 다시 로드
-            loadJournal();
+            showToast('학습 일지가 저장되었습니다! 📝');
         } else {
-            console.error('일지 저장 실패:', data.error);
-            alert('일지 저장에 실패했습니다: ' + (data.error || '알 수 없는 오류'));
+            alert('일지 저장 실패: ' + (data.error || '알 수 없는 오류'));
         }
     })
-    .catch(error => {
-        console.error('일지 저장 중 오류:', error);
-        alert('일지 저장 중 오류가 발생했습니다: ' + error.message);
+    .catch(err => {
+        console.error('일지 저장 실패:', err);
+        alert('일지 저장 중 오류가 발생했습니다.');
     });
 }
 
-// 일지 로드
-function loadJournal() {
-    if (!groupId || groupId === null) return;
-    
-    fetch(`/api/study-groups/${groupId}/journal`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.journal) {
-                const journal = data.journal;
-                if (document.getElementById('studyContent')) {
-                    document.getElementById('studyContent').value = journal.studyContent || '';
-                }
-                if (document.getElementById('feeling')) {
-                    document.getElementById('feeling').value = journal.feeling || '';
-                }
-                if (document.getElementById('nextGoal')) {
-                    document.getElementById('nextGoal').value = journal.nextGoal || '';
-                }
-                if (journal.moodRating) {
-                    setMood(journal.moodRating);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('일지 로드 중 오류:', error);
-        });
-}
-
-// 기분 설정
-function setMood(rating) {
-    selectedMood = rating;
-    document.querySelectorAll('.mood-btn').forEach(btn => {
-        btn.classList.remove('selected');
-        if (parseInt(btn.getAttribute('data-rating')) === rating) {
-            btn.classList.add('selected');
-        }
-        btn.style.opacity = btn.dataset.rating == rating ? '1' : '0.5';
-        btn.style.transform = btn.dataset.rating == rating ? 'scale(1.2)' : 'scale(1)';
-    });
-}
-
-// 목표 달성 확인
-function checkGoals() {
-    fetch(`/api/study-groups/${groupId}/goals/check`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.hasAchievement) {
-                showCelebration(data.achievedGoals);
-            }
-        });
-}
-
-// 축하 애니메이션 표시
-function showCelebration(goals) {
-    const celebration = document.getElementById('celebration');
-    const message = document.getElementById('celebrationMessage');
-    
-    if (goals.length > 0) {
-        message.textContent = `팀 목표를 달성했습니다! 🎊`;
-        celebration.classList.add('active');
+// 상태 메시지 입력 이벤트
+document.getElementById('statusMessageInput')?.addEventListener('blur', function() {
+    const message = this.value.trim();
+    if (message) {
+        updateStatusMessage(message);
     }
+});
+
+// 유틸리티
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-function closeCelebration() {
-    document.getElementById('celebration').classList.remove('active');
+function formatTime(timeStr) {
+    if (!timeStr) return '방금 전';
+    const time = new Date(timeStr);
+    const now = new Date();
+    const diff = Math.floor((now - time) / 1000 / 60);
+    if (diff < 1) return '방금 전';
+    if (diff < 60) return `${diff}분 전`;
+    const hours = Math.floor(diff / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    return `${Math.floor(hours / 24)}일 전`;
 }
 
-// 유틸리티 함수
 function formatTime(minutes) {
     if (typeof minutes === 'number') {
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
         return h > 0 ? `${h}h ${m}m` : `${m}m`;
     }
-    return minutes;
+    return minutes || '0m';
 }
 
-function formatLastActive(time) {
-    if (!time) return '오프라인';
-    const now = new Date();
-    const active = new Date(time);
-    const diff = Math.floor((now - active) / 1000 / 60);
+function showToast(message) {
+    // 간단한 토스트 알림
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--cafe-primary);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 1000;
+        animation: slideUp 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
     
-    if (diff < 1) return '방금 전';
-    if (diff < 60) return `${diff}분 전`;
-    const hours = Math.floor(diff / 60);
-    if (hours < 24) return `${hours}시간 전`;
-    return '오프라인';
+    setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
 }
 
-function getStatusText(status) {
-    const statusMap = {
-        'ONLINE': '온라인',
-        'AWAY': '자리비움',
-        'STUDYING': '학습 중',
-        'BREAK': '쉬는 시간',
-        'OFFLINE': '오프라인'
-    };
-    return statusMap[status] || '오프라인';
+// 오늘의 통계 업데이트
+function updateTodayStats() {
+    if (!groupId) return;
+    
+    fetch(`/api/study-groups/${groupId}/members`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.members) {
+                const myMember = data.members.find(m => m.id === currentUserId);
+                if (myMember) {
+                    const todayTime = myMember.todayStudyTime || 0;
+                    const hours = Math.floor(todayTime / 60);
+                    const minutes = todayTime % 60;
+                    document.getElementById('todayTime').textContent = 
+                        hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+                }
+                
+                // 팀 전체 학습 시간 계산
+                const teamTotal = data.members.reduce((sum, m) => sum + (m.todayStudyTime || 0), 0);
+                const teamHours = Math.floor(teamTotal / 60);
+                const teamMinutes = teamTotal % 60;
+                const teamTimeEl = document.getElementById('teamTotalTime');
+                if (teamTimeEl) {
+                    teamTimeEl.textContent = teamHours > 0 ? `${teamHours}h ${teamMinutes}m` : `${teamMinutes}m`;
+                }
+            }
+        })
+        .catch(err => console.error('통계 업데이트 실패:', err));
 }
 
-function showNotification(message) {
-    // 간단한 알림 (실제로는 더 나은 알림 시스템 사용)
-    alert(message);
+// 동기부여 메시지 업데이트
+function updateMotivationMessage() {
+    const messages = [
+        '오늘도 화이팅! 함께 공부해요!',
+        '작은 발걸음이 큰 성취로 이어집니다!',
+        '지금 이 순간이 미래의 나를 만듭니다!',
+        '함께하면 더 즐겁고 더 효과적이에요!',
+        '오늘의 노력이 내일의 실력이 됩니다!'
+    ];
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    const el = document.getElementById('motivationMessage');
+    if (el) el.textContent = randomMsg;
 }
 
-function updateAttendanceStatus() {
-    if (!sessionId) return;
-    fetch(`/api/study-groups/sessions/${sessionId}/attendance`)
+// 실시간 타이머 동기화 (다른 참여자들의 타이머 정보)
+function syncTimersWithMembers() {
+    if (!groupId || !sessionId) return;
+    
+    fetch(`/api/study-groups/${groupId}/members`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                const statusDiv = document.getElementById('attendanceStatus');
-                const countSpan = document.getElementById('attendanceCount');
-                if (statusDiv && countSpan) {
-                    statusDiv.style.display = 'flex';
-                    countSpan.textContent = `${data.count}/${data.attendances.length}명 출석 완료`;
+                const studyingMembers = data.members.filter(m => m.isOnline && m.status === 'STUDYING');
+                // 다른 멤버들이 학습 중이면 동기화된 느낌을 주기 위해 함께 공부중인 멤버 수 표시
+                if (studyingMembers.length > 1) {
+                    document.getElementById('timerStatus').textContent = 
+                        `${studyingMembers.length}명이 함께 공부하고 있어요! 💪`;
                 }
-            }
-        });
-}
-
-// 팀원 정보 로드
-function loadMembers() {
-    if (!groupId) {
-        console.error('그룹 ID가 없습니다.');
-        return;
-    }
-    
-    fetch(`/api/study-groups/${groupId}/members`)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.success) {
-                const container = document.getElementById('membersList');
-                if (!container) {
-                    console.error('멤버 리스트 컨테이너를 찾을 수 없습니다.');
-                    return;
-                }
-                
-                container.innerHTML = '';
-                
-                if (data.members && data.members.length > 0) {
-                    data.members.forEach(member => {
-                        const statusColor = member.isOnline ? '#10b981' : '#9ca3af';
-                        const statusText = getStatusText(member.status);
-                        const lastActive = formatLastActive(member.lastActiveTime);
-                        
-                        const div = document.createElement('div');
-                        div.className = 'online-member';
-                        div.style.marginBottom = '12px';
-                        div.innerHTML = `
-                            <div style="position: relative;">
-                                <img class="online-member-avatar" src="https://i.pravatar.cc/36?img=${member.id}" alt="프로필">
-                                <span class="online-badge" style="background: ${statusColor};"></span>
-                            </div>
-                            <div style="flex: 1;">
-                                <div class="online-member-name">
-                                    ${escapeHtml(member.name)} ${member.role === 'CREATOR' ? '<span style="font-size: 11px; color: #f59e0b;">(팀장)</span>' : ''}
-                                </div>
-                                <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">
-                                    ${statusText} · ${lastActive}
-                                </div>
-                                ${member.statusMessage ? `<div style="font-size: 11px; color: var(--primary); margin-top: 2px; font-style: italic;">"${escapeHtml(member.statusMessage)}"</div>` : ''}
-                                <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
-                                    오늘: ${formatTime(member.todayStudyTime)} · 스트릭: ${member.consecutiveDays}일
-                                </div>
-                            </div>
-                        `;
-                        container.appendChild(div);
-                    });
-                } else {
-                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">멤버 정보를 불러올 수 없습니다.</div>';
-                }
-            } else {
-                console.error('멤버 정보 로드 실패:', data.error);
             }
         })
-        .catch(error => {
-            console.error('멤버 정보 로드 중 오류:', error);
-        });
+        .catch(err => console.error('타이머 동기화 실패:', err));
 }
 
 // 초기화
@@ -903,9 +1537,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (groupId) {
         loadSettings();
         loadMembers();
+        loadStudyingMembers();
         loadMessages();
-        loadJournal();
-        checkGoals();
+        updateMotivationMessage();
+        updateTodayStats();
         
         // 활성 세션 확인
         fetch('/api/study-groups/sessions/active')
@@ -913,42 +1548,63 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success && data.session && data.session.groupId === groupId) {
                     sessionId = data.session.id;
-                    currentCycle = data.session.cyclesCompleted;
-                    document.getElementById('currentCycle').textContent = currentCycle;
+                    currentCycle = data.session.cyclesCompleted || 0;
+                    focusModeActive = true;
+                    studyStartTime = new Date();
+                    updateCycleProgress();
                     document.getElementById('startBtn').style.display = 'none';
                     document.getElementById('pauseBtn').style.display = 'inline-block';
                     document.getElementById('endBtn').style.display = 'inline-block';
+                    document.getElementById('focusModeWarning').style.display = 'block';
+                    document.getElementById('studyRules').style.display = 'block';
+                    initFocusMode();
+                    if (data.session.statusMessage) {
+                        document.getElementById('statusMessageInput').value = data.session.statusMessage;
+                    }
                 }
             });
         
-        // 주기적으로 업데이트
+        // 실시간 업데이트 (2초마다 - 더 빠른 반응성)
         setInterval(() => {
             loadMembers();
+            loadStudyingMembers();
             loadMessages();
-            checkGoals();
-            updateAttendanceStatus();
-        }, 5000); // 5초마다
+            updateTodayStats();
+            syncTimersWithMembers();
+        }, 2000);
+        
+        // 동기부여 메시지 변경 (30초마다)
+        setInterval(() => {
+            updateMotivationMessage();
+        }, 30000);
+        
+        // 상태 메시지 자동 업데이트
+        const statusInput = document.getElementById('statusMessageInput');
+        if (statusInput) {
+            let statusTimeout;
+            statusInput.addEventListener('input', function() {
+                clearTimeout(statusTimeout);
+                statusTimeout = setTimeout(() => {
+                    if (this.value.trim()) {
+                        updateStatusMessage(this.value);
+                    }
+                }, 800); // 0.8초 후 자동 저장
+            });
+            
+            // Enter 키로 즉시 업데이트
+            statusInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (this.value.trim()) {
+                        updateStatusMessage(this.value);
+                        showToast('상태 메시지가 업데이트되었습니다! ✨');
+                    }
+                }
+            });
+        }
     }
 });
 </script>
-
-<style>
-.mood-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    background: var(--card-bg);
-    font-size: 24px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.mood-btn:hover {
-    transform: scale(1.1);
-    border-color: var(--primary);
-}
-</style>
 
 </body>
 </html>

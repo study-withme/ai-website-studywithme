@@ -15,7 +15,8 @@ class Config:
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_PORT = int(os.getenv('DB_PORT', 3306))
     DB_USER = os.getenv('DB_USER', 'root')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', 'Xmflslxl2@')
+    # 보안: 환경 변수에서 비밀번호를 가져오고, 없으면 기본값 사용 (운영 환경에서는 반드시 환경 변수 설정)
+    DB_PASSWORD = os.getenv('DB_PASSWORD', os.getenv('SPRING_DATASOURCE_PASSWORD', 'Xmflslxl2@'))
     DB_NAME = os.getenv('DB_NAME', 'studywithmever2')
     
     # 로깅 설정

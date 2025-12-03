@@ -69,6 +69,12 @@ public class CommentService {
         if (content == null || content.trim().isEmpty()) {
             throw new RuntimeException("댓글 내용을 입력해주세요.");
         }
+        if (userId == null) {
+            throw new RuntimeException("사용자 ID가 필요합니다.");
+        }
+        if (postId == null) {
+            throw new RuntimeException("게시글 ID가 필요합니다.");
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
@@ -139,6 +145,9 @@ public class CommentService {
 
     @Transactional
     public boolean toggleLike(Integer userId, Long commentId) {
+        if (commentId == null) {
+            throw new RuntimeException("댓글 ID가 필요합니다.");
+        }
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
 

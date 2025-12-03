@@ -24,6 +24,9 @@ public class StudyJournalService {
     public StudyJournal saveJournal(Integer userId, Long groupId, LocalDate date,
                                      String studyContent, String feeling, String nextGoal, 
                                      Integer moodRating) {
+        if (groupId == null) {
+            throw new RuntimeException("스터디 그룹 ID가 필요합니다.");
+        }
         StudyGroup group = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("스터디 그룹을 찾을 수 없습니다."));
 

@@ -23,6 +23,12 @@ public class BookmarkService {
     // 북마크 토글 (북마크가 있으면 취소, 없으면 추가)
     @Transactional
     public boolean toggleBookmark(Integer userId, Long postId) {
+        if (userId == null) {
+            throw new RuntimeException("사용자 ID가 필요합니다.");
+        }
+        if (postId == null) {
+            throw new RuntimeException("게시글 ID가 필요합니다.");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Post post = postRepository.findById(postId)
