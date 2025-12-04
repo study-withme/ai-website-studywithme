@@ -2,7 +2,7 @@
 
 <div align="center">
 
-### Capstone Design Project | 졸업작품
+### Capstone Design Project
 
 **Study With Me: 하이브리드 추천 알고리즘과 실시간 콘텐츠 필터링을 활용한 지능형 학습 커뮤니티 플랫폼**
 
