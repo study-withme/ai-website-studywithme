@@ -13,7 +13,9 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **개발 기간**: 2025.03 ~ 2026. 03
+
 **프로젝트 유형**: 캡스톤 디자인
+
 **분야**: 웹 애플리케이션, , AI/ML, 추천 시스템, 자연어 처리
 
 </div>
