@@ -6,10 +6,10 @@ services:
     container_name: studywithme-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-studywithmever2}
       MYSQL_USER: ${MYSQL_USER:-study_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-studypass}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TZ: Asia/Seoul
     ports:
       - "${MYSQL_PORT:-3306}:3306"

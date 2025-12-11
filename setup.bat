@@ -39,9 +39,12 @@ if not exist "%PROPERTIES_FILE%" (
     )
     echo.
     echo 🔑 데이터베이스 비밀번호 설정
-    echo    Docker Compose를 사용하시면 'studypass'를 사용하세요.
-    set /p db_password="DB 비밀번호를 입력하세요 (Enter = studypass): "
-    if "!db_password!"=="" set db_password=studypass
+    echo    Docker Compose를 사용하시면 환경 변수를 설정하세요.
+    set /p db_password="DB 비밀번호를 입력하세요: "
+    if "!db_password!"=="" (
+        echo ❌ 오류: DB 비밀번호는 필수입니다.
+        exit /b 1
+    )
     
     REM PowerShell을 사용하여 파일 내용 변경
     powershell -NoProfile -Command "(Get-Content '%PROPERTIES_FILE%' -Encoding UTF8) -replace 'your_password_here', '!db_password!' | Set-Content '%PROPERTIES_FILE%' -Encoding UTF8" >nul 2>&1

@@ -21,9 +21,12 @@ if [ ! -f "$PROPERTIES_FILE" ]; then
     
     echo ""
     echo "🔑 데이터베이스 비밀번호 설정"
-    echo "   Docker Compose를 사용하시면 'studypass'를 사용하세요."
-    read -p "DB 비밀번호를 입력하세요 (Enter = studypass): " db_password
-    db_password=${db_password:-studypass}
+    echo "   Docker Compose를 사용하시면 환경 변수를 설정하세요."
+    read -p "DB 비밀번호를 입력하세요: " db_password
+    if [ -z "$db_password" ]; then
+        echo "❌ 오류: DB 비밀번호는 필수입니다."
+        exit 1
+    fi
     
     # macOS와 Linux에서 sed 명령어가 다를 수 있음
     if [[ "$OSTYPE" == "darwin"* ]]; then
