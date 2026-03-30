@@ -105,10 +105,10 @@
 ┌──────────────────────▼──────────────────────────────────────┐
 │              Spring Boot Application (Java 21)               │
 │  ┌────────────────────────────────────────────────────────┐ │
-│  │  Controller Layer                                      │ │
-│  │  - MainController, AdminController,                    │ │
-│  │    CommentApiController, NotificationApiController,   │ │
-│  │    ChatbotController                                    │ │
+│  │  Controller Layer (도메인별 MVC·REST)                    │ │
+│  │  - HomeController, PostWebController, UserWebController │ │
+│  │  - AdminController, CommentApiController,              │ │
+│  │    NotificationApiController, ChatbotController       │ │
 │  └────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  Service Layer                                         │ │
@@ -585,71 +585,82 @@ boolean matched = regexPattern.matcher(text).find();
 
 ## 프로젝트 구조
 
+백엔드는 **도메인(바운디드 컨텍스트)별 패키지**로 구성합니다. 각 도메인 아래에 `entity` → `repository` → `service` → (필요 시) `application` → `controller` 순으로 두어, 포트폴리오·실무에서 말하는 *기능 단위 모듈*와 대응시키기 쉽습니다. (단일 Spring Boot 애플리케이션, 단일 DB.)
+
+| 도메인 | 역할 |
+|--------|------|
+| `user` | 회원·프로필·활동·온라인·통계·추천(Java↔Python 연동) |
+| `board` | 게시글·좋아요·북마크·지원·자격증 일정·메인 피드 |
+| `comment` | 댓글·댓글 API |
+| `studygroup` | 스터디 그룹·캘린더·채팅·목표·출석·관리 API |
+| `studysession` | 개인 학습 세션·학습 일지 화면 |
+| `notification` | 알림 |
+| `moderation` | 필터·차단·관리자 |
+| `ai` | 태그/요약·챗봇·Python 실행기·게시글 연동 REST |
+| `config` | Security, Python 초기화 |
+
+### 계층 규칙 (요약)
+
+- **`controller`**: HTTP, 세션, 뷰 이름·리다이렉트만 담당.
+- **`application`** (선택): 한 화면/시나리오에 필요한 **여러 서비스·리포지토리 조합**과 트랜잭션 경계. 예: `user.application.UserOnboardingApplicationService` (AI 온보딩 카테고리 저장).
+- **`service`**: 단일 도메인 규칙·도메인 로직.
+- **`repository` / `entity`**: 영속성.
+
+### 도메인 간 의존 관계 (참고)
+
+화살표는 **상위 패키지가 하위를 사용(참조)한다**는 뜻입니다. 순환을 피하려면 새 기능은 가능한 한 한 방향으로만 호출하는 것이 좋습니다.
+
+```mermaid
+flowchart TB
+  subgraph core["핵심"]
+    user[("user")]
+    board[("board")]
+  end
+  subgraph collab["협업·세션"]
+    comment[("comment")]
+    studygroup[("studygroup")]
+    studysession[("studysession")]
+  end
+  subgraph platform["플랫폼·AI"]
+    notification[("notification")]
+    moderation[("moderation")]
+    ai[("ai")]
+  end
+  board --> user
+  comment --> board
+  comment --> user
+  comment --> notification
+  comment --> moderation
+  studygroup --> board
+  studygroup --> user
+  studygroup --> notification
+  studysession --> studygroup
+  studysession --> user
+  notification --> user
+  moderation --> board
+  moderation --> user
+  moderation --> ai
+  ai --> board
+  ai --> user
+  user --> board
+  user --> ai
+```
+
 ```
 studywithmever2/
 ├── src/main/java/com/example/studywithme/
-│   ├── config/                          # Spring 설정
-│   │   ├── SecurityConfig.java          # 보안 설정
-│   │   └── PythonInitializer.java       # Python 환경 자동 초기화
-│   │
-│   ├── controller/                      # MVC 컨트롤러
-│   │   ├── MainController.java          # 메인 페이지 라우팅
-│   │   ├── AdminController.java         # 관리자 페이지
-│   │   ├── CommentApiController.java    # 댓글 REST API
-│   │   ├── NotificationApiController.java # 알림 API
-│   │   └── ChatbotController.java       # 챗봇 API
-│   │
-│   ├── entity/                          # JPA 엔티티
-│   │   ├── User.java                    # 사용자
-│   │   ├── UserProfile.java             # 사용자 프로필
-│   │   ├── Post.java                    # 게시글
-│   │   ├── Comment.java                 # 댓글
-│   │   ├── StudyGroup.java              # 스터디 그룹
-│   │   ├── StudyGroupMember.java        # 그룹 멤버
-│   │   ├── UserActivity.java            # 사용자 활동 로그
-│   │   ├── BlockedPost.java             # 차단된 게시글
-│   │   ├── BlockedComment.java          # 차단된 댓글
-│   │   ├── Bookmark.java                # 북마크
-│   │   ├── PostLike.java                # 게시글 좋아요
-│   │   ├── CommentLike.java             # 댓글 좋아요
-│   │   ├── PostApplication.java         # 게시글 지원
-│   │   ├── Notification.java            # 알림
-│   │   ├── ChatMessage.java             # 챗봇 메시지
-│   │   ├── FilterWord.java              # 필터 단어
-│   │   ├── FilterKeyword.java           # 필터 키워드
-│   │   ├── FilterPattern.java           # 필터 패턴
-│   │   └── AILearningData.java          # AI 학습 데이터
-│   │
-│   ├── repository/                      # JPA Repository
-│   │   ├── UserRepository.java
-│   │   ├── PostRepository.java
-│   │   ├── CommentRepository.java
-│   │   ├── StudyGroupRepository.java
-│   │   ├── UserActivityRepository.java
-│   │   ├── BlockedPostRepository.java
-│   │   ├── BlockedCommentRepository.java
-│   │   └── ...
-│   │
-│   ├── service/                         # 비즈니스 로직
-│   │   ├── UserService.java             # 사용자 관리
-│   │   ├── PostService.java             # 게시글 관리
-│   │   ├── CommentService.java          # 댓글 관리
-│   │   ├── StudyGroupService.java       # 스터디 그룹 관리
-│   │   ├── UserRecommendationService.java      # 추천 서비스 (Java)
-│   │   ├── PythonRecommendationService.java    # Python 추천 통합
-│   │   ├── AITagService.java            # AI 태그 분류
-│   │   ├── AISummaryService.java        # AI 요약 (규칙 기반)
-│   │   ├── ChatbotService.java          # 챗봇 서비스 (Gemini API)
-│   │   ├── ContentFilterService.java    # 콘텐츠 필터링
-│   │   ├── UserActivityService.java     # 활동 로그 수집
-│   │   ├── BookmarkService.java         # 북마크 관리
-│   │   ├── PostLikeService.java         # 좋아요 관리
-│   │   ├── PostApplicationService.java  # 지원 관리
-│   │   ├── NotificationService.java     # 알림 관리
-│   │   ├── AdminService.java            # 관리자 기능
-│   │   └── UserStatsService.java        # 사용자 통계
-│   │
-│   └── StudyWithMeApplication.java      # 메인 애플리케이션
+│   ├── StudyWithMeApplication.java
+│   ├── config/
+│   │   ├── SecurityConfig.java
+│   │   └── PythonInitializer.java
+│   ├── user/                 # entity, repository, service, application, controller
+│   ├── board/                # entity, repository, service, controller (HomeController, PostWebController)
+│   ├── comment/
+│   ├── studygroup/
+│   ├── studysession/
+│   ├── notification/
+│   ├── moderation/
+│   └── ai/                   # AiPostApiController, ChatbotController 등
 │
 ├── src/main/resources/
 │   ├── application.properties           # Spring Boot 설정
@@ -688,7 +699,10 @@ studywithmever2/
 ├── README.md                            # 본 문서
 ├── QUICK_START.md                       # 빠른 시작 가이드
 ├── SETUP.md                             # 상세 설치 가이드
-└── PROJECT_ROADMAP.md                   # 프로젝트 로드맵
+├── PROJECT_ROADMAP.md                   # 프로젝트 로드맵
+└── scripts/                             # 유지보수용 스크립트
+    ├── migrate_domain_packages.ps1      # 도메인 패키지 일괄 이동 (참고)
+    └── migrate_domain_packages.py
 ```
 
 ---
