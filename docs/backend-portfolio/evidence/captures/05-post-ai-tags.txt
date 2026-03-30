@@ -1,0 +1,3 @@
+﻿=== CAPTURE: POST /api/posts/ai-tags ===
+StatusCode: 200
+Body: {"category_confidence":0.0,"category":"ê¸°í","tags":[]}

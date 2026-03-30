@@ -1,0 +1,224 @@
+{
+  "info": {
+    "name": "Study With Me — Backend API",
+    "description": "도메인별 REST·세션 쿠키 기반 API. 로그인 후 Postman Cookies에 JSESSIONID가 잡히는지 확인하세요.\n\n가져오기: Import → 이 JSON 파일 선택.\n환경: StudyWithMe-Backend.postman_environment.json 함께 Import 후 `baseUrl` 수정.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" }
+  ],
+  "item": [
+    {
+      "name": "0. 설정",
+      "item": [
+        {
+          "name": "Health — 메인 HTML",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "board",
+      "item": [
+        {
+          "name": "GET /api/posts (페이징)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/posts?page=0&size=10&sort=latest&category="
+          }
+        }
+      ]
+    },
+    {
+      "name": "user",
+      "item": [
+        {
+          "name": "POST /auth (로그인 — form)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "email", "value": "user@example.com", "type": "text" },
+                { "key": "password", "value": "your_password", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/auth"
+          }
+        },
+        {
+          "name": "GET /api/recommendations/posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/recommendations/posts?size=10"
+          }
+        },
+        {
+          "name": "GET /api/user/preferences (세션 필요)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/user/preferences"
+          }
+        }
+      ]
+    },
+    {
+      "name": "comment",
+      "item": [
+        {
+          "name": "GET /api/posts/:postId/comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/posts/1/comments?sort=latest"
+          }
+        },
+        {
+          "name": "POST /api/posts/:postId/comments (세션 필요)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "content", "value": "테스트 댓글", "type": "text" },
+                { "key": "parentId", "value": "", "type": "text", "disabled": true }
+              ]
+            },
+            "url": "{{baseUrl}}/api/posts/1/comments"
+          }
+        },
+        {
+          "name": "POST /api/comments/:id/like",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/comments/1/like"
+          }
+        }
+      ]
+    },
+    {
+      "name": "notification",
+      "item": [
+        {
+          "name": "GET unread-count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/notifications/unread-count"
+          }
+        },
+        {
+          "name": "GET recent",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/notifications/recent"
+          }
+        },
+        {
+          "name": "POST read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/notifications/1/read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ai",
+      "item": [
+        {
+          "name": "POST /api/posts/ai-tags",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "title", "value": "Spring Boot", "type": "text" },
+                { "key": "content", "value": "JPA 학습 스터디 모집", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/posts/ai-tags"
+          }
+        },
+        {
+          "name": "POST /api/posts/:id/ai-summary",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/posts/1/ai-summary?maxLength=200"
+          }
+        },
+        {
+          "name": "POST /api/chatbot/message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "message", "value": "추천 게시글 알려줘", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/chatbot/message"
+          }
+        },
+        {
+          "name": "GET /api/chatbot/history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/chatbot/history"
+          }
+        }
+      ]
+    },
+    {
+      "name": "studygroup",
+      "item": [
+        {
+          "name": "POST sessions/start (세션 필요)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "statusMessage", "value": "집중", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/study-groups/1/sessions/start"
+          }
+        },
+        {
+          "name": "GET group chat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/study-groups/1/chat"
+          }
+        },
+        {
+          "name": "GET calendar month",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/study-groups/1/calendar/events/month/2026/3"
+          }
+        }
+      ]
+    }
+  ]
+}

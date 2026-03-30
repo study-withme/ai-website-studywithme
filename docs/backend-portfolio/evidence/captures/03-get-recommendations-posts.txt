@@ -1,0 +1,3 @@
+﻿=== CAPTURE: GET /api/recommendations/posts?size=3 ===
+StatusCode: 200
+Body: []

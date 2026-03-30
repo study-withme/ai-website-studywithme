@@ -1,0 +1,3 @@
+﻿=== CAPTURE: GET /api/notifications/unread-count (no session) ===
+StatusCode: 200
+Body: {"count":0}

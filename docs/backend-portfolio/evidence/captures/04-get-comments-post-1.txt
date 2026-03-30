@@ -1,0 +1,3 @@
+﻿=== CAPTURE: GET /api/posts/1/comments ===
+StatusCode: 200
+Body: []

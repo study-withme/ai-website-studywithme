@@ -1,0 +1,45 @@
+### Study With Me — REST Client (.http)
+### VS Code / IntelliJ HTTP Client에서 사용. @baseUrl만 환경에 맞게 수정.
+
+@baseUrl = http://localhost:8080
+
+### board — 공개 게시글 JSON (Spring Data Page)
+GET {{baseUrl}}/api/posts?page=0&size=10&sort=latest
+
+### user — 추천 (비로그인 가능)
+GET {{baseUrl}}/api/recommendations/posts?size=5
+
+### notification — 미읽음 (비로그인 시 count: 0)
+GET {{baseUrl}}/api/notifications/unread-count
+
+### comment — 댓글 목록
+GET {{baseUrl}}/api/posts/1/comments?sort=latest
+
+### ai — 태그 추천 (Python 필요)
+POST {{baseUrl}}/api/posts/ai-tags
+Content-Type: application/x-www-form-urlencoded
+
+title=스프링&content=JPA 스터디
+
+### ai — 챗봇 (Gemini API 키 필요)
+POST {{baseUrl}}/api/chatbot/message
+Content-Type: application/x-www-form-urlencoded
+
+message=안녕
+
+### user — 로그인 (이후 Set-Cookie JSESSIONID 확인)
+# @name login
+POST {{baseUrl}}/auth
+Content-Type: application/x-www-form-urlencoded
+
+email=test@example.com&password=yourpassword
+
+### user — 선호도 (로그인 쿠키 필요)
+GET {{baseUrl}}/api/user/preferences
+# Cookie: JSESSIONID=...
+
+### studygroup — 세션 시작 (로그인 + 멤버 필요)
+POST {{baseUrl}}/api/study-groups/1/sessions/start
+Content-Type: application/x-www-form-urlencoded
+
+statusMessage=포모도로

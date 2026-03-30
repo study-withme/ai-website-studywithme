@@ -700,10 +700,14 @@ studywithmever2/
 ├── QUICK_START.md                       # 빠른 시작 가이드
 ├── SETUP.md                             # 상세 설치 가이드
 ├── PROJECT_ROADMAP.md                   # 프로젝트 로드맵
-└── scripts/                             # 유지보수용 스크립트
-    ├── migrate_domain_packages.ps1      # 도메인 패키지 일괄 이동 (참고)
-    └── migrate_domain_packages.py
+├── scripts/                             # 유지보수용 스크립트
+│   ├── migrate_domain_packages.ps1      # 도메인 패키지 일괄 이동 (참고)
+│   └── migrate_domain_packages.py
+└── docs/backend-portfolio/              # 도메인별 백엔드 포트폴리오 문서 (API·흐름·Postman·트러블슈팅)
+    └── README.md                        # 목차 및 링크
 ```
+
+**백엔드 포트폴리오 문서 바로가기**: [docs/backend-portfolio/README.md](docs/backend-portfolio/README.md) · [트러블슈팅·Postman 첨부](docs/backend-portfolio/troubleshooting-evidence.md)
 
 ---
 
